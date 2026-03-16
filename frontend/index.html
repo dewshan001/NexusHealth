@@ -8,7 +8,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Google Material Icons -->
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
@@ -27,10 +27,12 @@
                 <li><a href="#home">Home</a></li>
                 <li><a href="#doctors">Doctors</a></li>
                 <li><a href="#pharmacy">Pharmacy</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="contact.html">Contact</a></li>
             </ul>
         </div>
         <div class="nav-right">
-            <button class="btn btn-outline" aria-label="Login">Login</button>
+            <button class="btn btn-outline" aria-label="Login" onclick="location.href='login.html'">Login</button>
             <button class="btn btn-primary" aria-label="Book Appointment">Book Appointment</button>
         </div>
     </nav>
@@ -39,10 +41,32 @@
         <!-- Section 2: Hero Section -->
         <section id="home" class="hero-section">
             <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="material-symbols-outlined" style="font-size:16px;">verified</span>
+                    Trusted by modern clinics
+                </div>
                 <h1 class="hero-headline">Your Health, Managed Effectively</h1>
                 <p class="hero-subtext">Book appointments, access digital medical records, and manage pharmacy needs in
-                    one secure place.</p>
-                <button class="btn btn-primary btn-large" aria-label="Find a Doctor">Find a Doctor</button>
+                    one secure platform built for clinics and their patients.</p>
+                <div class="hero-actions">
+                    <button class="btn btn-primary btn-large" aria-label="Find a Doctor">Book an Appointment</button>
+                    <span class="hero-secondary-text">No phone calls • Instant confirmations</span>
+                </div>
+
+                <div class="hero-metrics">
+                    <div class="metric">
+                        <span class="metric-value">120+</span>
+                        <span class="metric-label">Partner Clinics</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">98%</span>
+                        <span class="metric-label">Patient Satisfaction</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">24/7</span>
+                        <span class="metric-label">Online Access</span>
+                    </div>
+                </div>
             </div>
             <div class="hero-image-container">
                 <!-- Using Unsplash for a high quality hero image of a modern clinic -->
@@ -83,6 +107,33 @@
             </div>
         </section>
 
+        <!-- Section 3.5: Pharmacy Overview -->
+        <section id="pharmacy" class="pharmacy-section">
+            <div class="container pharmacy-grid">
+                <div class="pharmacy-copy">
+                    <h2 class="section-title">Connected Pharmacy Experience</h2>
+                    <p class="pharmacy-text">NexusHealth links your clinic and pharmacy so prescriptions are
+                        fulfilled faster, safer, and with fewer errors. Patients receive timely reminders and can
+                        track refills online.</p>
+                    <ul class="pharmacy-list">
+                        <li><span class="material-symbols-outlined">task_alt</span> e-Prescriptions sent instantly to
+                            partner pharmacies</li>
+                        <li><span class="material-symbols-outlined">notifications_active</span> Automated refill
+                            reminders for chronic care</li>
+                        <li><span class="material-symbols-outlined">shield_lock</span> Secure, compliant medication
+                            history storage</li>
+                    </ul>
+                </div>
+                <div class="pharmacy-card glass-dark">
+                    <h3 class="pharmacy-card-title">For Clinic Administrators</h3>
+                    <p class="pharmacy-card-text">Monitor prescription status in real time, reduce paperwork, and
+                        keep your care team in sync with the pharmacy.</p>
+                    <button class="btn btn-outline-primary" aria-label="Learn about pharmacy integration">Learn more
+                        about integration</button>
+                </div>
+            </div>
+        </section>
+
         <!-- Section 4: Meet Our Specialists -->
         <section id="doctors" class="specialists-section">
             <div class="container">
@@ -93,7 +144,10 @@
                         <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=400&q=80"
                             alt="Dr. Sarah Jenkins" class="doctor-img">
                         <h2 class="doctor-name">Dr. Sarah Jenkins</h2>
+                        <p class="doctor-availability">● Available today</p>
+                        <p class="doctor-experience">12+ years experience</p>
                         <p class="doctor-specialization">Cardiology</p>
+                        <p class="doctor-rating"><span class="doctor-rating-stars">★★★★★</span> 4.9 <span class="doctor-rating-count">(142 reviews)</span></p>
                         <button class="btn btn-outline-primary">Check Availability</button>
                     </div>
                     <!-- Doctor 2 -->
@@ -101,7 +155,10 @@
                         <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=400&q=80"
                             alt="Dr. Michael Chen" class="doctor-img">
                         <h2 class="doctor-name">Dr. Michael Chen</h2>
+                        <p class="doctor-availability">● Available today</p>
+                        <p class="doctor-experience">10+ years experience</p>
                         <p class="doctor-specialization">Pediatrics</p>
+                        <p class="doctor-rating"><span class="doctor-rating-stars">★★★★★</span> 4.9 <span class="doctor-rating-count">(128 reviews)</span></p>
                         <button class="btn btn-outline-primary">Check Availability</button>
                     </div>
                     <!-- Doctor 3 -->
@@ -109,7 +166,10 @@
                         <img src="https://images.unsplash.com/photo-1527613426441-4da17471b66d?auto=format&fit=crop&w=400&q=80"
                             alt="Dr. Emily Rodriguez" class="doctor-img">
                         <h2 class="doctor-name">Dr. Emily Rodriguez</h2>
+                        <p class="doctor-availability">● Available today</p>
+                        <p class="doctor-experience">8+ years experience</p>
                         <p class="doctor-specialization">Dermatology</p>
+                        <p class="doctor-rating"><span class="doctor-rating-stars">★★★★★</span> 4.9 <span class="doctor-rating-count">(96 reviews)</span></p>
                         <button class="btn btn-outline-primary">Check Availability</button>
                     </div>
                 </div>
@@ -155,6 +215,14 @@
             </div>
         </div>
     </footer>
+
+    <script>
+        window.addEventListener('scroll', () => {
+            document.querySelector('.navbar').style.boxShadow = window.scrollY > 10
+                ? '0 4px 30px rgba(0,86,219,0.12)'
+                : '0 1px 20px rgba(0,86,219,0.08)';
+        });
+    </script>
 </body>
 
 </html>
