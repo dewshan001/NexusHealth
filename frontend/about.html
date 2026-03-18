@@ -43,7 +43,8 @@
             <div class="container">
                 <div class="about-hero-content">
                     <h1 class="about-headline">Transforming Healthcare Through Technology</h1>
-                    <p class="about-subheading">At NexusHealth, we believe every patient deserves seamless, accessible, and
+                    <p class="about-subheading">At NexusHealth, we believe every patient deserves seamless, accessible,
+                        and
                         trustworthy care. Our mission is to bridge clinics, doctors, and patients with intelligent,
                         secure digital solutions.</p>
                 </div>
@@ -67,7 +68,8 @@
                     <div class="vision-card glass">
                         <h2 class="vision-title">Our Vision</h2>
                         <p class="vision-text">A world where every clinic operates seamlessly, every patient
-                            receives personalized care, and every prescription is fulfilled safely and on time. Healthcare
+                            receives personalized care, and every prescription is fulfilled safely and on time.
+                            Healthcare
                             without friction.</p>
                     </div>
                 </div>
@@ -84,28 +86,32 @@
                             <span class="material-symbols-outlined">verified_user</span>
                         </div>
                         <h3 class="value-name">Trust & Security</h3>
-                        <p class="value-description">Patient data is sacred. We employ enterprise-grade encryption and comply with all healthcare regulations to keep information safe.</p>
+                        <p class="value-description">Patient data is sacred. We employ enterprise-grade encryption and
+                            comply with all healthcare regulations to keep information safe.</p>
                     </div>
                     <div class="value-card">
                         <div class="value-icon">
                             <span class="material-symbols-outlined">people</span>
                         </div>
                         <h3 class="value-name">User-Centric Design</h3>
-                        <p class="value-description">Every feature is built with real users in mind. Clinicians, administrators, and patients guide our development process.</p>
+                        <p class="value-description">Every feature is built with real users in mind. Clinicians,
+                            administrators, and patients guide our development process.</p>
                     </div>
                     <div class="value-card">
                         <div class="value-icon">
                             <span class="material-symbols-outlined">trending_up</span>
                         </div>
                         <h3 class="value-name">Continuous Innovation</h3>
-                        <p class="value-description">Healthcare evolves. We constantly improve our platform with the latest AI, security practices, and clinical insights.</p>
+                        <p class="value-description">Healthcare evolves. We constantly improve our platform with the
+                            latest AI, security practices, and clinical insights.</p>
                     </div>
                     <div class="value-card">
                         <div class="value-icon">
                             <span class="material-symbols-outlined">handshake</span>
                         </div>
                         <h3 class="value-name">Partnership</h3>
-                        <p class="value-description">We succeed when our clinic partners succeed. We're invested in your growth, feedback, and long-term success.</p>
+                        <p class="value-description">We succeed when our clinic partners succeed. We're invested in your
+                            growth, feedback, and long-term success.</p>
                     </div>
                 </div>
             </div>
@@ -142,18 +148,24 @@
                     <div class="story-text">
                         <h2 class="story-title">Our Story</h2>
                         <p class="story-paragraph">
-                            NexusHealth was founded in 2021 by a team of healthcare professionals, software engineers, and
-                            patient advocates who saw a critical gap in clinic management technology. We realized that traditional
+                            NexusHealth was founded in 2021 by a team of healthcare professionals, software engineers,
+                            and
+                            patient advocates who saw a critical gap in clinic management technology. We realized that
+                            traditional
                             systems were outdated, fragmented, and frustrating for everyone involved.
                         </p>
                         <p class="story-paragraph">
-                            We set out to build something better—a unified platform that connects clinics, doctors, patients, and
-                            pharmacies in a single, intuitive ecosystem. Today, we proudly serve hundreds of clinics and tens of
+                            We set out to build something better—a unified platform that connects clinics, doctors,
+                            patients, and
+                            pharmacies in a single, intuitive ecosystem. Today, we proudly serve hundreds of clinics and
+                            tens of
                             thousands of patients across multiple regions.
                         </p>
                         <p class="story-paragraph">
-                            But we're just getting started. Our vision extends far beyond digital records and appointment booking.
-                            We're integrating AI diagnostics, predictive health analytics, and telemedicine to revolutionize the
+                            But we're just getting started. Our vision extends far beyond digital records and
+                            appointment booking.
+                            We're integrating AI diagnostics, predictive health analytics, and telemedicine to
+                            revolutionize the
                             entire patient care experience.
                         </p>
                     </div>
@@ -173,7 +185,8 @@
                             alt="CEO" class="team-img">
                         <h3 class="team-name">Dr. James Mitchell</h3>
                         <p class="team-role">Founder & CEO</p>
-                        <p class="team-bio">Former cardiac surgeon with 15+ years in healthcare. Visionary leader driving
+                        <p class="team-bio">Former cardiac surgeon with 15+ years in healthcare. Visionary leader
+                            driving
                             digital transformation in medicine.</p>
                     </div>
                     <div class="team-member">
@@ -181,7 +194,8 @@
                             alt="CTO" class="team-img">
                         <h3 class="team-name">Sarah Chen</h3>
                         <p class="team-role">CTO</p>
-                        <p class="team-bio">Tech pioneer with expertise in healthcare software and secure data management.
+                        <p class="team-bio">Tech pioneer with expertise in healthcare software and secure data
+                            management.
                             Building the future of digital health.</p>
                     </div>
                     <div class="team-member">
@@ -201,7 +215,8 @@
             <div class="container">
                 <div class="cta-content">
                     <h2 class="cta-headline">Ready to Join the Healthcare Revolution?</h2>
-                    <p class="cta-subtext">Whether you're a clinic looking for better management tools or a patient seeking seamless care, NexusHealth is here for you.</p>
+                    <p class="cta-subtext">Whether you're a clinic looking for better management tools or a patient
+                        seeking seamless care, NexusHealth is here for you.</p>
                     <div class="cta-buttons">
                         <button class="btn btn-primary btn-large">Get Started Today</button>
                         <button class="btn btn-outline-primary btn-large">Partner with Us</button>
@@ -251,10 +266,25 @@
     </footer>
 
     <script>
+        const navbar = document.querySelector('.navbar');
+        let lastScrollY = window.scrollY;
+
         window.addEventListener('scroll', () => {
-            document.querySelector('.navbar').style.boxShadow = window.scrollY > 10
-                ? '0 4px 30px rgba(0,86,219,0.12)'
-                : '0 1px 20px rgba(0,86,219,0.08)';
+            // Shadow logic
+            navbar.style.boxShadow = window.scrollY > 10
+                ? '0 15px 35px rgba(0, 86, 219, 0.1), 0 5px 15px rgba(0, 0, 0, 0.03), inset 0 0 20px rgba(255, 255, 255, 0.2)'
+                : '0 15px 35px rgba(0, 86, 219, 0.1), 0 5px 15px rgba(0, 0, 0, 0.03), inset 0 0 20px rgba(255, 255, 255, 0.2)';
+
+            // Hide/Show logic
+            if (lastScrollY < window.scrollY && window.scrollY > 100) {
+                // Scrolling down
+                navbar.classList.add('navbar--hidden');
+            } else {
+                // Scrolling up
+                navbar.classList.remove('navbar--hidden');
+            }
+
+            lastScrollY = window.scrollY;
         });
     </script>
 </body>
