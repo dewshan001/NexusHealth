@@ -1631,3 +1631,430 @@ h3 {
         font-size: 1.6rem;
     }
 }
+
+/* Login Page Styles */
+.login-body {
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    background:
+        radial-gradient(circle at 15% 20%, rgba(0, 102, 255, 0.15), transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(0, 201, 167, 0.14), transparent 45%),
+        var(--bg-gradient);
+}
+
+.login-bg-orb {
+    position: fixed;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    filter: blur(36px);
+    opacity: 0.45;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.login-bg-orb--blue {
+    top: -110px;
+    left: -80px;
+    background: rgba(0, 102, 255, 0.28);
+}
+
+.login-bg-orb--teal {
+    right: -70px;
+    bottom: -110px;
+    background: rgba(0, 201, 167, 0.22);
+}
+
+.login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.login-layout {
+    width: 100%;
+    max-width: 1120px;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 1.5rem;
+    align-items: stretch;
+}
+
+.login-brand-panel,
+.login-form-panel {
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    animation: fadeUp 0.55s ease forwards;
+}
+
+.login-brand-panel {
+    padding: 2.4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5));
+}
+
+.login-brand-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.login-brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary-medical-blue);
+}
+
+.login-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(0, 102, 255, 0.1);
+    color: var(--primary-medical-blue);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.login-status-pill .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.login-brand-copy {
+    margin: 2.2rem 0;
+}
+
+.login-heading {
+    font-size: clamp(1.85rem, 3vw, 2.7rem);
+    line-height: 1.2;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #0066FF 0%, #00C9A7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.04em;
+}
+
+.login-subheading {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    max-width: 460px;
+}
+
+.login-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+}
+
+.login-metric-card {
+    border-radius: var(--border-radius-md);
+    border: 1px solid rgba(0, 102, 255, 0.14);
+    background: rgba(255, 255, 255, 0.7);
+    padding: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.login-metric-value {
+    color: var(--primary-medical-blue);
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.login-metric-label {
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.login-form-panel {
+    background: var(--bg-white);
+    border: 1px solid rgba(0, 102, 255, 0.12);
+    padding: 2.2rem;
+}
+
+.login-form-header {
+    margin-bottom: 1.25rem;
+}
+
+.login-form-title {
+    font-size: 1.85rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+
+.login-form-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.login-helper-text {
+    margin-top: 0.7rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.login-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.login-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0 0.85rem;
+    border: 1px solid rgba(0, 102, 255, 0.2);
+    border-radius: var(--border-radius-md);
+    background: rgba(0, 102, 255, 0.02);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.login-input-wrap:focus-within {
+    border-color: var(--primary-medical-blue);
+    box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+    background-color: var(--bg-white);
+}
+
+.login-input-wrap .material-symbols-outlined {
+    font-size: 20px;
+    color: var(--primary-medical-blue);
+}
+
+.login-input {
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    padding: 0.88rem 0;
+}
+
+.login-input:focus {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+.login-select {
+    appearance: none;
+    cursor: pointer;
+    color: var(--text-primary);
+}
+
+.login-select:invalid {
+    color: var(--text-muted);
+}
+
+.login-link {
+    color: var(--primary-medical-blue);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.login-link:hover {
+    color: var(--primary-blue-hover);
+}
+
+.login-form-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.login-remember {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.86rem;
+    color: var(--text-secondary);
+}
+
+.login-remember input {
+    accent-color: var(--primary-medical-blue);
+}
+
+.login-submit {
+    width: 100%;
+    margin-top: 0.35rem;
+}
+
+.login-divider {
+    margin: 1.35rem 0 1rem;
+    position: relative;
+    text-align: center;
+}
+
+.login-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.login-divider span {
+    position: relative;
+    display: inline-block;
+    padding: 0 0.8rem;
+    background: var(--bg-white);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.login-social-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+}
+
+.login-social-btn {
+    width: 100%;
+    gap: 0.35rem;
+    font-weight: 600;
+}
+
+.login-social-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.login-bottom-text {
+    margin-top: 1.2rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 992px) {
+    .login-layout {
+        grid-template-columns: 1fr;
+        max-width: 680px;
+    }
+
+    .login-brand-panel {
+        padding: 1.75rem;
+    }
+
+    .login-metric-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .login-wrapper {
+        padding: 1rem;
+    }
+
+    .login-form-panel,
+    .login-brand-panel {
+        padding: 1.3rem;
+    }
+
+    .login-metric-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .login-social-row {
+        grid-template-columns: 1fr;
+    }
+
+    .login-status-pill {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Signup-specific spacing fix */
+.signup-body .login-brand-panel {
+    justify-content: flex-start;
+    gap: 1.4rem;
+}
+
+.signup-body .login-brand-copy {
+    margin: 0;
+}
+
+.signup-body .login-metric-grid {
+    margin-top: 0.5rem;
+}
+
+.signup-body .signup-info-stack {
+    margin-top: 1rem;
+    display: grid;
+    gap: 0.8rem;
+}
+
+.signup-body .signup-info-card {
+    border: 1px solid rgba(0, 102, 255, 0.16);
+    border-radius: var(--border-radius-md);
+    background: rgba(255, 255, 255, 0.72);
+    padding: 1rem;
+}
+
+.signup-body .signup-info-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.6rem;
+}
+
+.signup-body .signup-info-list {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.signup-body .signup-info-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.signup-body .signup-info-list .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--primary-medical-blue);
+    margin-top: 0.02rem;
+}
+
+.signup-body .signup-info-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    border-radius: var(--border-radius-md);
+    background: rgba(0, 102, 255, 0.08);
+    color: var(--text-secondary);
+    padding: 0.85rem 0.9rem;
+    font-size: 0.86rem;
+}
+
+.signup-body .signup-info-note .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--primary-medical-blue);
+}
