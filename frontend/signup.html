@@ -150,6 +150,19 @@
             </article>
         </section>
     </main>
+
+    <script>
+        (function initTheme() {
+            const saved = localStorage.getItem('nexus-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = saved || (prefersDark ? 'dark' : 'light');
+            if (theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+        })();
+    </script>
 </body>
 
 </html>

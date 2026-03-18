@@ -508,11 +508,45 @@
             font-size: 0.95rem;
             outline: none;
             transition: border-color 0.2s;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-primary);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
         }
 
         .form-input:focus,
         .form-select:focus {
             border-color: var(--primary-medical-blue);
+        }
+
+        #tab-options div[style*="background: white"] {
+            background: var(--surface-bg) !important;
+            border-color: var(--surface-border) !important;
+            backdrop-filter: blur(14px) saturate(130%);
+            -webkit-backdrop-filter: blur(14px) saturate(130%);
+        }
+
+        #tab-maintenance div[style*="background: #F9FAFB"] {
+            background: var(--surface-bg) !important;
+            border-color: var(--surface-border) !important;
+            color: var(--text-primary);
+            backdrop-filter: blur(14px) saturate(130%);
+            -webkit-backdrop-filter: blur(14px) saturate(130%);
+        }
+
+        #tab-maintenance div[style*="background: #E5E7EB"] {
+            background: rgba(255, 255, 255, 0.14) !important;
+        }
+
+        :root[data-theme="light"] #tab-maintenance div[style*="background: #F9FAFB"] {
+            background: #F9FAFB !important;
+            border-color: var(--border-color) !important;
+        }
+
+        :root[data-theme="light"] #tab-maintenance div[style*="background: #E5E7EB"] {
+            background: #E5E7EB !important;
         }
 
         /* Status Toggles */
