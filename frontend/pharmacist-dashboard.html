@@ -850,6 +850,85 @@
             color: white;
         }
 
+        /* ══ DARK MODE — OVERRIDE style.css DEFAULTS ══════════════════ */
+        /* Inputs & Selects */
+        :root:not([data-theme="light"]) input,
+        :root:not([data-theme="light"]) select,
+        :root:not([data-theme="light"]) textarea,
+        :root:not([data-theme="light"]) .form-input,
+        :root:not([data-theme="light"]) .form-select,
+        :root:not([data-theme="light"]) .search-input,
+        :root:not([data-theme="light"]) .date-input {
+            background: rgba(255, 255, 255, 0.09) !important;
+            color: rgba(255, 255, 255, 0.92) !important;
+            border-color: rgba(255, 255, 255, 0.18) !important;
+        }
+
+        :root:not([data-theme="light"]) input::placeholder,
+        :root:not([data-theme="light"]) .form-input::placeholder,
+        :root:not([data-theme="light"]) .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.35) !important;
+        }
+
+        :root:not([data-theme="light"]) select option {
+            background: #0d1f3c;
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        /* Table cells */
+        :root:not([data-theme="light"]) .data-table td,
+        :root:not([data-theme="light"]) .data-table th {
+            color: rgba(255, 255, 255, 0.85) !important;
+            border-color: rgba(255, 255, 255, 0.07) !important;
+        }
+
+        :root:not([data-theme="light"]) .data-table thead tr {
+            background: rgba(255, 255, 255, 0.04) !important;
+        }
+
+        /* Modal internals */
+        :root:not([data-theme="light"]) .modal-content h3,
+        :root:not([data-theme="light"]) .modal-content h4,
+        :root:not([data-theme="light"]) .modal-content p,
+        :root:not([data-theme="light"]) .modal-content label,
+        :root:not([data-theme="light"]) .modal-content li {
+            color: rgba(255, 255, 255, 0.88) !important;
+        }
+
+        /* Section cards, alert items, visit items */
+        :root:not([data-theme="light"]) .section-card,
+        :root:not([data-theme="light"]) .alert-item {
+            color: rgba(255, 255, 255, 0.88) !important;
+        }
+
+        :root:not([data-theme="light"]) .alert-item p {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        /* Buttons from style.css */
+        :root:not([data-theme="light"]) .btn-outline {
+            background: rgba(255, 255, 255, 0.06) !important;
+            color: rgba(255, 255, 255, 0.85) !important;
+            border-color: rgba(255, 255, 255, 0.22) !important;
+        }
+
+        :root:not([data-theme="light"]) .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.14) !important;
+            color: white !important;
+        }
+
+        :root:not([data-theme="light"]) .btn-outline-primary {
+            background: rgba(99, 179, 255, 0.12) !important;
+            color: #7dd3fc !important;
+            border-color: rgba(99, 179, 255, 0.35) !important;
+        }
+
+        /* Upload note & misc small text */
+        :root:not([data-theme="light"]) .upload-note,
+        :root:not([data-theme="light"]) p[style*="color"] {
+            color: rgba(255, 255, 255, 0.55) !important;
+        }
+
         :root[data-theme="light"] .metric-card::before {
             background: linear-gradient(90deg, transparent, rgba(0, 102, 255, 0.15), transparent);
         }
