@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusHealth - Admin Dashboard</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Google Material Icons -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* Dashboard Specific Inline Styles */
+        body {
+            background-color: #F8FAFC;
+        }
+
+        .dashboard-container {
+            display: block;
+            margin-left: 280px;
+            /* Space for fixed sidebar */
+            padding: 2rem;
+            max-width: 1300px;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: #ffffff;
+            border-right: 1px solid rgba(0, 102, 255, 0.1);
+            box-shadow: 4px 0 24px rgba(0, 102, 255, 0.04);
+            padding: 1.5rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            overflow-y: auto;
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        .sidebar::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Safari and Opera */
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-medical-blue);
+            margin-bottom: 2rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid rgba(0, 102, 255, 0.1);
+        }
+
+        .sidebar-logo .logo-icon {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, var(--primary-medical-blue), #00C9A7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-logo .logo-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--primary-medical-blue), #0044aa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-profile {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid rgba(0, 102, 255, 0.1);
+        }
+
+        .sidebar-profile img {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 0.75rem;
+            padding: 3px;
+            background: linear-gradient(135deg, var(--primary-medical-blue), #00C9A7);
+            box-shadow: 0 8px 16px rgba(0, 102, 255, 0.15);
+        }
+
+        .sidebar-profile h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .sidebar-profile p {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+            background: var(--primary-medical-blue);
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            display: inline-block;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sidebar-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: none;
+            background: transparent;
+            text-align: left;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-btn:hover {
+            background: rgba(0, 102, 255, 0.04);
+            color: var(--primary-medical-blue);
+            transform: translateX(4px);
+        }
+
+        .sidebar-btn.active {
+            background: linear-gradient(135deg, var(--primary-medical-blue) 0%, #0056db 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
+        }
+
+        .sidebar-btn.active .material-symbols-outlined {
+            color: white;
+        }
+
+        .sidebar-btn .material-symbols-outlined {
+            font-size: 22px;
+            transition: color 0.3s ease;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Content Area */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .content-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-medical-blue);
+        }
+
+        /* Admin Specific Components */
+
+        .admin-card {
+            background: white;
+            border-radius: var(--border-radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: #F9FAFB;
+            color: var(--text-secondary);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .data-table tr:hover {
+            background-color: #F8FAFC;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            border-color: var(--primary-medical-blue);
+        }
+
+        /* Status Toggles */
+        .status-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+
+        .status-active {
+            background: #DEF7EC;
+            color: #03543F;
+        }
+
+        .status-inactive {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        /* Stats Cards */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .stat-info h4 {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+
+        .stat-info h2 {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+
+<body>
+    <main class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <span class="material-symbols-outlined logo-icon">medical_services</span>
+                <span class="logo-text">NexusHealth</span>
+            </div>
+
+            <div class="sidebar-profile">
+                <!-- Admin Profile Image -->
+                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80"
+                    alt="Admin Profile" id="sidebarProfilePic">
+                <h3>Eleanor Vance</h3>
+                <p>System Administrator</p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button class="sidebar-btn active" onclick="switchTab('users', event)">
+                    <span class="material-symbols-outlined">group</span>
+                    Staff Management
+                </button>
+                <button class="sidebar-btn" onclick="switchTab('patients', event)">
+                    <span class="material-symbols-outlined">recent_patient</span>
+                    Patient Accounts
+                </button>
+                <button class="sidebar-btn" onclick="switchTab('config', event)">
+                    <span class="material-symbols-outlined">domain</span>
+                    Clinic Configuration
+                </button>
+                <button class="sidebar-btn" onclick="switchTab('reports', event)">
+                    <span class="material-symbols-outlined">monitoring</span>
+                    Reports & Analytics
+                </button>
+                <button class="sidebar-btn" onclick="switchTab('maintenance', event)">
+                    <span class="material-symbols-outlined">database</span>
+                    Data Maintenance
+                </button>
+                <button class="sidebar-btn" onclick="switchTab('options', event)">
+                    <span class="material-symbols-outlined">settings</span>
+                    Options
+                </button>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <a href="index.html" class="sidebar-btn" style="text-decoration: none;">
+                    <span class="material-symbols-outlined">home</span>
+                    Back to Home
+                </a>
+                <button class="sidebar-btn" onclick="window.location.href='index.html'" style="color: #EF4444;">
+                    <span class="material-symbols-outlined">logout</span>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="dashboard-content-area">
+
+            <!-- STAFF MANAGEMENT TAB (Formerly User Management) -->
+            <div id="tab-users" class="tab-content active">
+                <div class="content-header">
+                    <h2 class="content-title">Staff & Account Management</h2>
+                    <button class="btn btn-primary" onclick="openModal('createUserModal')">+ Create New Staff
+                        Profile</button>
+                </div>
+
+                <div class="admin-card" style="margin-bottom: 2rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1.2rem;">Staff Directory</h3>
+                        <div style="position: relative; width: 300px;">
+                            <span class="material-symbols-outlined"
+                                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">search</span>
+                            <input type="text" placeholder="Search by name or email..."
+                                style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); outline: none;">
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody">
+                                <tr>
+                                    <td style="font-weight:600;">Dr. Sarah Jenkins</td>
+                                    <td>s.jenkins@nexushealth.com</td>
+                                    <td><span
+                                            style="background:#EBF5FF; color:#1E40AF; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600;">Doctor</span>
+                                    </td>
+                                    <td><span class="status-badge status-active">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
+                                            onclick="showToast('Edit user opened (Demo)')">Edit</button>
+                                        <button class="btn btn-outline"
+                                            style="padding:0.3rem 0.6rem; color:#EF4444; border-color:#FEE2E2;"
+                                            onclick="showToast('User deactivated', true)">Revoke</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:600;">Michael Chang</td>
+                                    <td>m.chang@nexushealth.com</td>
+                                    <td><span
+                                            style="background:#F0FDF4; color:#166534; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600;">Pharmacist</span>
+                                    </td>
+                                    <td><span class="status-badge status-active">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
+                                            onclick="showToast('Edit user opened (Demo)')">Edit</button>
+                                        <button class="btn btn-outline"
+                                            style="padding:0.3rem 0.6rem; color:#EF4444; border-color:#FEE2E2;"
+                                            onclick="showToast('User deactivated', true)">Revoke</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:600;">David Miller</td>
+                                    <td>d.miller@nexushealth.com</td>
+                                    <td><span
+                                            style="background:#FFF7ED; color:#9A3412; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600;">Receptionist</span>
+                                    </td>
+                                    <td><span class="status-badge status-inactive">Inactive</span></td>
+                                    <td>
+                                        <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
+                                            onclick="showToast('Edit user opened (Demo)')">Edit</button>
+                                        <button class="btn btn-outline"
+                                            style="padding:0.3rem 0.6rem; color:#059669; border-color:#d1fae5;"
+                                            onclick="showToast('User activated')">Activate</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PATIENT MANAGEMENT TAB -->
+            <div id="tab-patients" class="tab-content">
+                <div class="content-header">
+                    <h2 class="content-title">Patient Accounts</h2>
+                </div>
+
+                <div class="admin-card" style="margin-bottom: 2rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1.2rem;">Patient Registry</h3>
+                        <div style="position: relative; width: 300px;">
+                            <span class="material-symbols-outlined"
+                                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">search</span>
+                            <input type="text" placeholder="Search by name, ID, or phone..."
+                                style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); outline: none;">
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Patient ID</th>
+                                    <th>Name</th>
+                                    <th>Contact</th>
+                                    <th>Last Visit</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="font-family: monospace; color: var(--text-secondary);">P-1092</td>
+                                    <td style="font-weight:600;">Emily Chen</td>
+                                    <td>+1 (555) 123-4567</td>
+                                    <td>Today (Routine)</td>
+                                    <td><span class="status-badge status-active">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
+                                            onclick="showToast('Loading patient profile...', false)">View</button>
+                                        <button class="btn btn-outline"
+                                            style="padding:0.3rem 0.6rem; color:#EF4444; border-color:#FEE2E2;"
+                                            onclick="showToast('Patient account suspended', true)">Suspend</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-family: monospace; color: var(--text-secondary);">P-8472</td>
+                                    <td style="font-weight:600;">Marcus Johnson</td>
+                                    <td>+1 (555) 987-6543</td>
+                                    <td>Oct 12, 2025</td>
+                                    <td><span class="status-badge status-active">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
+                                            onclick="showToast('Loading patient profile...', false)">View</button>
+                                        <button class="btn btn-outline"
+                                            style="padding:0.3rem 0.6rem; color:#EF4444; border-color:#FEE2E2;"
+                                            onclick="showToast('Patient account suspended', true)">Suspend</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-family: monospace; color: var(--text-secondary);">P-3321</td>
+                                    <td style="font-weight:600;">Amanda Ripley</td>
+                                    <td>+1 (555) 456-7890</td>
+                                    <td>Mar 05, 2024</td>
+                                    <td><span class="status-badge status-inactive">Suspended</span></td>
+                                    <td>
+                                        <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
+                                            onclick="showToast('Loading patient profile...', false)">View</button>
+                                        <button class="btn btn-outline"
+                                            style="padding:0.3rem 0.6rem; color:#059669; border-color:#d1fae5;"
+                                            onclick="showToast('Patient account restored!')">Restore</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLINIC CONFIGURATION TAB -->
+            <div id="tab-config" class="tab-content">
+                <div class="content-header">
+                    <h2 class="content-title">Clinic Configuration</h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <!-- Doctor Assignments -->
+                    <div class="admin-card">
+                        <h3
+                            style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                            Doctor Schedule & Room Assignments</h3>
+
+                        <div class="form-group">
+                            <label class="form-label">Select Doctor</label>
+                            <select class="form-select">
+                                <option>Dr. Sarah Jenkins (Cardiology)</option>
+                                <option>Dr. Michael Chen (General Practice)</option>
+                                <option>Dr. Emily Rodriguez (Pediatrics)</option>
+                            </select>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label">Assigned Room</label>
+                                <select class="form-select">
+                                    <option>Room 101 (East Wing)</option>
+                                    <option>Room 102 (East Wing)</option>
+                                    <option>Room 205 (Specialist Wing)</option>
+                                    <option selected>Room 304 (Cardiology Lab)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Consultation Avg. Time</label>
+                                <select class="form-select">
+                                    <option>15 Minutes</option>
+                                    <option selected>30 Minutes</option>
+                                    <option>45 Minutes</option>
+                                    <option>60 Minutes</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Standard Operating Hours</label>
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <input type="time" class="form-input" value="09:00">
+                                <span>to</span>
+                                <input type="time" class="form-input" value="17:00">
+                            </div>
+                        </div>
+
+                        <div style="text-align: right; margin-top: 1rem;">
+                            <button class="btn btn-primary"
+                                onclick="showToast('Doctor configuration updated successfully!')">Save
+                                Configuration</button>
+                        </div>
+                    </div>
+
+                    <!-- Add New Specialization -->
+                    <div class="admin-card" style="height: fit-content;">
+                        <h3
+                            style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                            Add New Medical Specialization</h3>
+
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Add new
+                            expertise departments to allow patients to book relevant doctors.</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Specialization Title</label>
+                            <input type="text" class="form-input" placeholder="e.g. Neurology, Dermatology">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Description (for Patient View)</label>
+                            <textarea class="form-input" style="height: 100px; resize: none;"
+                                placeholder="Brief description of this department..."></textarea>
+                        </div>
+
+                        <div style="text-align: right;">
+                            <button class="btn btn-outline-primary"
+                                onclick="showToast('Specialization added to clinic database.')">Add Department</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REPORTS & ANALYTICS TAB -->
+            <div id="tab-reports" class="tab-content">
+                <div class="content-header">
+                    <h2 class="content-title">Reports & Analytics</h2>
+                    <div style="display: flex; gap: 1rem;">
+                        <input type="date" class="form-input" value="2026-03-18">
+                        <button class="btn btn-outline"><span class="material-symbols-outlined"
+                                style="font-size: 18px; margin-right: 4px;">download</span> Export PDF</button>
+                    </div>
+                </div>
+
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #E0F2FE; color: #0EA5E9;">
+                            <span class="material-symbols-outlined">payments</span>
+                        </div>
+                        <div class="stat-info">
+                            <h4>Daily Revenue</h4>
+                            <h2>$4,250.00</h2>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #DCFCE7; color: #16A34A;">
+                            <span class="material-symbols-outlined">prescriptions</span>
+                        </div>
+                        <div class="stat-info">
+                            <h4>Pharmacy Sales</h4>
+                            <h2>$1,845.50</h2>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #F3E8FF; color: #9333EA;">
+                            <span class="material-symbols-outlined">groups</span>
+                        </div>
+                        <div class="stat-info">
+                            <h4>Total Patients Visited</h4>
+                            <h2>124</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <h3
+                        style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        Recent Financial Transactions</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Transaction ID</th>
+                                <th>Type</th>
+                                <th>Department</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>TXN-88492</td>
+                                <td>Consultation Fee</td>
+                                <td>Cardiology</td>
+                                <td>$150.00</td>
+                                <td><span class="status-badge status-active">Settled</span></td>
+                            </tr>
+                            <tr>
+                                <td>TXN-88493</td>
+                                <td>Pharmacy Purchase</td>
+                                <td>Dispensary</td>
+                                <td>$45.50</td>
+                                <td><span class="status-badge status-active">Settled</span></td>
+                            </tr>
+                            <tr>
+                                <td>TXN-88494</td>
+                                <td>Lab Test (Blood Work)</td>
+                                <td>Pathology</td>
+                                <td>$210.00</td>
+                                <td><span class="status-badge status-active">Settled</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DATA MAINTENANCE TAB -->
+            <div id="tab-maintenance" class="tab-content">
+                <div class="content-header">
+                    <h2 class="content-title">System & Data Maintenance</h2>
+                </div>
+
+                <div class="admin-card" style="max-width: 800px;">
+                    <h3
+                        style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        Archive Inactive Records</h3>
+
+                    <div style="display: flex; gap: 1.5rem; align-items: start; margin-bottom: 2rem;">
+                        <span class="material-symbols-outlined" style="font-size: 48px; color: #F59E0B;">archive</span>
+                        <div>
+                            <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Database Optimization Routine</h4>
+                            <p style="color: var(--text-secondary); line-height: 1.5; font-size: 0.95rem;">
+                                Archiving patient records that have been inactive for over 5 years improves system
+                                performance.
+                                Archived records are heavily compressed and stored securely, but remain accessible if a
+                                patient returns.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        style="background: #F9FAFB; padding: 1.5rem; border-radius: var(--border-radius-sm); border: 1px dashed var(--border-color); margin-bottom: 1.5rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <span style="font-weight: 600;">System Scan Results:</span>
+                            <span
+                                style="background: #FEE2E2; color: #991B1B; padding: 4px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;">4,102
+                                Inactive Records Found</span>
+                        </div>
+                        <div style="width: 100%; background: #E5E7EB; height: 8px; border-radius: 4px;">
+                            <div
+                                style="width: 15%; background: var(--primary-medical-blue); height: 100%; border-radius: 4px;">
+                            </div>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); text-align: right; margin-top: 0.5rem;">
+                            Last scan: 2 hours ago</p>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+                            <input type="checkbox"> I confirm I want to begin the archival process.
+                        </label>
+                        <button class="btn btn-primary"
+                            onclick="showToast('Archival process initiated in background. This may take a few minutes.')">Start
+                            Archive Process</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OPTIONS TAB -->
+            <div id="tab-options" class="tab-content">
+                <div class="content-header">
+                    <h2 class="content-title">Admin Account Options</h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 2rem; margin-bottom: 2rem;">
+
+                    <!-- Profile Picture Change -->
+                    <div
+                        style="background: white; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 2rem; text-align: center; height: fit-content;">
+                        <h3
+                            style="margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; text-align: left;">
+                            Profile Picture</h3>
+                        <div style="position: relative; display: inline-block; margin-bottom: 1.5rem;">
+                            <img id="optionsProfilePic"
+                                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80"
+                                alt="Current Profile"
+                                style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; padding: 4px; background: linear-gradient(135deg, var(--primary-medical-blue), #00C9A7);">
+                            <label for="profileUpload"
+                                style="position: absolute; bottom: 5px; right: 5px; background: var(--primary-medical-blue); color: white; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.15); border: 2.5px solid white; transition: background 0.2s;">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span>
+                            </label>
+                            <input type="file" id="profileUpload" accept="image/*" style="display: none;"
+                                onchange="updateProfilePic(event)">
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Allowed
+                            formats: JPG, PNG. Max size: 5MB.</p>
+                        <button class="btn btn-outline-primary" style="width: 100%; font-size: 0.9rem;">Remove
+                            Picture</button>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 2rem;">
+                        <!-- Personal Info -->
+                        <div
+                            style="background: white; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 2.5rem;">
+                            <h3
+                                style="margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                                Personal Information</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <div>
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" class="form-input" value="Eleanor Vance">
+                                </div>
+                                <div>
+                                    <label class="form-label">Contact Email</label>
+                                    <input type="email" class="form-input" value="admin@nexushealth.com">
+                                </div>
+                            </div>
+                            <div style="margin-top: 1.5rem; text-align: right;">
+                                <button class="btn btn-primary"
+                                    onclick="showToast('Admin info saved successfully!')">Save Admin Info</button>
+                            </div>
+                        </div>
+
+                        <!-- Security Tab -->
+                        <div
+                            style="background: white; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 2.5rem;">
+                            <h3
+                                style="margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                                Change Admin Password</h3>
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+                                <div>
+                                    <label class="form-label">Current Password</label>
+                                    <input type="password" class="form-input" placeholder="••••••••">
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                    <div>
+                                        <label class="form-label">New Password</label>
+                                        <input type="password" class="form-input"
+                                            placeholder="Min 12 characters (Admin req)">
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Confirm New Password</label>
+                                        <input type="password" class="form-input">
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 1.5rem; text-align: right;">
+                                <button class="btn btn-primary"
+                                    onclick="showToast('Admin password updated securely!')">Update Password</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Create User Modal -->
+    <div class="modal-overlay" id="createUserModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
+        <div class="modal-content"
+            style="background: white; padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 500px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.3rem;">Create New Staff Profile</h3>
+                <span class="material-symbols-outlined" style="cursor: pointer; color: var(--text-secondary);"
+                    onclick="closeModal('createUserModal')">close</span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-input" placeholder="Enter full name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" class="form-input" placeholder="name@nexushealth.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Assign Role</label>
+                <select class="form-select">
+                    <option>Doctor</option>
+                    <option>Pharmacist</option>
+                    <option>Receptionist</option>
+                    <option>Admin</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Initial Password</label>
+                <input type="password" class="form-input" placeholder="Temporary password">
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                <button class="btn btn-outline" onclick="closeModal('createUserModal')">Cancel</button>
+                <button class="btn btn-primary"
+                    onclick="closeModal('createUserModal'); showToast('New staff profile successfully created!', false)">Create
+                    User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Layout Toast -->
+    <div id="admin-toast"
+        style="visibility: hidden; min-width: 300px; background-color: var(--success-soft-green); color: #fff; text-align: center; border-radius: var(--border-radius-md); padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; transform: translateX(-50%); box-shadow: var(--shadow-lg); font-weight: 500; transition: opacity 0.4s, bottom 0.4s; opacity: 0; display:flex; align-items:center; justify-content:center;">
+        <span class="material-symbols-outlined" style="margin-right: 8px;">info</span>
+        <span id="admin-toast-msg">Operation successful!</span>
+    </div>
+
+    <script>
+        // Tab Switching Logic
+        function switchTab(tabId, event) {
+            document.querySelectorAll('.sidebar-btn').forEach(btn => btn.classList.remove('active'));
+            if (event) {
+                event.currentTarget.classList.add('active');
+            }
+
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        // Generic Toast Notification
+        function showToast(message, isError = false) {
+            var toast = document.getElementById("admin-toast");
+            var msgEl = document.getElementById("admin-toast-msg");
+
+            msgEl.innerText = message;
+            toast.style.backgroundColor = isError ? '#EF4444' : 'var(--success-soft-green)';
+
+            toast.style.visibility = "visible";
+            toast.style.opacity = "1";
+            toast.style.bottom = "50px";
+
+            setTimeout(function () {
+                toast.style.opacity = "0";
+                toast.style.bottom = "30px";
+                setTimeout(() => { toast.style.visibility = "hidden"; }, 400);
+            }, 3000);
+        }
+
+        // Modal Logic
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Options Image Upload
+        function updateProfilePic(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('optionsProfilePic').src = e.target.result;
+                    document.getElementById('sidebarProfilePic').src = e.target.result;
+                    showToast('Profile picture updated successfully!');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusHealth - Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="login-body">
+    <div class="login-bg-orb login-bg-orb--blue" aria-hidden="true"></div>
+    <div class="login-bg-orb login-bg-orb--teal" aria-hidden="true"></div>
+
+    <main class="login-wrapper">
+        <section class="login-layout">
+            <article class="login-brand-panel glass">
+                <div class="login-brand-top">
+                    <a href="index.html" class="login-brand-link" aria-label="Go back to homepage">
+                        <span class="material-symbols-outlined logo-icon">medical_services</span>
+                        <span class="logo-text">NexusHealth</span>
+                    </a>
+                    <span class="login-status-pill">
+                        <span class="material-symbols-outlined">verified_user</span>
+                        Secure Sign In
+                    </span>
+                </div>
+
+                <div class="login-brand-copy">
+                    <h1 class="login-heading">Welcome back to smarter clinical care.</h1>
+                    <p class="login-subheading">Sign in to manage appointments, records, and pharmacy workflows in one trusted dashboard.</p>
+                </div>
+
+                <div class="login-metric-grid">
+                    <div class="login-metric-card">
+                        <span class="login-metric-value">24/7</span>
+                        <span class="login-metric-label">Access Anywhere</span>
+                    </div>
+                    <div class="login-metric-card">
+                        <span class="login-metric-value">98%</span>
+                        <span class="login-metric-label">Patient Satisfaction</span>
+                    </div>
+                    <div class="login-metric-card">
+                        <span class="login-metric-value">256-bit</span>
+                        <span class="login-metric-label">Encryption</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="login-form-panel">
+                <div class="login-form-header">
+                    <h2 class="login-form-title">Sign In</h2>
+                    <p class="login-form-subtitle">Use your NexusHealth account credentials</p>
+                    <p class="login-helper-text">New here? <a class="login-link" href="signup.html">Create your account</a></p>
+                </div>
+
+                <form class="login-form" action="#" method="post">
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email Address</label>
+                        <div class="login-input-wrap">
+                            <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+                            <input class="form-input login-input" type="email" id="email" name="email"
+                                placeholder="you@clinic.com" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="login-label-row">
+                            <label class="form-label" for="password">Password</label>
+                            <a class="login-link" href="#">Forgot password?</a>
+                        </div>
+                        <div class="login-input-wrap">
+                            <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+                            <input class="form-input login-input" type="password" id="password" name="password"
+                                placeholder="Enter your password" required>
+                        </div>
+                    </div>
+
+                    <div class="login-form-row">
+                        <label class="login-remember">
+                            <input type="checkbox" name="remember">
+                            <span>Remember me</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-large login-submit">Sign In</button>
+                </form>
+
+                <div class="login-divider" role="presentation">
+                    <span>or continue with</span>
+                </div>
+
+                <div class="login-social-row">
+                    <button type="button" class="btn btn-outline login-social-btn">
+                        <span class="material-symbols-outlined" aria-hidden="true">badge</span>
+                        Staff SSO
+                    </button>
+                    <button type="button" class="btn btn-outline login-social-btn">
+                        <span class="material-symbols-outlined" aria-hidden="true">shield_lock</span>
+                        Patient Portal
+                    </button>
+                </div>
+
+                <p class="login-bottom-text">Need help getting started? <a class="login-link" href="contact.html">Contact support</a></p>
+            </article>
+        </section>
+    </main>
+</body>
+
+</html>
