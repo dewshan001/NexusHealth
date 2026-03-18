@@ -217,10 +217,25 @@
     </footer>
 
     <script>
+        const navbar = document.querySelector('.navbar');
+        let lastScrollY = window.scrollY;
+
         window.addEventListener('scroll', () => {
-            document.querySelector('.navbar').style.boxShadow = window.scrollY > 10
-                ? '0 4px 30px rgba(0,86,219,0.12)'
-                : '0 1px 20px rgba(0,86,219,0.08)';
+            // Shadow logic
+            navbar.style.boxShadow = window.scrollY > 10
+                ? '0 15px 35px rgba(0, 86, 219, 0.1), 0 5px 15px rgba(0, 0, 0, 0.03), inset 0 0 20px rgba(255, 255, 255, 0.2)'
+                : '0 15px 35px rgba(0, 86, 219, 0.1), 0 5px 15px rgba(0, 0, 0, 0.03), inset 0 0 20px rgba(255, 255, 255, 0.2)'; // keep the same for liquid glass effect, but can adjust if needed
+
+            // Hide/Show logic
+            if (lastScrollY < window.scrollY && window.scrollY > 100) {
+                // Scrolling down
+                navbar.classList.add('navbar--hidden');
+            } else {
+                // Scrolling up
+                navbar.classList.remove('navbar--hidden');
+            }
+
+            lastScrollY = window.scrollY;
         });
     </script>
 </body>
