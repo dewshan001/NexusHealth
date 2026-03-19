@@ -39,7 +39,7 @@
             --tab-active-bc: rgba(255, 255, 255, 0.4);
             --profile-name: rgba(255, 255, 255, 0.9);
             --profile-id: #7dd3fc;
-            --surface-bg: rgba(10, 22, 40, 0.78);
+            --surface-bg: rgba(10, 22, 40, 0.97);
             --surface-border: rgba(255, 255, 255, 0.15);
             --surface-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
             --text-primary: rgba(255, 255, 255, 0.92);
@@ -47,6 +47,32 @@
             --text-muted: rgba(255, 255, 255, 0.45);
             --border-color: rgba(255, 255, 255, 0.15);
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+
+            --badge-success-bg: rgba(52, 211, 153, 0.18);
+            --badge-success-clr: #6ee7b7;
+            --badge-danger-bg: rgba(252, 129, 129, 0.18);
+            --badge-danger-clr: #fca5a5;
+
+            --role-doc-bg: rgba(59, 130, 246, 0.18);
+            --role-doc-clr: #93c5fd;
+            --role-pharm-bg: rgba(34, 197, 94, 0.18);
+            --role-pharm-clr: #86efac;
+            --role-recep-bg: rgba(249, 115, 22, 0.18);
+            --role-recep-clr: #fdba74;
+
+            --stat-blue-bg: rgba(14, 165, 233, 0.18);
+            --stat-blue-clr: #7dd3fc;
+            --stat-green-bg: rgba(22, 163, 74, 0.18);
+            --stat-green-clr: #86efac;
+            --stat-purple-bg: rgba(147, 51, 234, 0.18);
+            --stat-purple-clr: #d8b4fe;
+
+            --maint-box-bg: rgba(255, 255, 255, 0.05);
+            --maint-track-bg: rgba(255, 255, 255, 0.1);
+
+            --input-bg: rgba(255, 255, 255, 0.08);
+            --input-border: rgba(255, 255, 255, 0.15);
+            --primary-medical-blue: #0066FF;
         }
 
         :root[data-theme="light"] {
@@ -76,6 +102,31 @@
             --text-muted: #9CA3AF;
             --border-color: #E5E7EB;
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+            --badge-success-bg: #DEF7EC;
+            --badge-success-clr: #03543F;
+            --badge-danger-bg: #FEE2E2;
+            --badge-danger-clr: #991B1B;
+
+            --role-doc-bg: #EBF5FF;
+            --role-doc-clr: #1E40AF;
+            --role-pharm-bg: #F0FDF4;
+            --role-pharm-clr: #166534;
+            --role-recep-bg: #FFF7ED;
+            --role-recep-clr: #9A3412;
+
+            --stat-blue-bg: #E0F2FE;
+            --stat-blue-clr: #0EA5E9;
+            --stat-green-bg: #DCFCE7;
+            --stat-green-clr: #16A34A;
+            --stat-purple-bg: #F3E8FF;
+            --stat-purple-clr: #9333EA;
+
+            --maint-box-bg: #F9FAFB;
+            --maint-track-bg: #E5E7EB;
+
+            --input-bg: white;
+            --input-border: #D1D5DB;
         }
 
         body {
@@ -502,13 +553,13 @@
         .form-select {
             width: 100%;
             padding: 0.75rem 1rem;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--input-border);
             border-radius: var(--border-radius-sm);
             font-family: inherit;
             font-size: 0.95rem;
             outline: none;
             transition: border-color 0.2s;
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--input-bg);
             color: var(--text-primary);
         }
 
@@ -521,34 +572,6 @@
             border-color: var(--primary-medical-blue);
         }
 
-        #tab-options div[style*="background: white"] {
-            background: var(--surface-bg) !important;
-            border-color: var(--surface-border) !important;
-            backdrop-filter: blur(14px) saturate(130%);
-            -webkit-backdrop-filter: blur(14px) saturate(130%);
-        }
-
-        #tab-maintenance div[style*="background: #F9FAFB"] {
-            background: var(--surface-bg) !important;
-            border-color: var(--surface-border) !important;
-            color: var(--text-primary);
-            backdrop-filter: blur(14px) saturate(130%);
-            -webkit-backdrop-filter: blur(14px) saturate(130%);
-        }
-
-        #tab-maintenance div[style*="background: #E5E7EB"] {
-            background: rgba(255, 255, 255, 0.14) !important;
-        }
-
-        :root[data-theme="light"] #tab-maintenance div[style*="background: #F9FAFB"] {
-            background: #F9FAFB !important;
-            border-color: var(--border-color) !important;
-        }
-
-        :root[data-theme="light"] #tab-maintenance div[style*="background: #E5E7EB"] {
-            background: #E5E7EB !important;
-        }
-
         /* Status Toggles */
         .status-badge {
             padding: 0.4rem 0.8rem;
@@ -559,13 +582,13 @@
         }
 
         .status-active {
-            background: #DEF7EC;
-            color: #03543F;
+            background: var(--badge-success-bg);
+            color: var(--badge-success-clr);
         }
 
         .status-inactive {
-            background: #FEE2E2;
-            color: #991B1B;
+            background: var(--badge-danger-bg);
+            color: var(--badge-danger-clr);
         }
 
         /* Stats Cards */
@@ -615,6 +638,49 @@
         :root[data-theme="light"] .stat-card,
         :root[data-theme="light"] .sidebar {
             background: rgba(255, 255, 255, 0.9);
+        }
+
+        /* ══ DARK MODE — Modal & Inner Elements ══════════════════ */
+        :root:not([data-theme="light"]) .modal-content h3,
+        :root:not([data-theme="light"]) .modal-content h4,
+        :root:not([data-theme="light"]) .modal-content p,
+        :root:not([data-theme="light"]) .modal-content label,
+        :root:not([data-theme="light"]) .modal-content span:not(.material-symbols-outlined),
+        :root:not([data-theme="light"]) .modal-content li {
+            color: var(--text-primary) !important;
+        }
+
+        :root:not([data-theme="light"]) .modal-content .form-label {
+            color: var(--text-secondary) !important;
+        }
+
+        :root:not([data-theme="light"]) .modal-content .form-input,
+        :root:not([data-theme="light"]) .modal-content .form-select,
+        :root:not([data-theme="light"]) .modal-content input,
+        :root:not([data-theme="light"]) .modal-content select {
+            background: rgba(255, 255, 255, 0.09) !important;
+            color: rgba(255, 255, 255, 0.92) !important;
+            border-color: rgba(255, 255, 255, 0.18) !important;
+        }
+
+        :root:not([data-theme="light"]) .modal-content input::placeholder {
+            color: rgba(255, 255, 255, 0.35) !important;
+        }
+
+        :root:not([data-theme="light"]) .modal-content select option {
+            background: #0d1f3c;
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        :root:not([data-theme="light"]) .btn-outline {
+            background: rgba(255, 255, 255, 0.06) !important;
+            color: rgba(255, 255, 255, 0.85) !important;
+            border-color: rgba(255, 255, 255, 0.22) !important;
+        }
+
+        :root:not([data-theme="light"]) .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.14) !important;
+            color: white !important;
         }
 
         :root[data-theme="light"] .data-table th {
@@ -692,7 +758,7 @@
     <main class="dashboard-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
-            <div class="sidebar-logo">   
+            <div class="sidebar-logo">
             </div>
 
             <div class="sidebar-profile">
@@ -761,7 +827,9 @@
                             <span class="material-symbols-outlined"
                                 style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">search</span>
                             <input type="text" placeholder="Search by name or email..."
-                                style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); outline: none;">
+                                style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--input-border); border-radius: var(--border-radius-sm); outline: none; background: var(--input-bg); color: var(--text-primary);"
+                                onfocus="this.style.borderColor='var(--primary-medical-blue)'"
+                                onblur="this.style.borderColor='var(--input-border)'">
                         </div>
                     </div>
 
@@ -781,7 +849,7 @@
                                     <td style="font-weight:600;">Dr. Sarah Jenkins</td>
                                     <td>s.jenkins@nexushealth.com</td>
                                     <td><span
-                                            style="background:#EBF5FF; color:#1E40AF; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600;">Doctor</span>
+                                            style="background:var(--role-doc-bg); color:var(--role-doc-clr); padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600;">Doctor</span>
                                     </td>
                                     <td><span class="status-badge status-active">Active</span></td>
                                     <td>
@@ -796,7 +864,7 @@
                                     <td style="font-weight:600;">Michael Chang</td>
                                     <td>m.chang@nexushealth.com</td>
                                     <td><span
-                                            style="background:#F0FDF4; color:#166534; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600;">Pharmacist</span>
+                                            style="background:var(--role-pharm-bg); color:var(--role-pharm-clr); padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600;">Pharmacist</span>
                                     </td>
                                     <td><span class="status-badge status-active">Active</span></td>
                                     <td>
@@ -811,7 +879,7 @@
                                     <td style="font-weight:600;">David Miller</td>
                                     <td>d.miller@nexushealth.com</td>
                                     <td><span
-                                            style="background:#FFF7ED; color:#9A3412; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600;">Receptionist</span>
+                                            style="background:var(--role-recep-bg); color:var(--role-recep-clr); padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600;">Receptionist</span>
                                     </td>
                                     <td><span class="status-badge status-inactive">Inactive</span></td>
                                     <td>
@@ -842,7 +910,9 @@
                             <span class="material-symbols-outlined"
                                 style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">search</span>
                             <input type="text" placeholder="Search by name, ID, or phone..."
-                                style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); outline: none;">
+                                style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--input-border); border-radius: var(--border-radius-sm); outline: none; background: var(--input-bg); color: var(--text-primary);"
+                                onfocus="this.style.borderColor='var(--primary-medical-blue)'"
+                                onblur="this.style.borderColor='var(--input-border)'">
                         </div>
                     </div>
 
@@ -1006,7 +1076,7 @@
 
                 <div class="stat-grid">
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: #E0F2FE; color: #0EA5E9;">
+                        <div class="stat-icon" style="background: var(--stat-blue-bg); color: var(--stat-blue-clr);">
                             <span class="material-symbols-outlined">payments</span>
                         </div>
                         <div class="stat-info">
@@ -1015,7 +1085,7 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: #DCFCE7; color: #16A34A;">
+                        <div class="stat-icon" style="background: var(--stat-green-bg); color: var(--stat-green-clr);">
                             <span class="material-symbols-outlined">prescriptions</span>
                         </div>
                         <div class="stat-info">
@@ -1024,7 +1094,8 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: #F3E8FF; color: #9333EA;">
+                        <div class="stat-icon"
+                            style="background: var(--stat-purple-bg); color: var(--stat-purple-clr);">
                             <span class="material-symbols-outlined">groups</span>
                         </div>
                         <div class="stat-info">
@@ -1100,15 +1171,15 @@
                     </div>
 
                     <div
-                        style="background: #F9FAFB; padding: 1.5rem; border-radius: var(--border-radius-sm); border: 1px dashed var(--border-color); margin-bottom: 1.5rem;">
+                        style="background: var(--maint-box-bg); padding: 1.5rem; border-radius: var(--border-radius-sm); border: 1px dashed var(--border-color); margin-bottom: 1.5rem;">
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <span style="font-weight: 600;">System Scan Results:</span>
                             <span
-                                style="background: #FEE2E2; color: #991B1B; padding: 4px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;">4,102
+                                style="background: var(--badge-danger-bg); color: var(--badge-danger-clr); padding: 4px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;">4,102
                                 Inactive Records Found</span>
                         </div>
-                        <div style="width: 100%; background: #E5E7EB; height: 8px; border-radius: 4px;">
+                        <div style="width: 100%; background: var(--maint-track-bg); height: 8px; border-radius: 4px;">
                             <div
                                 style="width: 15%; background: var(--primary-medical-blue); height: 100%; border-radius: 4px;">
                             </div>
@@ -1139,7 +1210,7 @@
 
                     <!-- Profile Picture Change -->
                     <div
-                        style="background: white; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 2rem; text-align: center; height: fit-content;">
+                        style="background: var(--surface-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 2rem; text-align: center; height: fit-content;">
                         <h3
                             style="margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; text-align: left;">
                             Profile Picture</h3>
@@ -1164,7 +1235,7 @@
                     <div style="display: flex; flex-direction: column; gap: 2rem;">
                         <!-- Personal Info -->
                         <div
-                            style="background: white; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 2.5rem;">
+                            style="background: var(--surface-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 2.5rem;">
                             <h3
                                 style="margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                                 Personal Information</h3>
@@ -1186,7 +1257,7 @@
 
                         <!-- Security Tab -->
                         <div
-                            style="background: white; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 2.5rem;">
+                            style="background: var(--surface-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 2.5rem;">
                             <h3
                                 style="margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                                 Change Admin Password</h3>
@@ -1223,7 +1294,7 @@
     <div class="modal-overlay" id="createUserModal"
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
         <div class="modal-content"
-            style="background: white; padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 500px; width: 90%;">
+            style="background: var(--surface-bg); padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 500px; width: 90%; border: 1px solid var(--border-color);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                 <h3 style="font-size: 1.3rem;">Create New Staff Profile</h3>
                 <span class="material-symbols-outlined" style="cursor: pointer; color: var(--text-secondary);"
