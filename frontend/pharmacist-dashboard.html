@@ -4,22 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusHealth - Pharmacist Dashboard</title>
-
-    <!-- Google Fonts -->
+    <title>Pharmacist Dashboard - NexusHealth</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;600;700;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
-    <!-- Google Material Icons -->
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-
-    <!-- External CSS -->
     <link rel="stylesheet" href="style.css">
-
     <style>
-        /* Dashboard Specific Inline Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         :root {
             --bg-base: #0a1628;
             --blob1-color: rgba(0, 102, 255, 0.35);
@@ -39,14 +38,48 @@
             --tab-active-bc: rgba(255, 255, 255, 0.4);
             --profile-name: rgba(255, 255, 255, 0.9);
             --profile-id: #7dd3fc;
-            --surface-bg: rgba(255, 255, 255, 0.08);
-            --surface-border: rgba(255, 255, 255, 0.15);
-            --surface-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+            --drawer-bg: rgba(10, 22, 40, 0.85);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+            --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
             --text-primary: rgba(255, 255, 255, 0.92);
-            --text-secondary: rgba(255, 255, 255, 0.65);
-            --text-muted: rgba(255, 255, 255, 0.45);
-            --border-color: rgba(255, 255, 255, 0.15);
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+            --text-secondary: rgba(255, 255, 255, 0.5);
+            --text-muted: rgba(255, 255, 255, 0.35);
+            --metric-bg: rgba(255, 255, 255, 0.10);
+            --metric-border: rgba(255, 255, 255, 0.18);
+            --metric-inset: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            --visit-bg: rgba(255, 255, 255, 0.06);
+            --visit-border: rgba(255, 255, 255, 0.10);
+            --visit-date-bg: rgba(99, 179, 255, 0.18);
+            --visit-date-clr: #93c5fd;
+            --table-border: rgba(255, 255, 255, 0.07);
+            --table-head-bg: rgba(255, 255, 255, 0.04);
+            --table-head-clr: rgba(255, 255, 255, 0.45);
+            --table-td-clr: rgba(255, 255, 255, 0.8);
+            --table-row-hover: rgba(255, 255, 255, 0.06);
+            --input-bg: rgba(255, 255, 255, 0.08);
+            --input-border: rgba(255, 255, 255, 0.15);
+            --input-color: rgba(255, 255, 255, 0.9);
+            --input-ph: rgba(255, 255, 255, 0.3);
+            --modal-bg: rgba(20, 35, 60, 0.95);
+            --modal-text: rgba(255, 255, 255, 0.9);
+            --icon-blue-bg: rgba(99, 179, 255, 0.18);
+            --icon-blue-clr: #7dd3fc;
+            --icon-green-bg: rgba(52, 211, 153, 0.18);
+            --icon-green-clr: #6ee7b7;
+            --icon-amber-bg: rgba(251, 191, 36, 0.18);
+            --icon-amber-clr: #fcd34d;
+            --icon-red-bg: rgba(252, 129, 129, 0.18);
+            --icon-red-clr: #fca5a5;
+            --badge-paid-bg: rgba(52, 211, 153, 0.18);
+            --badge-paid-clr: #6ee7b7;
+            --badge-pend-bg: rgba(251, 191, 36, 0.18);
+            --badge-pend-clr: #fcd34d;
+            --alert-urgent-bg: rgba(239, 68, 68, 0.12);
+            --alert-urgent-border: rgba(239, 68, 68, 0.5);
+            --alert-warn-bg: rgba(245, 158, 11, 0.12);
+            --alert-warn-border: rgba(245, 158, 11, 0.5);
         }
 
         :root[data-theme="light"] {
@@ -68,27 +101,106 @@
             --tab-active-bc: #0066FF;
             --profile-name: #111827;
             --profile-id: #0066FF;
-            --surface-bg: rgba(255, 255, 255, 0.9);
-            --surface-border: rgba(0, 102, 255, 0.09);
-            --surface-shadow: 0 2px 16px rgba(0, 0, 0, 0.05);
+            --drawer-bg: rgba(255, 255, 255, 0.96);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(0, 102, 255, 0.09);
+            --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 1);
+            --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.05);
             --text-primary: #111827;
             --text-secondary: #6B7280;
             --text-muted: #9CA3AF;
-            --border-color: #E5E7EB;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --metric-bg: rgba(255, 255, 255, 0.95);
+            --metric-border: rgba(0, 102, 255, 0.08);
+            --metric-inset: inset 0 1px 0 rgba(255, 255, 255, 1);
+            --visit-bg: #F9FAFB;
+            --visit-border: #E5E7EB;
+            --visit-date-bg: #EEF4FF;
+            --visit-date-clr: #0066FF;
+            --table-border: #F3F4F6;
+            --table-head-bg: #FAFAFA;
+            --table-head-clr: #6B7280;
+            --table-td-clr: #374151;
+            --table-row-hover: #F3F4F6;
+            --input-bg: white;
+            --input-border: #D1D5DB;
+            --input-color: #111827;
+            --input-ph: #9CA3AF;
+            --modal-bg: rgba(255, 255, 255, 0.97);
+            --modal-text: #111827;
+            --icon-blue-bg: #EEF4FF;
+            --icon-blue-clr: #0066FF;
+            --icon-green-bg: #ECFDF5;
+            --icon-green-clr: #059669;
+            --icon-amber-bg: #FEF3C7;
+            --icon-amber-clr: #D97706;
+            --icon-red-bg: #FEF2F2;
+            --icon-red-clr: #EF4444;
+            --badge-paid-bg: #ECFDF5;
+            --badge-paid-clr: #059669;
+            --badge-pend-bg: #FEF3C7;
+            --badge-pend-clr: #D97706;
+            --alert-urgent-bg: #FEF2F2;
+            --alert-urgent-border: #FCA5A5;
+            --alert-warn-bg: #FFFBEB;
+            --alert-warn-border: #FCD34D;
         }
 
         body {
+            font-family: 'DM Sans', sans-serif;
             background: var(--bg-base);
             background-image:
                 radial-gradient(ellipse 80% 60% at 20% 10%, var(--blob1-color) 0%, transparent 55%),
                 radial-gradient(ellipse 60% 80% at 80% 90%, var(--blob2-color) 0%, transparent 55%),
                 radial-gradient(ellipse 50% 50% at 60% 40%, var(--blob3-color) 0%, transparent 50%);
             background-attachment: fixed;
+            min-height: 100vh;
             color: var(--text-primary);
             transition: background 0.4s ease, color 0.3s ease;
         }
 
+        body::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: -10%;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 102, 255, 0.22) 0%, transparent 70%);
+            animation: blobFloat 12s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -10%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 201, 167, 0.2) 0%, transparent 70%);
+            animation: blobFloat 16s ease-in-out infinite alternate-reverse;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes blobFloat {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(40px, 30px) scale(1.08);
+            }
+
+            100% {
+                transform: translate(-20px, 50px) scale(0.96);
+            }
+        }
+
+        /* ── TOP NAV ── */
         .top-nav {
             position: fixed;
             top: 0;
@@ -99,13 +211,13 @@
             backdrop-filter: blur(28px) saturate(180%);
             -webkit-backdrop-filter: blur(28px) saturate(180%);
             border-bottom: 1px solid var(--nav-border);
-            z-index: 1200;
+            z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 2rem;
             box-shadow: var(--nav-shadow);
-            transition: background 0.4s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            transition: background 0.4s ease, border-color 0.3s ease;
         }
 
         .nav-brand {
@@ -133,7 +245,7 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .top-nav .nav-links {
+        .nav-links {
             display: flex;
             align-items: center;
             gap: 0.25rem;
@@ -143,11 +255,11 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.6rem 0.95rem;
+            padding: 0.6rem 1.1rem;
             border: 1px solid transparent;
             background: var(--tab-bg);
             font-family: inherit;
-            font-size: 0.86rem;
+            font-size: 0.9rem;
             font-weight: 600;
             color: var(--tab-color);
             border-radius: 10px;
@@ -157,7 +269,7 @@
         }
 
         .nav-tab .material-symbols-outlined {
-            font-size: 19px;
+            font-size: 20px;
         }
 
         .nav-tab:hover {
@@ -173,7 +285,11 @@
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.4);
         }
 
-        .top-nav .nav-right {
+        .nav-tab.active .material-symbols-outlined {
+            color: white;
+        }
+
+        .nav-right {
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -183,6 +299,7 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            cursor: pointer;
         }
 
         .nav-profile img {
@@ -191,8 +308,7 @@
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid transparent;
-            background: linear-gradient(white, white) padding-box,
-                linear-gradient(135deg, #0066FF, #00C9A7) border-box;
+            background: linear-gradient(white, white) padding-box, linear-gradient(135deg, #0066FF, #00C9A7) border-box;
         }
 
         .nav-profile-info {
@@ -239,7 +355,7 @@
         .nav-hamburger {
             display: none;
             background: var(--tab-bg);
-            border: 1px solid var(--surface-border);
+            border: 1px solid var(--glass-border);
             color: var(--tab-color);
             cursor: pointer;
             padding: 0.4rem;
@@ -251,12 +367,11 @@
             top: 70px;
             left: 0;
             right: 0;
-            background: var(--nav-bg);
+            background: var(--drawer-bg);
             backdrop-filter: blur(24px) saturate(180%);
-            -webkit-backdrop-filter: blur(24px) saturate(180%);
-            border-bottom: 1px solid var(--surface-border);
+            border-bottom: 1px solid var(--glass-border);
             padding: 1rem;
-            z-index: 1100;
+            z-index: 999;
             display: none;
             flex-direction: column;
             gap: 0.5rem;
@@ -285,6 +400,410 @@
             justify-content: flex-start;
         }
 
+        /* ── MAIN ── */
+        .dashboard-page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 90px 2rem 3rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── HERO ── */
+        .page-hero {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px) saturate(160%);
+            border: 1px solid var(--glass-border);
+            border-radius: 22px;
+            padding: 2rem 2.5rem;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            box-shadow: var(--glass-shadow), var(--glass-inset);
+            position: relative;
+            overflow: hidden;
+            transition: background 0.4s ease, border-color 0.3s ease;
+        }
+
+        .page-hero::before {
+            content: '';
+            position: absolute;
+            top: -60%;
+            left: -60%;
+            width: 220%;
+            height: 220%;
+            background: conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255, 255, 255, 0.04) 40deg, rgba(120, 180, 255, 0.07) 80deg, transparent 120deg);
+            animation: shimmerSpin 8s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes shimmerSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .page-hero-text h1 {
+            font-size: 1.9rem;
+            font-weight: 800;
+            margin-bottom: 0.35rem;
+            color: var(--text-primary);
+        }
+
+        .page-hero-text p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .page-hero-badge {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 0.9rem 1.4rem;
+            text-align: center;
+            z-index: 1;
+            box-shadow: var(--glass-inset);
+        }
+
+        .page-hero-badge .badge-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .page-hero-badge .badge-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* ── TAB CONTENT ── */
+        .tab-content {
+            display: none;
+            animation: fadeUp 0.35s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── METRICS ── */
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--metric-bg);
+            backdrop-filter: blur(20px) saturate(160%);
+            border-radius: 18px;
+            padding: 1.5rem;
+            border: 1px solid var(--metric-border);
+            box-shadow: var(--glass-shadow), var(--metric-inset);
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        }
+
+        .metric-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 26px;
+        }
+
+        .metric-icon.blue {
+            background: var(--icon-blue-bg);
+            color: var(--icon-blue-clr);
+        }
+
+        .metric-icon.green {
+            background: var(--icon-green-bg);
+            color: var(--icon-green-clr);
+        }
+
+        .metric-icon.amber {
+            background: var(--icon-amber-bg);
+            color: var(--icon-amber-clr);
+        }
+
+        .metric-icon.red {
+            background: var(--icon-red-bg);
+            color: var(--icon-red-clr);
+        }
+
+        .metric-info .metric-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .metric-info .metric-num {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.1;
+        }
+
+        /* ── SECTION CARD ── */
+        .section-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(150%);
+            border-radius: 18px;
+            padding: 1.75rem;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow), var(--glass-inset);
+            margin-bottom: 1.5rem;
+            transition: background 0.4s ease, border-color 0.3s ease;
+        }
+
+        .section-card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        /* ── TABLE ── */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            text-align: left;
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid var(--table-border);
+        }
+
+        .data-table th {
+            background: var(--table-head-bg);
+            color: var(--table-head-clr);
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            position: sticky;
+            top: 0;
+        }
+
+        .data-table td {
+            color: var(--table-td-clr);
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--table-row-hover);
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ── BADGES ── */
+        .status-badge {
+            padding: 0.3rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .status-in-stock {
+            background: var(--badge-paid-bg);
+            color: var(--badge-paid-clr);
+        }
+
+        .status-low-stock {
+            background: var(--badge-pend-bg);
+            color: var(--badge-pend-clr);
+        }
+
+        .status-expired {
+            background: var(--icon-red-bg);
+            color: var(--icon-red-clr);
+        }
+
+        .pending-badge {
+            background: var(--icon-blue-bg);
+            color: var(--icon-blue-clr);
+            padding: 0.3rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* ── ALERT ITEMS ── */
+        .alert-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            margin-bottom: 1rem;
+            background: var(--visit-bg);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .alert-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .alert-item.urgent {
+            border-left: 4px solid #EF4444;
+            background: var(--alert-urgent-bg);
+            border-color: var(--alert-urgent-border);
+        }
+
+        .alert-item.warning {
+            border-left: 4px solid #F59E0B;
+            background: var(--alert-warn-bg);
+            border-color: var(--alert-warn-border);
+        }
+
+        .alert-title-urgent {
+            color: var(--icon-red-clr);
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .alert-title-warn {
+            color: var(--icon-amber-clr);
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        /* ── FORMS ── */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.4rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            background: var(--input-bg);
+            color: var(--input-color);
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.3s;
+        }
+
+        .form-group input::placeholder {
+            color: var(--input-ph);
+        }
+
+        .form-group input:focus,
+        .form-input:focus,
+        .form-select:focus {
+            border-color: rgba(99, 179, 255, 0.7);
+            box-shadow: 0 0 0 3px rgba(99, 179, 255, 0.12);
+        }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            place-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.active {
+            display: grid;
+        }
+
+        .modal-content {
+            background: var(--modal-bg);
+            backdrop-filter: blur(32px) saturate(180%);
+            padding: 2.5rem;
+            border-radius: 24px;
+            max-width: 560px;
+            width: 92%;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow), var(--glass-inset);
+            animation: fadeUp 0.3s ease;
+            color: var(--modal-text);
+            transition: background 0.4s ease;
+        }
+
+        /* ── THEME TOGGLE ── */
         .theme-toggle {
             width: 44px;
             height: 44px;
@@ -322,425 +841,215 @@
             background: rgba(0, 102, 255, 0.15);
         }
 
-        .dashboard-container {
-            display: block;
-            margin-left: 0;
-            padding: 90px 2rem 2rem;
-            max-width: 100%;
+        :root[data-theme="light"] .nav-tab.active {
+            color: white;
         }
 
-        .dashboard-content-area {
-            width: 100%;
-            max-width: 1100px;
-            margin: 0 auto;
+        :root[data-theme="light"] .nav-logout:hover {
+            background: #EF4444;
+            color: white;
         }
 
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 280px;
-            height: 100vh;
-            background: #ffffff;
-            border-right: 1px solid rgba(0, 102, 255, 0.1);
-            box-shadow: 4px 0 24px rgba(0, 102, 255, 0.04);
-            padding: 1.5rem 1.25rem;
-            display: flex;
-            flex-direction: column;
-            z-index: 1000;
-            overflow-y: auto;
-            -ms-overflow-style: none;
-            /* IE and Edge */
-            scrollbar-width: none;
-            /* Firefox */
+        /* ══ DARK MODE — OVERRIDE style.css DEFAULTS ══════════════════ */
+        /* Inputs & Selects */
+        :root:not([data-theme="light"]) input,
+        :root:not([data-theme="light"]) select,
+        :root:not([data-theme="light"]) textarea,
+        :root:not([data-theme="light"]) .form-input,
+        :root:not([data-theme="light"]) .form-select,
+        :root:not([data-theme="light"]) .search-input,
+        :root:not([data-theme="light"]) .date-input {
+            background: rgba(255, 255, 255, 0.09) !important;
+            color: rgba(255, 255, 255, 0.92) !important;
+            border-color: rgba(255, 255, 255, 0.18) !important;
         }
 
-        .sidebar::-webkit-scrollbar {
-            display: none;
-            /* Chrome, Safari and Opera */
+        :root:not([data-theme="light"]) input::placeholder,
+        :root:not([data-theme="light"]) .form-input::placeholder,
+        :root:not([data-theme="light"]) .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.35) !important;
         }
 
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--primary-medical-blue);
-            margin-bottom: 2rem;
-            padding-bottom: 1.25rem;
-            border-bottom: 1px solid rgba(0, 102, 255, 0.1);
+        :root:not([data-theme="light"]) select option {
+            background: #0d1f3c;
+            color: rgba(255, 255, 255, 0.92);
         }
 
-        .sidebar-logo .logo-icon {
-            font-size: 2.2rem;
-            background: linear-gradient(135deg, var(--primary-medical-blue), #00C9A7);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+        /* Table cells */
+        :root:not([data-theme="light"]) .data-table td,
+        :root:not([data-theme="light"]) .data-table th {
+            color: rgba(255, 255, 255, 0.85) !important;
+            border-color: rgba(255, 255, 255, 0.07) !important;
         }
 
-        .sidebar-logo .logo-text {
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, var(--primary-medical-blue), #0044aa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+        :root:not([data-theme="light"]) .data-table thead tr {
+            background: rgba(255, 255, 255, 0.04) !important;
         }
 
-        .sidebar-profile {
-            text-align: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1.25rem;
-            border-bottom: 1px solid rgba(0, 102, 255, 0.1);
+        /* Modal internals */
+        :root:not([data-theme="light"]) .modal-content h3,
+        :root:not([data-theme="light"]) .modal-content h4,
+        :root:not([data-theme="light"]) .modal-content p,
+        :root:not([data-theme="light"]) .modal-content label,
+        :root:not([data-theme="light"]) .modal-content li {
+            color: rgba(255, 255, 255, 0.88) !important;
         }
 
-        .sidebar-profile img {
-            width: 75px;
-            height: 75px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 0.75rem;
-            padding: 3px;
-            background: linear-gradient(135deg, var(--primary-medical-blue), #00C9A7);
-            box-shadow: 0 8px 16px rgba(0, 102, 255, 0.15);
+        /* Section cards, alert items, visit items */
+        :root:not([data-theme="light"]) .section-card,
+        :root:not([data-theme="light"]) .alert-item {
+            color: rgba(255, 255, 255, 0.88) !important;
         }
 
-        .sidebar-profile h3 {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 0.25rem;
+        :root:not([data-theme="light"]) .alert-item p {
+            color: rgba(255, 255, 255, 0.7) !important;
         }
 
-        .sidebar-profile p {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #03543F;
-            background: #DEF7EC;
-            padding: 0.35rem 0.85rem;
-            border-radius: 999px;
-            display: inline-block;
+        /* Buttons from style.css */
+        :root:not([data-theme="light"]) .btn-outline {
+            background: rgba(255, 255, 255, 0.06) !important;
+            color: rgba(255, 255, 255, 0.85) !important;
+            border-color: rgba(255, 255, 255, 0.22) !important;
         }
 
-        .sidebar-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        :root:not([data-theme="light"]) .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.14) !important;
+            color: white !important;
         }
 
-        .sidebar-btn {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            width: 100%;
-            padding: 1rem 1.25rem;
-            border: none;
-            background: transparent;
-            text-align: left;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            border-radius: var(--border-radius-md);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        :root:not([data-theme="light"]) .btn-outline-primary {
+            background: rgba(99, 179, 255, 0.12) !important;
+            color: #7dd3fc !important;
+            border-color: rgba(99, 179, 255, 0.35) !important;
+        }
+
+        /* Upload note & misc small text */
+        :root:not([data-theme="light"]) .upload-note,
+        :root:not([data-theme="light"]) p[style*="color"] {
+            color: rgba(255, 255, 255, 0.55) !important;
+        }
+
+        :root[data-theme="light"] .metric-card::before {
+            background: linear-gradient(90deg, transparent, rgba(0, 102, 255, 0.15), transparent);
+        }
+
+        :root[data-theme="light"] .page-hero::before {
+            opacity: 0.3;
+        }
+
+        :root[data-theme="light"] .btn-outline {
+            border-color: #D1D5DB;
+            color: #374151;
+            background: white;
+        }
+
+        :root[data-theme="light"] .btn-outline:hover {
+            border-color: #0066FF;
+            color: #0066FF;
+        }
+
+        :root[data-theme="light"] .btn-outline-primary {
+            color: #0066FF;
+            border-color: rgba(0, 102, 255, 0.4);
+            background: rgba(0, 102, 255, 0.05);
+        }
+
+        /* ── SEARCH BAR ── */
+        .search-wrap {
             position: relative;
-            overflow: hidden;
         }
 
-        .sidebar-btn:hover {
-            background: rgba(0, 102, 255, 0.04);
-            color: var(--primary-medical-blue);
-            transform: translateX(4px);
-        }
-
-        .sidebar-btn.active {
-            background: linear-gradient(135deg, var(--primary-medical-blue) 0%, #0056db 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
-        }
-
-        .sidebar-btn.active .material-symbols-outlined {
-            color: white;
-        }
-
-        .sidebar-btn .material-symbols-outlined {
-            font-size: 22px;
-            transition: color 0.3s ease;
-        }
-
-        .sidebar-bottom {
-            margin-top: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            padding-top: 1.25rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        /* Content Area */
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.4s ease;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .content-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .content-title {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--primary-medical-blue);
-        }
-
-        /* Pharmacist Specific Components */
-
-        .pharma-card {
-            background: var(--surface-bg);
-            border-radius: var(--border-radius-md);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--surface-border);
-            backdrop-filter: blur(14px) saturate(130%);
-            -webkit-backdrop-filter: blur(14px) saturate(130%);
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.95rem;
-        }
-
-        .data-table th,
-        .data-table td {
-            text-align: left;
-            padding: 1rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .data-table th {
-            background-color: rgba(255, 255, 255, 0.06);
+        .search-wrap .material-symbols-outlined {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
             color: var(--text-secondary);
-            font-weight: 600;
-            position: sticky;
-            top: 0;
+            font-size: 20px;
         }
 
-        .data-table tr:hover {
-            background-color: rgba(255, 255, 255, 0.06);
-        }
-
-        /* Forms */
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        .form-label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .form-input,
-        .form-select {
+        .search-input {
             width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-sm);
+            padding: 0.6rem 1rem 0.6rem 2.5rem;
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            background: var(--input-bg);
+            color: var(--input-color);
             font-family: inherit;
-            font-size: 0.95rem;
             outline: none;
-            transition: border-color 0.2s;
         }
 
-        .form-input:focus,
-        .form-select:focus {
-            border-color: var(--primary-medical-blue);
+        .search-input::placeholder {
+            color: var(--input-ph);
         }
 
-        /* Status Toggles */
-        .status-badge {
-            padding: 0.4rem 0.8rem;
-            border-radius: 999px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            display: inline-block;
-        }
-
-        .status-in-stock {
-            background: #DEF7EC;
-            color: #03543F;
-        }
-
-        .status-low-stock {
-            background: #FEF3C7;
-            color: #92400E;
-        }
-
-        .status-expired {
-            background: #FEE2E2;
-            color: #991B1B;
-        }
-
-        .pending-badge {
-            background: #DBEAFE;
-            color: #1E40AF;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        /* Alerts List */
-        .alert-item {
-            display: flex;
-            align-items: start;
-            gap: 1rem;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-md);
-            margin-bottom: 1rem;
-            background: var(--surface-bg);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .alert-item:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .alert-item.urgent {
-            border-left: 4px solid #EF4444;
-            background: rgba(239, 68, 68, 0.12);
-        }
-
-        .alert-item.warning {
-            border-left: 4px solid #F59E0B;
-            background: rgba(245, 158, 11, 0.14);
-        }
-
-        .alert-item.urgent h4 {
-            color: #fca5a5 !important;
-        }
-
-        .alert-item.warning h4 {
-            color: #fcd34d !important;
-        }
-
-        :root[data-theme="light"] .pharma-card,
-        :root[data-theme="light"] .alert-item {
-            background: rgba(255, 255, 255, 0.9);
-        }
-
-        :root[data-theme="light"] .alert-item.urgent {
-            background: #FEF2F2;
-        }
-
-        :root[data-theme="light"] .alert-item.warning {
-            background: #FFFBEB;
-        }
-
-        :root[data-theme="light"] .alert-item.urgent h4 {
-            color: #991B1B !important;
-        }
-
-        :root[data-theme="light"] .alert-item.warning h4 {
-            color: #92400E !important;
-        }
-
-        #tab-options div[style*="background: white"] {
-            background: var(--surface-bg) !important;
-            border-color: var(--surface-border) !important;
-            backdrop-filter: blur(14px) saturate(130%);
-            -webkit-backdrop-filter: blur(14px) saturate(130%);
-        }
-
-        :root[data-theme="light"] .data-table th {
-            background-color: #F9FAFB;
-        }
-
-        :root[data-theme="light"] .data-table tr:hover {
-            background-color: #F8FAFC;
-        }
-
-        @media (max-width: 980px) {
-            .top-nav {
-                padding: 0 1rem;
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) {
+            .nav-links {
+                display: none;
             }
 
-            .top-nav .nav-links,
-            .nav-profile-info,
-            .nav-logout {
+            .nav-profile-info {
                 display: none;
             }
 
             .nav-hamburger {
-                display: inline-flex;
+                display: block;
+            }
+
+            .metrics-row {
+                grid-template-columns: 1fr;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-hero {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
             }
         }
 
         @media (max-width: 600px) {
-            .dashboard-container {
-                padding: 84px 1rem 1.5rem;
+            .dashboard-page {
+                padding: 80px 1rem 2rem;
+            }
+
+            .form-grid-2 {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 
 <body>
+
+    <!-- TOP NAV -->
     <nav class="top-nav">
         <a href="index.html" class="nav-brand">
             <span class="material-symbols-outlined brand-icon">medical_services</span>
             <span class="brand-name">NexusHealth</span>
         </a>
-
         <div class="nav-links">
             <button class="nav-tab active" onclick="switchTab('prescriptions', event)">
-                <span class="material-symbols-outlined">receipt_long</span>
-                Prescriptions
+                <span class="material-symbols-outlined">receipt_long</span> Prescriptions
                 <span
-                    style="margin-left:auto; background:#EF4444; color:white; padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700;">2</span>
+                    style="background:#EF4444;color:white;padding:1px 7px;border-radius:999px;font-size:0.72rem;font-weight:700;margin-left:4px;">2</span>
             </button>
             <button class="nav-tab" onclick="switchTab('inventory', event)">
-                <span class="material-symbols-outlined">inventory_2</span>
-                Inventory
+                <span class="material-symbols-outlined">inventory_2</span> Inventory
             </button>
             <button class="nav-tab" onclick="switchTab('alerts', event)">
-                <span class="material-symbols-outlined">notifications_active</span>
-                Alerts
+                <span class="material-symbols-outlined">notifications_active</span> Alerts
                 <span
-                    style="margin-left:auto; background:#F59E0B; color:white; padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700;">3</span>
+                    style="background:#F59E0B;color:white;padding:1px 7px;border-radius:999px;font-size:0.72rem;font-weight:700;margin-left:4px;">3</span>
             </button>
             <button class="nav-tab" onclick="switchTab('options', event)">
-                <span class="material-symbols-outlined">settings</span>
-                Options
+                <span class="material-symbols-outlined">settings</span> Settings
             </button>
         </div>
-
         <div class="nav-right">
             <div class="nav-profile">
                 <div class="nav-profile-info">
@@ -749,7 +1058,7 @@
                 </div>
                 <img id="navProfilePic"
                     src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=150&q=80"
-                    alt="Pharmacist Profile">
+                    alt="Profile">
             </div>
             <a href="index.html" class="nav-logout">
                 <span class="material-symbols-outlined" style="font-size:18px;">logout</span> Logout
@@ -763,44 +1072,74 @@
         </div>
     </nav>
 
+    <!-- Mobile Drawer -->
     <div class="mobile-drawer" id="mobileDrawer">
         <button class="nav-tab active" onclick="switchTab('prescriptions', event)">
-            <span class="material-symbols-outlined">receipt_long</span> Digital Prescriptions
+            <span class="material-symbols-outlined">receipt_long</span> Prescriptions
         </button>
         <button class="nav-tab" onclick="switchTab('inventory', event)">
-            <span class="material-symbols-outlined">inventory_2</span> Inventory Management
+            <span class="material-symbols-outlined">inventory_2</span> Inventory
         </button>
         <button class="nav-tab" onclick="switchTab('alerts', event)">
-            <span class="material-symbols-outlined">notifications_active</span> Automated Alerts
+            <span class="material-symbols-outlined">notifications_active</span> Alerts
         </button>
         <button class="nav-tab" onclick="switchTab('options', event)">
-            <span class="material-symbols-outlined">settings</span> Options
+            <span class="material-symbols-outlined">settings</span> Settings
         </button>
-        <a href="index.html" class="nav-tab" style="text-decoration:none;">
-            <span class="material-symbols-outlined">home</span> Back to Home
-        </a>
-        <a href="index.html" class="nav-tab" style="text-decoration:none; color:#EF4444;">
-            <span class="material-symbols-outlined">logout</span> Logout
-        </a>
     </div>
 
-    <main class="dashboard-container">
-        <!-- Main Content Area -->
-        <div class="dashboard-content-area">
+    <div class="dashboard-page">
 
-            <!-- DIGITAL PRESCRIPTIONS TAB -->
-            <div id="tab-prescriptions" class="tab-content active">
-                <div class="content-header">
-                    <h2 class="content-title">Pending Digital Prescriptions</h2>
-                    <div style="position: relative; width: 300px;">
-                        <span class="material-symbols-outlined"
-                            style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">search</span>
-                        <input type="text" placeholder="Search Patient or Order ID..."
-                            style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); outline: none;">
+        <!-- TAB: PRESCRIPTIONS -->
+        <div id="tab-prescriptions" class="tab-content active">
+            <div class="page-hero">
+                <div class="page-hero-text">
+                    <h1>Digital Prescriptions 💊</h1>
+                    <p>Review and dispense incoming patient prescriptions.</p>
+                </div>
+                <div class="page-hero-badge">
+                    <div class="badge-label">Pending</div>
+                    <div class="badge-value">2</div>
+                </div>
+            </div>
+
+            <!-- Metrics -->
+            <div class="metrics-row">
+                <div class="metric-card">
+                    <div class="metric-icon blue"><span class="material-symbols-outlined">receipt_long</span></div>
+                    <div class="metric-info">
+                        <div class="metric-label">Pending Rx</div>
+                        <div class="metric-num">2</div>
                     </div>
                 </div>
+                <div class="metric-card">
+                    <div class="metric-icon green"><span class="material-symbols-outlined">check_circle</span></div>
+                    <div class="metric-info">
+                        <div class="metric-label">Dispensed Today</div>
+                        <div class="metric-num">14</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon amber"><span class="material-symbols-outlined">notifications_active</span>
+                    </div>
+                    <div class="metric-info">
+                        <div class="metric-label">Active Alerts</div>
+                        <div class="metric-num">3</div>
+                    </div>
+                </div>
+            </div>
 
-                <div class="pharma-card" style="margin-bottom: 2rem;">
+            <div class="section-card">
+                <div
+                    style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid var(--glass-border);">
+                    <span style="font-size:1.05rem;font-weight:700;color:var(--text-primary);">Pending Digital
+                        Prescriptions</span>
+                    <div class="search-wrap" style="width:280px;">
+                        <span class="material-symbols-outlined">search</span>
+                        <input class="search-input" type="text" placeholder="Search Patient or Order ID...">
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -812,478 +1151,408 @@
                                 <th>Action</th>
                             </tr>
                         </thead>
-                        <tbody id="prescriptionTableBody">
+                        <tbody>
                             <tr>
-                                <td style="font-family: monospace; color: var(--text-secondary);">RX-10024</td>
-                                <td style="font-weight:600;">Emily Chen</td>
+                                <td style="font-family:monospace;color:var(--text-secondary);">RX-10024</td>
+                                <td style="font-weight:600;color:var(--text-primary);">Emily Chen</td>
                                 <td>Dr. Sarah Jenkins</td>
                                 <td>10:45 AM (15m ago)</td>
                                 <td><span class="pending-badge">Awaiting Dispense</span></td>
                                 <td>
-                                    <button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;"
-                                        onclick="openModal('viewRxModal', 'Emily Chen', 'Dr. Sarah Jenkins', 'Amoxicillin 500mg, Paracetamol 500mg')">View
-                                        & Dispense</button>
+                                    <button class="btn btn-primary" style="padding:0.4rem 0.8rem;font-size:0.85rem;"
+                                        onclick="openRxModal('Emily Chen','Dr. Sarah Jenkins','Amoxicillin 500mg, Paracetamol 500mg')">
+                                        View &amp; Dispense
+                                    </button>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="font-family: monospace; color: var(--text-secondary);">RX-10025</td>
-                                <td style="font-weight:600;">James Morrison</td>
+                                <td style="font-family:monospace;color:var(--text-secondary);">RX-10025</td>
+                                <td style="font-weight:600;color:var(--text-primary);">James Morrison</td>
                                 <td>Dr. Michael Chen</td>
                                 <td>11:10 AM (Just now)</td>
                                 <td><span class="pending-badge">Awaiting Dispense</span></td>
                                 <td>
-                                    <button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;"
-                                        onclick="openModal('viewRxModal', 'James Morrison', 'Dr. Michael Chen', 'Lisinopril 10mg')">View
-                                        & Dispense</button>
+                                    <button class="btn btn-primary" style="padding:0.4rem 0.8rem;font-size:0.85rem;"
+                                        onclick="openRxModal('James Morrison','Dr. Michael Chen','Lisinopril 10mg')">
+                                        View &amp; Dispense
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+        </div><!-- /prescriptions -->
 
-            <!-- INVENTORY MANAGEMENT TAB -->
-            <div id="tab-inventory" class="tab-content">
-                <div class="content-header">
-                    <h2 class="content-title">Medicine Inventory</h2>
-                    <button class="btn btn-primary" onclick="openModal('addStockModal')">+ Add New Stock</button>
+        <!-- TAB: INVENTORY -->
+        <div id="tab-inventory" class="tab-content">
+            <div class="page-hero">
+                <div class="page-hero-text">
+                    <h1>Medicine Inventory 📦</h1>
+                    <p>Monitor stock levels, expiry dates and pricing.</p>
                 </div>
-
-                <div class="pharma-card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h3 style="font-size: 1.2rem;">Stock Database</h3>
-                        <div style="display: flex; gap: 1rem;">
-                            <select class="form-select" style="width: auto; padding: 0.5rem 1rem;">
-                                <option>All Categories</option>
-                                <option>Antibiotics</option>
-                                <option>Painkillers</option>
-                                <option>Cardiovascular</option>
-                            </select>
-                            <div style="position: relative; width: 250px;">
-                                <span class="material-symbols-outlined"
-                                    style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">search</span>
-                                <input type="text" placeholder="Search medicine..."
-                                    style="width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); outline: none;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="overflow-x: auto;">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Medicine Name</th>
-                                    <th>Category</th>
-                                    <th>Stock Level</th>
-                                    <th>Unit Price</th>
-                                    <th>Expiry Date</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td style="font-weight:600;">Amoxicillin 500mg</td>
-                                    <td>Antibiotics</td>
-                                    <td>450 units</td>
-                                    <td>$0.50</td>
-                                    <td>Dec 2027</td>
-                                    <td><span class="status-badge status-in-stock">In Stock</span></td>
-                                    <td>
-                                        <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
-                                            onclick="showToast('Open pricing settings modal')">Edit Price</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="font-weight:600;">Lisinopril 10mg</td>
-                                    <td>Cardiovascular</td>
-                                    <td style="color:#92400E; font-weight:700;">12 units</td>
-                                    <td>$0.75</td>
-                                    <td>Jun 2026</td>
-                                    <td><span class="status-badge status-low-stock">Low Stock</span></td>
-                                    <td>
-                                        <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
-                                            onclick="showToast('Open pricing settings modal')">Edit Price</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="font-weight:600;">Ibuprofen 400mg</td>
-                                    <td>Painkillers</td>
-                                    <td style="color:#991B1B; font-weight:700;">0 units</td>
-                                    <td>$0.25</td>
-                                    <td style="color:#991B1B; font-weight:700;">Jan 2024</td>
-                                    <td><span class="status-badge status-expired">Expired</span></td>
-                                    <td>
-                                        <button class="btn btn-outline"
-                                            style="padding:0.3rem 0.6rem; color:#EF4444; border-color:#FEE2E2;"
-                                            onclick="showToast('Expired medicine safely removed from system.', true)"><span
-                                                class="material-symbols-outlined"
-                                                style="font-size:16px; margin-right:4px;">delete</span> Remove</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="page-hero-badge">
+                    <div class="badge-label">Total SKUs</div>
+                    <div class="badge-value">3</div>
                 </div>
             </div>
 
-            <!-- AUTOMATED ALERTS TAB -->
-            <div id="tab-alerts" class="tab-content">
-                <div class="content-header">
-                    <h2 class="content-title">System Alerts</h2>
+            <div class="section-card">
+                <div
+                    style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid var(--glass-border);">
+                    <span style="font-size:1.05rem;font-weight:700;color:var(--text-primary);">Stock Database</span>
+                    <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+                        <select class="form-select" style="width:auto;padding:0.5rem 1rem;">
+                            <option>All Categories</option>
+                            <option>Antibiotics</option>
+                            <option>Painkillers</option>
+                            <option>Cardiovascular</option>
+                        </select>
+                        <div class="search-wrap" style="width:220px;">
+                            <span class="material-symbols-outlined">search</span>
+                            <input class="search-input" type="text" placeholder="Search medicine...">
+                        </div>
+                        <button class="btn btn-primary"
+                            onclick="document.getElementById('addStockModal').classList.add('active')">+ Add New
+                            Stock</button>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Medicine Name</th>
+                                <th>Category</th>
+                                <th>Stock Level</th>
+                                <th>Unit Price</th>
+                                <th>Expiry Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight:600;color:var(--text-primary);">Amoxicillin 500mg</td>
+                                <td>Antibiotics</td>
+                                <td>450 units</td>
+                                <td>$0.50</td>
+                                <td>Dec 2027</td>
+                                <td><span class="status-badge status-in-stock">In Stock</span></td>
+                                <td><button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
+                                        onclick="showToast('Pricing settings opened.')">Edit Price</button></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:600;color:var(--text-primary);">Lisinopril 10mg</td>
+                                <td>Cardiovascular</td>
+                                <td style="color:var(--icon-amber-clr);font-weight:700;">12 units</td>
+                                <td>$0.75</td>
+                                <td>Jun 2026</td>
+                                <td><span class="status-badge status-low-stock">Low Stock</span></td>
+                                <td><button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
+                                        onclick="showToast('Pricing settings opened.')">Edit Price</button></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:600;color:var(--text-primary);">Ibuprofen 400mg</td>
+                                <td>Painkillers</td>
+                                <td style="color:var(--icon-red-clr);font-weight:700;">0 units</td>
+                                <td>$0.25</td>
+                                <td style="color:var(--icon-red-clr);font-weight:700;">Jan 2024</td>
+                                <td><span class="status-badge status-expired">Expired</span></td>
+                                <td>
+                                    <button class="btn btn-outline"
+                                        style="padding:0.3rem 0.6rem;color:var(--icon-red-clr);border-color:var(--icon-red-bg);"
+                                        onclick="showToast('Expired medicine removed from system.', true)">
+                                        <span class="material-symbols-outlined"
+                                            style="font-size:15px;vertical-align:middle;margin-right:3px;">delete</span>Remove
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div><!-- /inventory -->
+
+        <!-- TAB: ALERTS -->
+        <div id="tab-alerts" class="tab-content">
+            <div class="page-hero">
+                <div class="page-hero-text">
+                    <h1>System Alerts 🔔</h1>
+                    <p>Automated notifications for expiry, low stock and reorder events.</p>
+                </div>
+                <div class="page-hero-badge">
+                    <div class="badge-label">Active</div>
+                    <div class="badge-value">3</div>
+                </div>
+            </div>
+
+            <div style="max-width:860px;">
+                <div class="alert-item urgent">
+                    <span class="material-symbols-outlined"
+                        style="font-size:32px;color:var(--icon-red-clr);flex-shrink:0;">error</span>
+                    <div style="flex-grow:1;">
+                        <p class="alert-title-urgent">Expired Medication Detected</p>
+                        <p style="color:var(--text-secondary);font-size:0.95rem;line-height:1.5;">Batch #A883 (Ibuprofen
+                            400mg) expired Jan 2024. Please remove from shelves and update system registry immediately.
+                        </p>
+                        <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem;">Detected 2 hours ago</p>
+                    </div>
+                    <button class="btn btn-outline"
+                        style="color:var(--icon-red-clr);border-color:var(--icon-red-bg);flex-shrink:0;"
+                        onclick="showToast('Medicines removed from active database.', true)">Purge from DB</button>
                 </div>
 
-                <div style="max-width: 900px;">
-                    <!-- Urgent Alert -->
-                    <div class="alert-item urgent">
-                        <span class="material-symbols-outlined" style="font-size: 32px; color: #EF4444;">error</span>
-                        <div style="flex-grow: 1;">
-                            <h4 style="font-size: 1.05rem; color: #991B1B; margin-bottom: 0.25rem;">Expired Medication
-                                Detected</h4>
-                            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;">Batch #A883
-                                (Ibuprofen 400mg) has expired on Jan 2024. Please immediately remove from shelves and
-                                update system registry.</p>
-                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Detected 2 hours
-                                ago</p>
-                        </div>
-                        <div>
-                            <button class="btn btn-outline" style="color:#EF4444; border-color:#FEE2E2;"
-                                onclick="showToast('Medicines removed from active database.', true)">Purge from
-                                DB</button>
-                        </div>
+                <div class="alert-item warning">
+                    <span class="material-symbols-outlined"
+                        style="font-size:32px;color:var(--icon-amber-clr);flex-shrink:0;">warning</span>
+                    <div style="flex-grow:1;">
+                        <p class="alert-title-warn">Low Stock Notification</p>
+                        <p style="color:var(--text-secondary);font-size:0.95rem;line-height:1.5;">Lisinopril 10mg is
+                            critically low (12 units). Estimated depletion in 2 days. Reordering advised.</p>
+                        <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem;">Generated Today, 09:00 AM
+                        </p>
                     </div>
+                    <button class="btn btn-primary" style="flex-shrink:0;"
+                        onclick="showToast('Re-order request sent to supplier!')">Auto-Reorder</button>
+                </div>
 
-                    <!-- Warning Alert -->
-                    <div class="alert-item warning">
-                        <span class="material-symbols-outlined" style="font-size: 32px; color: #F59E0B;">warning</span>
-                        <div style="flex-grow: 1;">
-                            <h4 style="font-size: 1.05rem; color: #92400E; margin-bottom: 0.25rem;">Low Stock
-                                Notification</h4>
-                            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;">Lisinopril
-                                10mg is running critically low (12 units remaining). Estimated depletion in 2 days.
-                                Reordering is advised.</p>
-                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Generated Today,
-                                09:00 AM</p>
+                <div class="alert-item warning">
+                    <span class="material-symbols-outlined"
+                        style="font-size:32px;color:var(--icon-amber-clr);flex-shrink:0;">warning</span>
+                    <div style="flex-grow:1;">
+                        <p class="alert-title-warn">Low Stock Notification</p>
+                        <p style="color:var(--text-secondary);font-size:0.95rem;line-height:1.5;">Metformin 500mg at 15%
+                            capacity (45 units). Threshold was set to alert at 20%.</p>
+                        <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem;">Generated Yesterday</p>
+                    </div>
+                    <button class="btn btn-primary" style="flex-shrink:0;"
+                        onclick="showToast('Re-order request sent to supplier!')">Auto-Reorder</button>
+                </div>
+            </div>
+        </div><!-- /alerts -->
+
+        <!-- TAB: OPTIONS -->
+        <div id="tab-options" class="tab-content">
+            <div class="page-hero">
+                <div class="page-hero-text">
+                    <h1>Account Settings ⚙️</h1>
+                    <p>Manage your personal information and security preferences.</p>
+                </div>
+            </div>
+
+            <div class="options-grid">
+                <!-- Profile Picture -->
+                <div class="section-card" style="text-align:center;">
+                    <div class="section-card-title" style="text-align:left;">Profile Picture</div>
+                    <div style="position:relative;display:inline-block;margin-bottom:1rem;">
+                        <img id="optionsProfilePic"
+                            src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=150&q=80"
+                            alt="Profile"
+                            style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:4px solid transparent;background:linear-gradient(white,white) padding-box,linear-gradient(135deg,#0066FF,#00C9A7) border-box;">
+                        <label for="profileUpload"
+                            style="position:absolute;bottom:4px;right:4px;background:#0066FF;color:white;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                            <span class="material-symbols-outlined" style="font-size:17px;">photo_camera</span>
+                        </label>
+                        <input type="file" id="profileUpload" accept="image/*" style="display:none;"
+                            onchange="updateProfilePic(event)">
+                    </div>
+                    <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;">JPG or PNG · Max 5MB</p>
+                    <button class="btn btn-outline-primary" style="width:100%;font-size:0.85rem;">Remove
+                        Picture</button>
+                </div>
+
+                <!-- Forms -->
+                <div>
+                    <div class="section-card">
+                        <div class="section-card-title">Personal Information</div>
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" value="Michael Chang">
+                            </div>
+                            <div class="form-group">
+                                <label>Contact Number</label>
+                                <input type="tel" value="+1 (555) 789-0123">
+                            </div>
                         </div>
-                        <div>
+                        <div style="text-align:right;">
                             <button class="btn btn-primary"
-                                onclick="showToast('Automatic re-order request sent to supplier!')">Auto-Reorder</button>
+                                onclick="showToast('Pharmacist info saved successfully!')">Save Changes</button>
                         </div>
                     </div>
 
-                    <!-- Warning Alert -->
-                    <div class="alert-item warning">
-                        <span class="material-symbols-outlined" style="font-size: 32px; color: #F59E0B;">warning</span>
-                        <div style="flex-grow: 1;">
-                            <h4 style="font-size: 1.05rem; color: #92400E; margin-bottom: 0.25rem;">Low Stock
-                                Notification</h4>
-                            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;">Metformin
-                                500mg currently at 15% capacity (45 units). Threshold was set to alert at 20%.</p>
-                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Generated
-                                Yesterday</p>
+                    <div class="section-card">
+                        <div class="section-card-title">Change Password</div>
+                        <div class="form-group">
+                            <label>Current Password</label>
+                            <input type="password" placeholder="••••••••">
                         </div>
-                        <div>
-                            <button class="btn btn-primary"
-                                onclick="showToast('Automatic re-order request sent to supplier!')">Auto-Reorder</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- OPTIONS TAB -->
-            <div id="tab-options" class="tab-content">
-                <div class="content-header">
-                    <h2 class="content-title">Pharmacist Account Options</h2>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 2rem; margin-bottom: 2rem;">
-
-                    <!-- Profile Picture Change -->
-                    <div
-                        style="background: white; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 2rem; text-align: center; height: fit-content;">
-                        <h3
-                            style="margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; text-align: left;">
-                            Profile Picture</h3>
-                        <div style="position: relative; display: inline-block; margin-bottom: 1.5rem;">
-                            <img id="optionsProfilePic"
-                                src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=150&q=80"
-                                alt="Current Profile"
-                                style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; padding: 4px; background: linear-gradient(135deg, var(--primary-medical-blue), #00C9A7);">
-                            <label for="profileUpload"
-                                style="position: absolute; bottom: 5px; right: 5px; background: var(--primary-medical-blue); color: white; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.15); border: 2.5px solid white; transition: background 0.2s;">
-                                <span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span>
-                            </label>
-                            <input type="file" id="profileUpload" accept="image/*" style="display: none;"
-                                onchange="updateProfilePic(event)">
-                        </div>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Allowed
-                            formats: JPG, PNG. Max size: 5MB.</p>
-                        <button class="btn btn-outline-primary" style="width: 100%; font-size: 0.9rem;">Remove
-                            Picture</button>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 2rem;">
-                        <!-- Personal Info -->
-                        <div
-                            style="background: white; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 2.5rem;">
-                            <h3
-                                style="margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                                Personal Information</h3>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                                <div>
-                                    <label class="form-label">Full Name</label>
-                                    <input type="text" class="form-input" value="Michael Chang">
-                                </div>
-                                <div>
-                                    <label class="form-label">Contact Number</label>
-                                    <input type="tel" class="form-input" value="+1 (555) 789-0123">
-                                </div>
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label>New Password</label>
+                                <input type="password" placeholder="Min 8 characters">
                             </div>
-                            <div style="margin-top: 1.5rem; text-align: right;">
-                                <button class="btn btn-primary"
-                                    onclick="showToast('Pharmacist info saved successfully!')">Save Info</button>
+                            <div class="form-group">
+                                <label>Confirm New Password</label>
+                                <input type="password" placeholder="Repeat new password">
                             </div>
                         </div>
-
-                        <!-- Security Tab -->
-                        <div
-                            style="background: white; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 2.5rem;">
-                            <h3
-                                style="margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                                Change Password</h3>
-                            <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
-                                <div>
-                                    <label class="form-label">Current Password</label>
-                                    <input type="password" class="form-input" placeholder="••••••••">
-                                </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                                    <div>
-                                        <label class="form-label">New Password</label>
-                                        <input type="password" class="form-input" placeholder="Min 8 characters">
-                                    </div>
-                                    <div>
-                                        <label class="form-label">Confirm New Password</label>
-                                        <input type="password" class="form-input">
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="margin-top: 1.5rem; text-align: right;">
-                                <button class="btn btn-primary"
-                                    onclick="showToast('Password updated successfully!')">Update Password</button>
-                            </div>
+                        <div style="text-align:right;">
+                            <button class="btn btn-primary" onclick="showToast('Password updated successfully!')">Update
+                                Password</button>
                         </div>
                     </div>
                 </div>
             </div>
+        </div><!-- /options -->
 
-        </div>
-    </main>
+    </div><!-- /dashboard-page -->
 
-    <!-- Modals -->
-
-    <!-- View & Dispense Rx Modal -->
-    <div class="modal-overlay" id="viewRxModal"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
-        <div class="modal-content"
-            style="background: white; padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 600px; width: 90%;">
+    <!-- MODAL: View & Dispense Rx -->
+    <div class="modal-overlay" id="viewRxModal">
+        <div class="modal-content" style="max-width:580px;text-align:left;">
             <div
-                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
-                <h3 style="font-size: 1.3rem; color: var(--primary-medical-blue);">Digital Prescription</h3>
-                <span class="material-symbols-outlined" style="cursor: pointer; color: var(--text-secondary);"
+                style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;border-bottom:1px solid var(--glass-border);padding-bottom:1rem;">
+                <h3 style="font-size:1.3rem;color:var(--text-primary);">Digital Prescription</h3>
+                <span class="material-symbols-outlined" style="cursor:pointer;color:var(--text-secondary);"
                     onclick="closeModal('viewRxModal')">close</span>
             </div>
-
             <div
-                style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: #F8FAFC; padding: 1rem; border-radius: var(--border-radius-sm);">
+                style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;background:var(--visit-bg);padding:1rem;border-radius:12px;border:1px solid var(--glass-border);">
                 <div>
-                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Patient</p>
-                    <p style="font-weight: 600;" id="rxModalPatient">Emily Chen</p>
+                    <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.25rem;">Patient</p>
+                    <p style="font-weight:600;color:var(--text-primary);" id="rxModalPatient">—</p>
                 </div>
                 <div>
-                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Prescribed By
-                    </p>
-                    <p style="font-weight: 600;" id="rxModalDoctor">Dr. Sarah Jenkins</p>
+                    <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.25rem;">Prescribed By</p>
+                    <p style="font-weight:600;color:var(--text-primary);" id="rxModalDoctor">—</p>
                 </div>
             </div>
-
-            <div style="margin-bottom: 2rem;">
-                <h4 style="margin-bottom: 0.75rem; color: var(--text-secondary); font-size: 0.95rem;">Prescribed
-                    Medications</h4>
-                <div
-                    style="border: 1px dashed var(--border-color); padding: 1rem; border-radius: var(--border-radius-sm);">
-                    <ul style="list-style-position: inside; color: var(--text-primary); font-weight: 500; line-height: 1.8;"
-                        id="rxModalMeds">
-                        <!-- Populated via JS -->
-                        <li>Amoxicillin 500mg - Twice Daily</li>
-                        <li>Paracetamol 500mg - When needed</li>
-                    </ul>
+            <div style="margin-bottom:2rem;">
+                <h4 style="margin-bottom:0.75rem;color:var(--text-secondary);font-size:0.95rem;">Prescribed Medications
+                </h4>
+                <div style="border:1px dashed var(--glass-border);padding:1rem;border-radius:12px;">
+                    <ul style="list-style-position:inside;color:var(--text-primary);font-weight:500;line-height:1.8;"
+                        id="rxModalMeds"></ul>
                 </div>
             </div>
-
-            <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
-                <p style="font-size: 0.85rem; color: var(--success-soft-green); font-weight: 600;"><span
-                        class="material-symbols-outlined"
-                        style="font-size: 16px; vertical-align: bottom;">check_circle</span> Stock Available</p>
-                <div style="display: flex; gap: 1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <p style="font-size:0.85rem;color:var(--icon-green-clr);font-weight:600;">
+                    <span class="material-symbols-outlined"
+                        style="font-size:16px;vertical-align:bottom;">check_circle</span> Stock Available
+                </p>
+                <div style="display:flex;gap:1rem;">
                     <button class="btn btn-outline" onclick="closeModal('viewRxModal')">Cancel</button>
                     <button class="btn btn-primary"
-                        onclick="closeModal('viewRxModal'); showToast('Prescription processed and marked as Dispensed!')">Mark
+                        onclick="closeModal('viewRxModal');showToast('Prescription processed and marked as Dispensed!')">Mark
                         as Dispensed</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Add Stock Modal -->
-    <div class="modal-overlay" id="addStockModal"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
-        <div class="modal-content"
-            style="background: white; padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 500px; width: 90%;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h3 style="font-size: 1.3rem;">Add New Inventory Batch</h3>
-                <span class="material-symbols-outlined" style="cursor: pointer; color: var(--text-secondary);"
+    <!-- MODAL: Add Stock -->
+    <div class="modal-overlay" id="addStockModal">
+        <div class="modal-content" style="max-width:480px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+                <h3 style="font-size:1.3rem;color:var(--text-primary);">Add New Inventory Batch</h3>
+                <span class="material-symbols-outlined" style="cursor:pointer;color:var(--text-secondary);"
                     onclick="closeModal('addStockModal')">close</span>
             </div>
-
-            <div class="form-group">
-                <label class="form-label">Select Medicine</label>
-                <input type="text" class="form-input" placeholder="Start typing name (e.g. Paracetamol)">
+            <div class="form-group"><label>Medicine Name</label><input type="text" placeholder="e.g. Paracetamol 500mg">
             </div>
-            <div class="form-group">
-                <label class="form-label">Batch Number</label>
-                <input type="text" class="form-input" placeholder="e.g. B-99827">
+            <div class="form-group"><label>Batch Number</label><input type="text" placeholder="e.g. B-99827"></div>
+            <div class="form-grid-2">
+                <div class="form-group"><label>Quantity</label><input type="number" placeholder="Total units"></div>
+                <div class="form-group"><label>Expiry Date</label><input type="month"></div>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div class="form-group">
-                    <label class="form-label">Quantity</label>
-                    <input type="number" class="form-input" placeholder="Total units">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Expiry Date</label>
-                    <input type="month" class="form-input">
-                </div>
-            </div>
-
-            <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+            <div style="display:flex;justify-content:flex-end;gap:1rem;margin-top:1rem;">
                 <button class="btn btn-outline" onclick="closeModal('addStockModal')">Cancel</button>
                 <button class="btn btn-primary"
-                    onclick="closeModal('addStockModal'); showToast('New stock batch successfully added to inventory!', false)">Add
-                    to DB</button>
+                    onclick="closeModal('addStockModal');showToast('New stock batch added to inventory!')">Add to
+                    DB</button>
             </div>
         </div>
     </div>
 
-    <!-- Global Layout Toast -->
-    <div id="pharma-toast"
-        style="visibility: hidden; min-width: 300px; background-color: var(--success-soft-green); color: #fff; text-align: center; border-radius: var(--border-radius-md); padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; transform: translateX(-50%); box-shadow: var(--shadow-lg); font-weight: 500; transition: opacity 0.4s, bottom 0.4s; opacity: 0; display:flex; align-items:center; justify-content:center;">
-        <span class="material-symbols-outlined" style="margin-right: 8px;">info</span>
-        <span id="pharma-toast-msg">Operation successful!</span>
+    <!-- Toast -->
+    <div id="toast"
+        style="visibility:hidden;min-width:240px;background:#059669;color:#fff;text-align:center;border-radius:12px;padding:14px 20px;position:fixed;z-index:3000;left:50%;bottom:30px;transform:translateX(-50%);box-shadow:0 6px 20px rgba(0,0,0,0.15);font-weight:600;transition:opacity 0.4s,bottom 0.4s;opacity:0;display:flex;align-items:center;gap:8px;">
+        <span class="material-symbols-outlined">check_circle</span>
+        <span id="toast-msg">Operation successful!</span>
     </div>
 
     <script>
-        // Tab Switching Logic
+        // Tab switching
         function switchTab(tabId, event) {
-            document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             if (event) {
-                const clickedText = event.currentTarget.textContent.trim();
-                document.querySelectorAll('.nav-tab').forEach(btn => {
-                    if (btn.textContent.trim() === clickedText) btn.classList.add('active');
+                const txt = event.currentTarget.textContent.trim();
+                document.querySelectorAll('.nav-tab').forEach(t => {
+                    if (t.textContent.trim() === txt) t.classList.add('active');
                 });
             }
-
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
-
-            const drawer = document.getElementById('mobileDrawer');
-            if (drawer) drawer.classList.remove('open');
+            document.getElementById('mobileDrawer').classList.remove('open');
         }
 
         function toggleMobileMenu() {
-            const drawer = document.getElementById('mobileDrawer');
-            if (drawer) drawer.classList.toggle('open');
+            document.getElementById('mobileDrawer').classList.toggle('open');
         }
 
-        // Generic Toast Notification
+        // Toast
         function showToast(message, isError = false) {
-            var toast = document.getElementById("pharma-toast");
-            var msgEl = document.getElementById("pharma-toast-msg");
-
-            msgEl.innerText = message;
-            toast.style.backgroundColor = isError ? '#EF4444' : 'var(--success-soft-green)';
-
-            toast.style.visibility = "visible";
-            toast.style.opacity = "1";
-            toast.style.bottom = "50px";
-
-            setTimeout(function () {
-                toast.style.opacity = "0";
-                toast.style.bottom = "30px";
-                setTimeout(() => { toast.style.visibility = "hidden"; }, 400);
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = message;
+            toast.style.background = isError ? '#EF4444' : '#059669';
+            toast.style.visibility = 'visible'; toast.style.opacity = '1'; toast.style.bottom = '50px';
+            setTimeout(() => {
+                toast.style.opacity = '0'; toast.style.bottom = '30px';
+                setTimeout(() => { toast.style.visibility = 'hidden'; }, 400);
             }, 3000);
         }
 
-        // Modal Logic
-        function openModal(modalId, patientName = null, doctorName = null, meds = null) {
-            document.getElementById(modalId).style.display = 'flex';
-
-            // Populate Rx modal dynamically if values are passed
-            if (modalId === 'viewRxModal' && patientName) {
-                document.getElementById('rxModalPatient').innerText = patientName;
-                document.getElementById('rxModalDoctor').innerText = doctorName;
-
-                // create unordered list from comma separated meds
-                const medArray = meds.split(',');
-                let listHtml = '';
-                medArray.forEach(m => {
-                    listHtml += `<li>${m.trim()} - As directed</li>`;
-                });
-                document.getElementById('rxModalMeds').innerHTML = listHtml;
-            }
+        // Modal
+        function openRxModal(patient, doctor, meds) {
+            document.getElementById('rxModalPatient').innerText = patient;
+            document.getElementById('rxModalDoctor').innerText = doctor;
+            document.getElementById('rxModalMeds').innerHTML = meds.split(',').map(m => `<li>${m.trim()} – As directed</li>`).join('');
+            document.getElementById('viewRxModal').classList.add('active');
         }
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-        // Options Image Upload
+        window.onclick = e => { if (e.target.classList.contains('modal-overlay')) closeModal(e.target.id); };
+
+        // Profile pic
         function updateProfilePic(event) {
             const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    document.getElementById('optionsProfilePic').src = e.target.result;
-                    document.getElementById('navProfilePic').src = e.target.result;
-                    showToast('Profile picture updated successfully!');
-                }
-                reader.readAsDataURL(file);
-            }
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                document.getElementById('optionsProfilePic').src = e.target.result;
+                document.getElementById('navProfilePic').src = e.target.result;
+                showToast('Profile picture updated!');
+            };
+            reader.readAsDataURL(file);
         }
 
+        // Theme
         function applyTheme(theme) {
             const root = document.documentElement;
             const icon = document.getElementById('themeIcon');
-            if (theme === 'light') {
-                root.setAttribute('data-theme', 'light');
-                if (icon) icon.textContent = 'dark_mode';
-            } else {
-                root.removeAttribute('data-theme');
-                if (icon) icon.textContent = 'light_mode';
-            }
+            if (theme === 'light') { root.setAttribute('data-theme', 'light'); if (icon) icon.textContent = 'dark_mode'; }
+            else { root.removeAttribute('data-theme'); if (icon) icon.textContent = 'light_mode'; }
         }
-
         function toggleTheme() {
             const isLight = document.documentElement.getAttribute('data-theme') === 'light';
             const next = isLight ? 'dark' : 'light';
             localStorage.setItem('nexus-theme', next);
             const icon = document.getElementById('themeIcon');
-            if (icon) {
-                icon.style.transform = 'rotate(360deg)';
-                setTimeout(() => { icon.style.transform = ''; }, 400);
-            }
+            if (icon) { icon.style.transform = 'rotate(360deg)'; setTimeout(() => { icon.style.transform = ''; }, 400); }
             applyTheme(next);
         }
-
         (function initTheme() {
             const saved = localStorage.getItem('nexus-theme');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
