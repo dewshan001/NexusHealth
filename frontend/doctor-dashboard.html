@@ -47,6 +47,18 @@
             --text-muted: rgba(255, 255, 255, 0.45);
             --border-color: rgba(255, 255, 255, 0.15);
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+
+            --badge-success-bg: rgba(52, 211, 153, 0.18);
+            --badge-success-clr: #6ee7b7;
+            --badge-danger-bg: rgba(252, 129, 129, 0.18);
+            --badge-danger-clr: #fca5a5;
+            --allergy-bg: rgba(239, 68, 68, 0.12);
+            --allergy-border: #EF4444;
+            --allergy-color: #fca5a5;
+            --input-bg: rgba(255, 255, 255, 0.08);
+            --input-border: rgba(255, 255, 255, 0.15);
+            --icon-bg: rgba(255, 255, 255, 0.1);
+            --primary-medical-blue: #0066FF;
         }
 
         :root[data-theme="light"] {
@@ -76,6 +88,17 @@
             --text-muted: #9CA3AF;
             --border-color: #E5E7EB;
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+            --badge-success-bg: #DEF7EC;
+            --badge-success-clr: #03543F;
+            --badge-danger-bg: #FEE2E2;
+            --badge-danger-clr: #EF4444;
+            --allergy-bg: #FEF2F2;
+            --allergy-border: #EF4444;
+            --allergy-color: #991B1B;
+            --input-bg: white;
+            --input-border: #D1D5DB;
+            --icon-bg: #F3F4F6;
         }
 
         body {
@@ -607,9 +630,9 @@
 
         /* Consultations specific styles */
         .allergy-alert {
-            background-color: #FEF2F2;
-            border-left: 4px solid #EF4444;
-            color: #991B1B;
+            background-color: var(--allergy-bg);
+            border-left: 4px solid var(--allergy-border);
+            color: var(--allergy-color);
             padding: 1rem 1.5rem;
             border-radius: var(--border-radius-sm);
             display: flex;
@@ -642,13 +665,13 @@
         .rx-input {
             width: 100%;
             padding: 0.75rem 1rem;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--input-border);
             border-radius: var(--border-radius-sm);
             font-family: inherit;
             font-size: 0.95rem;
             outline: none;
             transition: border-color 0.2s;
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--input-bg);
             color: var(--text-primary);
         }
 
@@ -695,14 +718,6 @@
             border-color: var(--surface-border) !important;
             backdrop-filter: blur(14px) saturate(130%);
             -webkit-backdrop-filter: blur(14px) saturate(130%);
-        }
-
-        #tab-pharmacy div[style*="background: #F8FAFC"],
-        #tab-pharmacy div[style*="background:#F8FAFC"],
-        #tab-pharmacy input[style*="background:#F9FAFB"] {
-            background: rgba(255, 255, 255, 0.06) !important;
-            color: var(--text-primary) !important;
-            border-color: var(--border-color) !important;
         }
 
         :root[data-theme="light"] .appointment-card,
@@ -886,7 +901,7 @@
                         </div>
                         <div>
                             <span class="status-badge"
-                                style="background:#DEF7EC; color:#03543F; padding:0.4rem 0.8rem; border-radius:999px; font-weight:600; font-size:0.8rem;">Completed</span>
+                                style="background:var(--badge-success-bg); color:var(--badge-success-clr); padding:0.4rem 0.8rem; border-radius:999px; font-weight:600; font-size:0.8rem;">Completed</span>
                         </div>
                     </div>
 
@@ -894,7 +909,7 @@
                     <div class="appointment-card next-slot">
                         <div style="flex-grow: 1;">
                             <div class="appointment-time">10:30 AM <span
-                                    style="font-size:0.8rem; color: #EF4444; font-weight:600; vertical-align:super; background:#FEE2E2; padding:2px 6px; border-radius:6px; margin-left:8px;">NEXT</span>
+                                    style="font-size:0.8rem; color: var(--badge-danger-clr); background: var(--badge-danger-bg); font-weight:600; vertical-align:super; padding:2px 6px; border-radius:6px; margin-left:8px;">NEXT</span>
                             </div>
                             <h3 style="margin-top: 0.25rem;">Emily Chen</h3>
                             <div class="appointment-meta">
@@ -951,9 +966,9 @@
                                 <span class="material-symbols-outlined"
                                     style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">search</span>
                                 <input id="consult-patient-search" type="text" placeholder="Search by name or ID..."
-                                    style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); outline: none;"
+                                    style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--input-border); border-radius: var(--border-radius-sm); outline: none; background: var(--input-bg); color: var(--text-primary);"
                                     onfocus="this.style.borderColor='var(--primary-medical-blue)'"
-                                    onblur="this.style.borderColor='var(--border-color)'">
+                                    onblur="this.style.borderColor='var(--input-border)'">
                             </div>
                             <button class="btn btn-outline" style="width: 100%;">Browse All Patients</button>
                         </div>
@@ -1036,9 +1051,9 @@
                                     style="margin-bottom: 1rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                                     Clinical Notes (Current Visit)</h3>
                                 <textarea placeholder="Type your consultation notes and observations here..."
-                                    style="width: 100%; height: 160px; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; resize: vertical; margin-bottom:1.5rem;"
+                                    style="width: 100%; height: 160px; padding: 1rem; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; resize: vertical; margin-bottom:1.5rem;"
                                     onfocus="this.style.borderColor='var(--primary-medical-blue)'"
-                                    onblur="this.style.borderColor='var(--border-color)'"></textarea>
+                                    onblur="this.style.borderColor='var(--input-border)'"></textarea>
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <p style="font-size:0.8rem; color:var(--text-muted);"><span
                                             class="material-symbols-outlined"
@@ -1079,30 +1094,30 @@
                         <div>
                             <label class="rx-label">Date</label>
                             <input type="text" class="rx-input" value="Today, Mar 18, 2026" disabled
-                                style="background:#F9FAFB; cursor:not-allowed;">
+                                style="background:var(--icon-bg); cursor:not-allowed;">
                         </div>
                     </div>
 
                     <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Add Medication</h3>
                     <div
-                        style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1rem; align-items: end; background: #F8FAFC; padding: 1.5rem; border-radius: var(--border-radius-md); border: 1px solid var(--border-color);">
+                        style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1rem; align-items: end; background: var(--icon-bg); padding: 1.5rem; border-radius: var(--border-radius-md); border: 1px solid var(--border-color);">
                         <div>
                             <label class="rx-label" style="font-size:0.85rem;">Medication Name</label>
                             <input type="text" id="med-name" class="rx-input" placeholder="e.g. Amoxicillin"
                                 onfocus="this.style.borderColor='var(--primary-medical-blue)'"
-                                onblur="this.style.borderColor='var(--border-color)'">
+                                onblur="this.style.borderColor='var(--input-border)'">
                         </div>
                         <div>
                             <label class="rx-label" style="font-size:0.85rem;">Dosage</label>
                             <input type="text" id="med-dose" class="rx-input" placeholder="e.g. 500mg"
                                 onfocus="this.style.borderColor='var(--primary-medical-blue)'"
-                                onblur="this.style.borderColor='var(--border-color)'">
+                                onblur="this.style.borderColor='var(--input-border)'">
                         </div>
                         <div>
                             <label class="rx-label" style="font-size:0.85rem;">Frequency</label>
                             <input type="text" id="med-freq" class="rx-input" placeholder="e.g. Twice Daily"
                                 onfocus="this.style.borderColor='var(--primary-medical-blue)'"
-                                onblur="this.style.borderColor='var(--border-color)'">
+                                onblur="this.style.borderColor='var(--input-border)'">
                         </div>
                         <div>
                             <button class="btn btn-outline-primary"
@@ -1115,7 +1130,7 @@
                         style="display:flex; justify-content:space-between; align-items:end; margin-top: 2.5rem; margin-bottom: 1rem;">
                         <h3 style="font-size: 1.1rem; margin:0;">Prescription Items</h3>
                         <span
-                            style="font-size:0.85rem; color:var(--text-secondary); background:#F3F4F6; padding:2px 8px; border-radius:999px;">Preview
+                            style="font-size:0.85rem; color:var(--text-secondary); background:var(--icon-bg); padding:2px 8px; border-radius:999px;">Preview
                             Mode</span>
                     </div>
 
@@ -1193,18 +1208,18 @@
                                         style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Full
                                         Name</label>
                                     <input type="text" value="Dr. Sarah Jenkins"
-                                        style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;"
+                                        style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;"
                                         onfocus="this.style.borderColor='var(--primary-medical-blue)'"
-                                        onblur="this.style.borderColor='var(--border-color)'">
+                                        onblur="this.style.borderColor='var(--input-border)'">
                                 </div>
                                 <div>
                                     <label
                                         style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Contact
                                         Number</label>
                                     <input type="tel" value="+1 (555) 987-6543"
-                                        style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;"
+                                        style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;"
                                         onfocus="this.style.borderColor='var(--primary-medical-blue)'"
-                                        onblur="this.style.borderColor='var(--border-color)'">
+                                        onblur="this.style.borderColor='var(--input-border)'">
                                 </div>
                             </div>
                             <div style="margin-top: 1.5rem; text-align: right;">
@@ -1225,9 +1240,9 @@
                                         style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Current
                                         Password</label>
                                     <input type="password" placeholder="••••••••"
-                                        style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;"
+                                        style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;"
                                         onfocus="this.style.borderColor='var(--primary-medical-blue)'"
-                                        onblur="this.style.borderColor='var(--border-color)'">
+                                        onblur="this.style.borderColor='var(--input-border)'">
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                                     <div>
@@ -1235,18 +1250,18 @@
                                             style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">New
                                             Password</label>
                                         <input type="password" placeholder="Min 8 characters"
-                                            style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;"
+                                            style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;"
                                             onfocus="this.style.borderColor='var(--primary-medical-blue)'"
-                                            onblur="this.style.borderColor='var(--border-color)'">
+                                            onblur="this.style.borderColor='var(--input-border)'">
                                     </div>
                                     <div>
                                         <label
                                             style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Confirm
                                             New Password</label>
                                         <input type="password"
-                                            style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;"
+                                            style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;"
                                             onfocus="this.style.borderColor='var(--primary-medical-blue)'"
-                                            onblur="this.style.borderColor='var(--border-color)'">
+                                            onblur="this.style.borderColor='var(--input-border)'">
                                     </div>
                                 </div>
                             </div>
