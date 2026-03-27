@@ -1,0 +1,56 @@
+package com.nexushelth.entities;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import com.nexushelth.enums.AppointmentStatus;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "appointments")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Appointment {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @ManyToOne
+    @JoinColumn(name = "doctor_id", nullable = false)
+    private Doctor doctor;
+    
+    @ManyToOne
+    @JoinColumn(name = "patient_id", nullable = false)
+    private Patient patient;
+    
+    @Column(nullable = false)
+    private LocalDateTime appointmentDateTime;
+    
+    @Column
+    private String reason;
+    
+    @Column
+    private String notes;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AppointmentStatus status = AppointmentStatus.PENDING;
+    
+    @Column
+    private LocalDateTime completedAt;
+    
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+    
+    @Column(nullable = false)
+    private LocalDateTime updatedAt = LocalDateTime.now();
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+}
+
