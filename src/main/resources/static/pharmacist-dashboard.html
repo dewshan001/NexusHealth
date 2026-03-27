@@ -341,6 +341,33 @@
 </head>
 
 <body>
+    <script>
+        // Check authentication on page load
+        (function() {
+            const token = localStorage.getItem('token');
+            const userRole = localStorage.getItem('userRole');
+
+            if (!token) {
+                // No token found, redirect to login
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Verify this is the correct role for this dashboard
+            const allowedRoles = ['PHARMACIST'];
+            if (!allowedRoles.includes(userRole)) {
+                // Wrong role, redirect to appropriate dashboard
+                const roleRedirects = {
+                    'PATIENT': 'patient-dashboard.html',
+                    'DOCTOR': 'doctor-dashboard.html',
+                    'RECEPTIONIST': 'receptionist-dashboard.html',
+                    'ADMIN': 'admin-dashboard.html'
+                };
+                const redirectUrl = roleRedirects[userRole] || 'login.html';
+                window.location.href = redirectUrl;
+            }
+        })();
+    </script>
     <main class="dashboard-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
