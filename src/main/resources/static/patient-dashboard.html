@@ -1227,7 +1227,118 @@
                 const redirectUrl = roleRedirects[userRole] || 'login.html';
                 window.location.href = redirectUrl;
             }
+
+            // Load patient details after authentication check
+            loadPatientDetails();
         })();
+
+        // Extract userId from JWT token
+        function getUserIdFromToken() {
+            const token = localStorage.getItem('token');
+            if (!token) return null;
+
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                const payload = JSON.parse(jsonPayload);
+                return payload.userId;
+            } catch (e) {
+                console.error('Failed to decode token:', e);
+                return null;
+            }
+        }
+
+        // Fetch patient details from backend
+        async function loadPatientDetails() {
+            const userId = getUserIdFromToken();
+            if (!userId) {
+                console.error('No user ID found in token');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/patients/user/${userId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error(`API Error: ${response.status} - Failed to fetch patient details`);
+                    console.log('Response:', await response.text());
+                    return;
+                }
+
+                const patient = await response.json();
+                console.log('Patient data received:', patient);
+                updateDashboardWithPatientData(patient);
+            } catch (error) {
+                console.error('Error fetching patient details:', error);
+            }
+        }
+
+        // Update dashboard with fetched patient data
+        function updateDashboardWithPatientData(patient) {
+            // Null safety checks
+            if (!patient) {
+                console.error('Patient data is null');
+                return;
+            }
+
+            if (!patient.user) {
+                console.error('Patient user data is null - Patient record may not exist');
+                return;
+            }
+
+            const firstName = patient.user.firstName || 'Patient';
+            const lastName = patient.user.lastName || '';
+            const fullName = (firstName + ' ' + lastName).trim();
+            const patientId = patient.id ? '#NX-' + patient.id : '#NX-00000';
+
+            console.log('Updating dashboard with:', { fullName, patientId, phone: patient.user.phone });
+
+            // Update top navigation profile
+            const navProfileName = document.querySelector('.nav-profile-name');
+            if (navProfileName) {
+                navProfileName.textContent = fullName;
+            }
+
+            const navProfileId = document.querySelector('.nav-profile-id');
+            if (navProfileId) {
+                navProfileId.textContent = patientId;
+            }
+
+            // Update welcome message
+            const welcomeText = document.querySelector('.page-hero-text h1');
+            if (welcomeText) {
+                welcomeText.textContent = `Welcome back, ${firstName}! 👋`;
+            }
+
+            // Update patient ID badge
+            const badgeValue = document.querySelector('.badge-value');
+            if (badgeValue) {
+                badgeValue.textContent = patientId;
+            }
+
+            // Update form fields in settings tab using new IDs
+            const fullNameInput = document.getElementById('patientFullName');
+            if (fullNameInput) {
+                fullNameInput.value = fullName;
+            }
+
+            const contactInput = document.getElementById('patientContactNumber');
+            if (contactInput) {
+                contactInput.value = patient.user.phone || '';
+            }
+
+            console.log('Dashboard update complete');
+        }
     </script>
 
     <!-- ═══ TOP NAVIGATION ════════════════════════════ -->
@@ -1574,11 +1685,11 @@
                         <div class="form-grid-2">
                             <div class="form-group">
                                 <label>Full Name</label>
-                                <input type="text" value="Sarah Connor">
+                                <input id="patientFullName" type="text" value="Sarah Connor">
                             </div>
                             <div class="form-group">
                                 <label>Contact Number</label>
-                                <input type="tel" value="+1 (555) 123-4567">
+                                <input id="patientContactNumber" type="tel" value="+1 (555) 123-4567">
                             </div>
                         </div>
                         <div style="text-align:right;">

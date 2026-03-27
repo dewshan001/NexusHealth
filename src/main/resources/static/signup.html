@@ -122,21 +122,6 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="role">Role</label>
-                        <div class="login-input-wrap">
-                            <span class="material-symbols-outlined" aria-hidden="true">stethoscope</span>
-                            <select class="form-input login-input login-select" id="role" name="role" required>
-                                <option value="" disabled selected>Select your role</option>
-                                <option value="patient">Patient</option>
-                                <option value="doctor">Doctor</option>
-                                <option value="receptionist">Receptionist</option>
-                                <option value="pharmacist">Pharmacist</option>
-                                <option value="admin">Administrator</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
                         <label class="form-label" for="signup-password">Password</label>
                         <div class="login-input-wrap">
                             <span class="material-symbols-outlined" aria-hidden="true">lock</span>
@@ -177,7 +162,6 @@
             const lastName = document.getElementById('last-name').value;
             const email = document.getElementById('signup-email').value;
             const phone = document.getElementById('phone').value;
-            const role = document.getElementById('role').value.toUpperCase();
             const password = document.getElementById('signup-password').value;
             const confirmPassword = document.getElementById('confirm-password').value;
 
@@ -204,7 +188,6 @@
                         lastName: lastName,
                         email: email,
                         phone: phone,
-                        role: role,
                         password: password
                     })
                 });
@@ -214,21 +197,12 @@
                 if (response.ok && data.token) {
                     // Store token in localStorage
                     localStorage.setItem('token', data.token);
-                    localStorage.setItem('userRole', role);
+                    localStorage.setItem('userRole', 'PATIENT');
 
                     alert('Account created successfully! Redirecting to dashboard...');
 
-                    // Redirect based on role
-                    const roleRedirects = {
-                        'PATIENT': 'patient-dashboard.html',
-                        'DOCTOR': 'doctor-dashboard.html',
-                        'RECEPTIONIST': 'receptionist-dashboard.html',
-                        'PHARMACIST': 'pharmacist-dashboard.html',
-                        'ADMIN': 'admin-dashboard.html'
-                    };
-
-                    const redirectUrl = roleRedirects[role] || 'index.html';
-                    window.location.href = redirectUrl;
+                    // All new signups are PATIENT users
+                    window.location.href = 'patient-dashboard.html';
                 } else {
                     alert(data.message || 'Signup failed. Please try again.');
                 }

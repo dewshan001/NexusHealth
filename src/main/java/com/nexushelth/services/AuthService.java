@@ -2,9 +2,11 @@ package com.nexushelth.services;
 
 import com.nexushelth.dto.LoginRequest;
 import com.nexushelth.dto.LoginResponse;
+import com.nexushelth.dto.PatientDTO;
 import com.nexushelth.dto.SignupRequest;
 import com.nexushelth.dto.UserDTO;
 import com.nexushelth.entities.User;
+import com.nexushelth.enums.UserRole;
 import com.nexushelth.repositories.UserRepository;
 import com.nexushelth.utils.JwtTokenProvider;
 import com.nexushelth.utils.PasswordEncoder;
@@ -17,6 +19,9 @@ public class AuthService {
     
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private PatientService patientService;
     
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
@@ -57,10 +62,16 @@ public class AuthService {
         newUser.setFirstName(signupRequest.getFirstName());
         newUser.setLastName(signupRequest.getLastName());
         newUser.setPhone(signupRequest.getPhone());
-        newUser.setRole(signupRequest.getRole());
+        newUser.setRole(UserRole.PATIENT);
         newUser.setIsActive(true);
         
         User savedUser = userRepository.save(newUser);
+        
+        // Auto-create skeleton Patient record for new PATIENT role users
+        if (savedUser.getRole() == UserRole.PATIENT) {
+            PatientDTO emptyPatient = new PatientDTO();
+            patientService.createPatient(savedUser.getId(), emptyPatient);
+        }
         
         String token = jwtTokenProvider.generateToken(
                 savedUser.getEmail(), 
