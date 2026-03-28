@@ -33,6 +33,9 @@ CREATE TABLE IF NOT EXISTS patients (
     date_of_birth  DATE,
     gender         TEXT CHECK(gender IN ('male','female','other')),
     blood_type     TEXT,
+    height         REAL,
+    weight         REAL,
+    heart_rate     INTEGER,
     address        TEXT,
     last_visit     DATETIME,
     account_status TEXT NOT NULL DEFAULT 'active'
@@ -46,6 +49,7 @@ CREATE TABLE IF NOT EXISTS doctors (
     id                        INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id                   INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
     license_number            TEXT,
+    phone                     TEXT,
     assigned_room             TEXT,
     specialization            TEXT,
     consultation_duration_min INTEGER DEFAULT 30,

@@ -845,19 +845,53 @@
                                     42</p>
                             </div>
                             <hr style="border:none; border-top:1px dashed var(--border-color); margin:1.5rem 0;">
-                            <p style="font-size:0.9rem; margin-bottom:0.75rem;"><strong
-                                    style="color:var(--text-secondary);">Blood Type:</strong> <span
-                                    style="float:right; font-weight:600;">O+</span></p>
-                            <p style="font-size:0.9rem; margin-bottom:0.75rem;"><strong
-                                    style="color:var(--text-secondary);">Height:</strong> <span
-                                    style="float:right; font-weight:600;">165 cm</span></p>
-                            <p style="font-size:0.9rem; margin-bottom:0.75rem;"><strong
-                                    style="color:var(--text-secondary);">Weight:</strong> <span
-                                    style="float:right; font-weight:600;">64 kg</span></p>
-                            <p style="font-size:0.9rem; margin-bottom:0.75rem;"><strong
-                                    style="color:var(--text-secondary);">Heart Rate:</strong> <span
-                                    style="float:right; font-weight:600; color:var(--primary-medical-blue);">72
-                                    bpm</span></p>
+
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <strong style="color:var(--text-secondary); font-size:0.9rem;">Blood Type:</strong>
+                                <input type="text" id="vitals-blood-type" placeholder="e.g. O+"
+                                    style="width: 80px; text-align: right; border: 1px solid transparent; background: transparent; font-weight: 600; outline: none; padding: 0.2rem;"
+                                    onfocus="this.style.border='1px solid var(--border-color)'; this.style.background='var(--panel-input-bg)';"
+                                    onblur="this.style.border='1px solid transparent'; this.style.background='transparent';">
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <strong style="color:var(--text-secondary); font-size:0.9rem;">Height:</strong>
+                                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                                    <input type="text" id="vitals-height" placeholder="e.g. 165"
+                                        style="width: 70px; text-align: right; border: 1px solid transparent; background: transparent; font-weight: 600; outline: none; padding: 0.2rem;"
+                                        onfocus="this.style.border='1px solid var(--border-color)'; this.style.background='var(--panel-input-bg)';"
+                                        onblur="this.style.border='1px solid transparent'; this.style.background='transparent';">
+                                    <span
+                                        style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">cm</span>
+                                </div>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <strong style="color:var(--text-secondary); font-size:0.9rem;">Weight:</strong>
+                                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                                    <input type="text" id="vitals-weight" placeholder="e.g. 64"
+                                        style="width: 70px; text-align: right; border: 1px solid transparent; background: transparent; font-weight: 600; outline: none; padding: 0.2rem;"
+                                        onfocus="this.style.border='1px solid var(--border-color)'; this.style.background='var(--panel-input-bg)';"
+                                        onblur="this.style.border='1px solid transparent'; this.style.background='transparent';">
+                                    <span
+                                        style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">kg</span>
+                                </div>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <strong style="color:var(--text-secondary); font-size:0.9rem;">Heart Rate:</strong>
+                                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                                    <input type="text" id="vitals-heart-rate" placeholder="e.g. 72"
+                                        style="width: 70px; text-align: right; border: 1px solid transparent; background: transparent; font-weight: 600; outline: none; padding: 0.2rem; color: var(--primary-medical-blue);"
+                                        onfocus="this.style.border='1px solid var(--border-color)'; this.style.background='var(--panel-input-bg)';"
+                                        onblur="this.style.border='1px solid transparent'; this.style.background='transparent';">
+                                    <span
+                                        style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">bpm</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline" style="width: 100%; margin-top: 1rem; padding: 0.5rem;"
+                                onclick="savePatientVitals()">Save Vitals</button>
                         </div>
                     </div>
 
@@ -888,20 +922,10 @@
                                 <h3
                                     style="margin-bottom: 1rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                                     Medical History</h3>
-                                <div class="history-item">
-                                    <h4
-                                        style="font-size:0.95rem; display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-                                        Hypertension <span>Diagnosed: 2023</span></h4>
-                                    <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5;">
-                                        Currently managed with Lisinopril 10mg daily. Blood pressure stable.</p>
-                                </div>
-                                <div class="history-item">
-                                    <h4
-                                        style="font-size:0.95rem; display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-                                        Past Visit: General Checkup <span>Oct 12, 2025</span></h4>
-                                    <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5;">Patient
-                                        reported occasional palpitations. EKG normal. Advised to reduce caffeine intake.
-                                    </p>
+                                <div id="medical-history-list">
+                                    <div
+                                        style="text-align:center; padding: 2rem; color:var(--text-muted); font-size: 0.9rem;">
+                                        Start a consultation to load history.</div>
                                 </div>
                             </div>
 
@@ -910,7 +934,15 @@
                                 <h3
                                     style="margin-bottom: 1rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                                     Clinical Notes (Current Visit)</h3>
-                                <textarea placeholder="Type your consultation notes and observations here..."
+
+                                <input type="text" id="consultation-diagnosis"
+                                    placeholder="Primary Diagnosis (e.g. general checkup, hypertension)"
+                                    style="width: 100%; padding: 0.8rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 0.95rem; margin-bottom: 1rem; outline: none;"
+                                    onfocus="this.style.borderColor='var(--primary-medical-blue)'"
+                                    onblur="this.style.borderColor='var(--border-color)'">
+
+                                <textarea id="consultation-notes"
+                                    placeholder="Type your consultation notes and observations here..."
                                     style="width: 100%; height: 160px; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; resize: vertical; margin-bottom:1.5rem; background: var(--panel-input-bg); color: var(--panel-input-text);"
                                     onfocus="this.style.borderColor='var(--primary-medical-blue)'"
                                     onblur="this.style.borderColor='var(--border-color)'"></textarea>
@@ -922,8 +954,8 @@
                                     <div>
                                         <button class="btn btn-outline" style="margin-right:0.5rem;"
                                             onclick="jumpToPharmacy()">Issue Prescription</button>
-                                        <button class="btn btn-primary"
-                                            onclick="showToast('Consultation notes saved to patient record.')">Save
+                                        <button class="btn btn-primary" id="btn-complete-consult"
+                                            onclick="completeConsultation()">Save
                                             Notes & Complete</button>
                                     </div>
                                 </div>
@@ -1065,7 +1097,7 @@
                                     <label
                                         style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Full
                                         Name</label>
-                                    <input type="text" value="Dr. Sarah Jenkins"
+                                    <input type="text" id="settingsName" value=""
                                         style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: var(--panel-input-bg); color: var(--panel-input-text);"
                                         onfocus="this.style.borderColor='var(--primary-medical-blue)'"
                                         onblur="this.style.borderColor='var(--border-color)'">
@@ -1074,15 +1106,15 @@
                                     <label
                                         style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Contact
                                         Number</label>
-                                    <input type="tel" value="+1 (555) 987-6543"
+                                    <input type="tel" id="settingsPhone" value=""
                                         style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: var(--panel-input-bg); color: var(--panel-input-text);"
                                         onfocus="this.style.borderColor='var(--primary-medical-blue)'"
                                         onblur="this.style.borderColor='var(--border-color)'">
                                 </div>
                             </div>
                             <div style="margin-top: 1.5rem; text-align: right;">
-                                <button class="btn btn-primary"
-                                    onclick="showToast('Personal info saved successfully!')">Save Personal Info</button>
+                                <button class="btn btn-primary" onclick="saveDoctorProfile()">Save Personal
+                                    Info</button>
                             </div>
                         </div>
 
@@ -1097,7 +1129,7 @@
                                     <label
                                         style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Current
                                         Password</label>
-                                    <input type="password" placeholder="••••••••"
+                                    <input type="password" id="settingsCurrentPass" placeholder="••••••••"
                                         style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: var(--panel-input-bg); color: var(--panel-input-text);"
                                         onfocus="this.style.borderColor='var(--primary-medical-blue)'"
                                         onblur="this.style.borderColor='var(--border-color)'">
@@ -1107,7 +1139,7 @@
                                         <label
                                             style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">New
                                             Password</label>
-                                        <input type="password" placeholder="Min 8 characters"
+                                        <input type="password" id="settingsNewPass" placeholder="Min 8 characters"
                                             style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: var(--panel-input-bg); color: var(--panel-input-text);"
                                             onfocus="this.style.borderColor='var(--primary-medical-blue)'"
                                             onblur="this.style.borderColor='var(--border-color)'">
@@ -1116,7 +1148,7 @@
                                         <label
                                             style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Confirm
                                             New Password</label>
-                                        <input type="password"
+                                        <input type="password" id="settingsConfirmPass"
                                             style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: var(--panel-input-bg); color: var(--panel-input-text);"
                                             onfocus="this.style.borderColor='var(--primary-medical-blue)'"
                                             onblur="this.style.borderColor='var(--border-color)'">
@@ -1124,8 +1156,7 @@
                                 </div>
                             </div>
                             <div style="margin-top: 1.5rem; text-align: right;">
-                                <button class="btn btn-primary"
-                                    onclick="showToast('Password updated successfully!')">Update Password</button>
+                                <button class="btn btn-primary" onclick="saveDoctorPassword()">Update Password</button>
                             </div>
                         </div>
                     </div>
@@ -1247,7 +1278,13 @@
         }
 
         // 2. Patient Consultations Start Flow
-        function startConsultation(name, id, allergies) {
+        let currentConsApptId = null;
+        let currentConsPatientCode = null;
+
+        async function startConsultation(apptId, name, id, allergies) {
+            currentConsApptId = apptId;
+            currentConsPatientCode = id;
+
             // Populate consultation tab
             document.getElementById('consult-empty-state').style.display = 'none';
             document.getElementById('patient-demographics').style.display = 'block';
@@ -1255,7 +1292,7 @@
 
             document.getElementById('p-name').innerText = name;
             document.getElementById('p-id').innerText = 'ID: ' + id;
-            document.getElementById('p-initial').innerText = name.charAt(0);
+            document.getElementById('p-initial').innerText = name.charAt(0) || 'P';
 
             // Handle allergy flag
             const allergyBox = document.getElementById('allergy-box');
@@ -1269,8 +1306,158 @@
             // pre-fill pharmacy tab patient name
             document.getElementById('rx-patient-name').value = name;
 
+            // Clear previous notes
+            document.getElementById('consultation-diagnosis').value = '';
+            document.getElementById('consultation-notes').value = '';
+
+            // Clear current vitals inputs
+            document.getElementById('vitals-blood-type').value = '';
+            document.getElementById('vitals-height').value = '';
+            document.getElementById('vitals-weight').value = '';
+            document.getElementById('vitals-heart-rate').value = '';
+
             // Switch to consultations tab
             switchTab('consultations');
+
+            // Fetch Vitals
+            try {
+                const vRes = await fetch(`/api/consultations/patient-vitals?patientCode=${encodeURIComponent(id)}`);
+                const vData = await vRes.json();
+                if (vData.success && vData.data) {
+                    document.getElementById('vitals-blood-type').value = vData.data.bloodType || '';
+                    document.getElementById('vitals-height').value = vData.data.height || '';
+                    document.getElementById('vitals-weight').value = vData.data.weight || '';
+                    document.getElementById('vitals-heart-rate').value = vData.data.heartRate || '';
+                }
+            } catch (err) {
+                console.error("Error fetching vitals:", err);
+            }
+
+            // Fetch Medical History
+            const historyList = document.getElementById('medical-history-list');
+            if (!historyList) return;
+
+            historyList.innerHTML = '<div style="text-align:center; padding: 2rem;"><span class="material-symbols-outlined" style="animation: spin 1s linear infinite;">sync</span></div>';
+
+            try {
+                const response = await fetch(`/api/consultations/history?patientCode=${encodeURIComponent(id)}`);
+                const result = await response.json();
+                if (result.success && result.data && result.data.length > 0) {
+                    let html = '';
+                    result.data.forEach(item => {
+                        html += `
+                            <div class="history-item" style="border-left: 3px solid var(--primary-medical-blue); padding-left: 1rem; margin-bottom: 1.5rem;">
+                                <h4 style="font-size:0.95rem; display:flex; justify-content:space-between; margin-bottom:0.25rem;">
+                                    ${item.diagnosis || 'General Checkup'} 
+                                    <span style="font-size:0.8rem; font-weight:normal; color:var(--text-muted);">${item.date}</span>
+                                </h4>
+                                <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5; margin-bottom:0.25rem;">${item.notes || 'No notes provided.'}</p>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                    <span class="material-symbols-outlined" style="font-size:14px; vertical-align:middle;">person</span> Dr. ${item.doctorName}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    historyList.innerHTML = html;
+                } else {
+                    historyList.innerHTML = '<div style="text-align:center; padding: 2rem; color:var(--text-muted); font-size: 0.9rem;">No past consultation history found.</div>';
+                }
+            } catch (error) {
+                console.error("Error fetching history:", error);
+                historyList.innerHTML = '<div style="text-align:center; padding: 1rem; color:var(--danger-color); font-size: 0.9rem;">Failed to fetch history.</div>';
+            }
+        }
+
+        async function savePatientVitals() {
+            if (!currentConsPatientCode) {
+                showToast("No active patient selected.", true);
+                return;
+            }
+            const bType = document.getElementById('vitals-blood-type').value.trim();
+            const h = document.getElementById('vitals-height').value.trim();
+            const w = document.getElementById('vitals-weight').value.trim();
+            const hr = document.getElementById('vitals-heart-rate').value.trim();
+
+            const formData = new URLSearchParams();
+            formData.append('patientCode', currentConsPatientCode);
+            formData.append('bloodType', bType);
+            formData.append('height', h);
+            formData.append('weight', w);
+            formData.append('heartRate', hr);
+
+            try {
+                const response = await fetch('/api/consultations/patient-vitals', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast("Patient vitals saved successfully.");
+                } else {
+                    showToast(result.message || "Failed to update vitals", true);
+                }
+            } catch (err) {
+                showToast("Error updating vitals", true);
+            }
+        }
+
+        async function completeConsultation() {
+            if (!currentConsApptId || !currentConsPatientCode) {
+                showToast("Cannot save: No active consultation selected.", true);
+                return;
+            }
+
+            const diagnosis = document.getElementById('consultation-diagnosis').value.trim() || 'General Checkup';
+            const notes = document.getElementById('consultation-notes').value.trim();
+
+            if (!notes) {
+                showToast("Please enter clinical notes before saving.", true);
+                return;
+            }
+
+            const btn = document.getElementById('btn-complete-consult');
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
+            try {
+                const formData = new URLSearchParams();
+                formData.append('appointmentId', currentConsApptId);
+                formData.append('patientCode', currentConsPatientCode);
+                formData.append('diagnosis', diagnosis);
+                formData.append('notes', notes);
+
+                const response = await fetch('/api/consultations/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast("Consultation notes saved to patient record successfully.");
+
+                    // Reset Workspace
+                    document.getElementById('consultation-workspace').style.display = 'none';
+                    document.getElementById('patient-demographics').style.display = 'none';
+                    document.getElementById('consult-empty-state').style.display = 'block';
+                    currentConsApptId = null;
+                    currentConsPatientCode = null;
+
+                    // Refresh Schedule to show complete
+                    fetchTodaySchedule();
+                    switchTab('schedule');
+                } else {
+                    showToast(result.message || "Failed to save consultation", true);
+                }
+            } catch (err) {
+                console.error("Save error:", err);
+                showToast("Network error. Could not save consultation.", true);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Save Notes & Complete";
+            }
         }
 
         // Jump to pharmacy
@@ -1394,20 +1581,20 @@
                                 <div>
                                     <span class="status-badge" style="background:var(--badge-success-bg); color:var(--badge-success-color); padding:0.4rem 0.8rem; border-radius:999px; font-weight:600; font-size:0.8rem; display:inline-block; margin-bottom:0.5rem;">Completed</span>
                                     <br>
-                                    <button class="btn btn-outline-primary" style="padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="startConsultation('${appt.patientName}', '${appt.patientCode}', 'None')">View</button>
+                                    <button class="btn btn-outline-primary" style="padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="startConsultation(${appt.id}, '${appt.patientName}', '${appt.patientCode}', 'None')">View</button>
                                 </div>
                             `;
                         } else if (statusStr === 'scheduled' || statusStr === 'confirmed') {
                             if (!foundCurrent) {
                                 statusClass = 'current';
                                 badgeHtml = `<span class="next-badge">NEXT</span>`;
-                                actionHtml = `<div><button class="btn btn-primary" onclick="startConsultation('${appt.patientName}', '${appt.patientCode}', 'None')">Start Consultation</button></div>`;
+                                actionHtml = `<div><button class="btn btn-primary" onclick="startConsultation(${appt.id}, '${appt.patientName}', '${appt.patientCode}', 'None')">Start Consultation</button></div>`;
                                 foundCurrent = true;
                             } else {
-                                actionHtml = `<div><button class="btn btn-outline-primary" onclick="startConsultation('${appt.patientName}', '${appt.patientCode}', 'None')">View Details</button></div>`;
+                                actionHtml = `<div><button class="btn btn-outline-primary" onclick="startConsultation(${appt.id}, '${appt.patientName}', '${appt.patientCode}', 'None')">View Details</button></div>`;
                             }
                         } else {
-                            actionHtml = `<div><button class="btn btn-outline-primary" onclick="startConsultation('${appt.patientName}', '${appt.patientCode}', 'None')">View Details</button></div>`;
+                            actionHtml = `<div><button class="btn btn-outline-primary" onclick="startConsultation(${appt.id}, '${appt.patientName}', '${appt.patientCode}', 'None')">View Details</button></div>`;
                         }
 
                         htmlContent += `
@@ -1444,6 +1631,91 @@
                 `;
             }
         }
+        // Settings page functions
+        let currentOptionsPicBase64 = null;
+
+        function updateProfilePic(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const base64 = e.target.result;
+                document.getElementById('optionsProfilePic').src = base64;
+                document.getElementById('doctorNavProfilePic').src = base64;
+                currentOptionsPicBase64 = base64;
+                showToast("Preview updated! Click Save Personal Info to commit.", false);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function loadDoctorData() {
+            try {
+                const res = await fetch('/api/doctor/profile');
+                if (!res.ok) throw new Error('Failed to fetch doc profile');
+                const data = await res.json();
+                if (data.success && data.doctor) {
+                    const doc = data.doctor;
+                    document.querySelector('.nav-profile-name').textContent = doc.fullName;
+
+                    if (doc.profilePicture && doc.profilePicture.trim() !== '') {
+                        document.getElementById('doctorNavProfilePic').src = doc.profilePicture;
+                        document.getElementById('optionsProfilePic').src = doc.profilePicture;
+                    }
+
+                    const settingsName = document.getElementById('settingsName');
+                    if (settingsName) settingsName.value = doc.fullName || '';
+                    const settingsPhone = document.getElementById('settingsPhone');
+                    if (settingsPhone) settingsPhone.value = doc.phone || '';
+                }
+            } catch (e) { console.error('Error loading doctor data', e); }
+        }
+
+        function saveDoctorProfile() {
+            const name = document.getElementById('settingsName').value;
+            const phone = document.getElementById('settingsPhone').value;
+            const payload = { fullName: name, phone: phone };
+            if (currentOptionsPicBase64 !== null) {
+                payload.profilePicture = currentOptionsPicBase64;
+            }
+
+            fetch('/api/settings/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    showToast('Personal info saved successfully!');
+                    loadDoctorData();
+                    currentOptionsPicBase64 = null;
+                } else alert('Failed: ' + data.message);
+            }).catch(e => { console.error(e); alert('Error saving profile'); });
+        }
+
+        function saveDoctorPassword() {
+            const currentPass = document.getElementById('settingsCurrentPass').value;
+            const newPass = document.getElementById('settingsNewPass').value;
+            const confirmPass = document.getElementById('settingsConfirmPass').value;
+
+            if (newPass !== confirmPass) { alert("New passwords do not match."); return; }
+            if (!currentPass || !newPass) { alert("Please fill in all password fields."); return; }
+
+            const payload = { currentPassword: currentPass, newPassword: newPass };
+
+            fetch('/api/settings/password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    showToast('Password updated successfully!');
+                    document.getElementById('settingsCurrentPass').value = '';
+                    document.getElementById('settingsNewPass').value = '';
+                    document.getElementById('settingsConfirmPass').value = '';
+                } else alert("Failed: " + data.message);
+            }).catch(e => { console.error(e); alert("Error saving password"); });
+        }
+
+        window.addEventListener('load', loadDoctorData);
     </script>
 </body>
 
