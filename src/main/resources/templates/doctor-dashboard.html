@@ -1097,7 +1097,7 @@
                                     <label
                                         style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Full
                                         Name</label>
-                                    <input type="text" value="Dr. Sarah Jenkins"
+                                    <input type="text" id="settingsName" value=""
                                         style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: var(--panel-input-bg); color: var(--panel-input-text);"
                                         onfocus="this.style.borderColor='var(--primary-medical-blue)'"
                                         onblur="this.style.borderColor='var(--border-color)'">
@@ -1106,15 +1106,15 @@
                                     <label
                                         style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Contact
                                         Number</label>
-                                    <input type="tel" value="+1 (555) 987-6543"
+                                    <input type="tel" id="settingsPhone" value=""
                                         style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: var(--panel-input-bg); color: var(--panel-input-text);"
                                         onfocus="this.style.borderColor='var(--primary-medical-blue)'"
                                         onblur="this.style.borderColor='var(--border-color)'">
                                 </div>
                             </div>
                             <div style="margin-top: 1.5rem; text-align: right;">
-                                <button class="btn btn-primary"
-                                    onclick="showToast('Personal info saved successfully!')">Save Personal Info</button>
+                                <button class="btn btn-primary" onclick="saveDoctorProfile()">Save Personal
+                                    Info</button>
                             </div>
                         </div>
 
@@ -1129,7 +1129,7 @@
                                     <label
                                         style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Current
                                         Password</label>
-                                    <input type="password" placeholder="••••••••"
+                                    <input type="password" id="settingsCurrentPass" placeholder="••••••••"
                                         style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: var(--panel-input-bg); color: var(--panel-input-text);"
                                         onfocus="this.style.borderColor='var(--primary-medical-blue)'"
                                         onblur="this.style.borderColor='var(--border-color)'">
@@ -1139,7 +1139,7 @@
                                         <label
                                             style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">New
                                             Password</label>
-                                        <input type="password" placeholder="Min 8 characters"
+                                        <input type="password" id="settingsNewPass" placeholder="Min 8 characters"
                                             style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: var(--panel-input-bg); color: var(--panel-input-text);"
                                             onfocus="this.style.borderColor='var(--primary-medical-blue)'"
                                             onblur="this.style.borderColor='var(--border-color)'">
@@ -1148,7 +1148,7 @@
                                         <label
                                             style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Confirm
                                             New Password</label>
-                                        <input type="password"
+                                        <input type="password" id="settingsConfirmPass"
                                             style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: var(--panel-input-bg); color: var(--panel-input-text);"
                                             onfocus="this.style.borderColor='var(--primary-medical-blue)'"
                                             onblur="this.style.borderColor='var(--border-color)'">
@@ -1156,8 +1156,7 @@
                                 </div>
                             </div>
                             <div style="margin-top: 1.5rem; text-align: right;">
-                                <button class="btn btn-primary"
-                                    onclick="showToast('Password updated successfully!')">Update Password</button>
+                                <button class="btn btn-primary" onclick="saveDoctorPassword()">Update Password</button>
                             </div>
                         </div>
                     </div>
@@ -1632,6 +1631,91 @@
                 `;
             }
         }
+        // Settings page functions
+        let currentOptionsPicBase64 = null;
+
+        function updateProfilePic(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const base64 = e.target.result;
+                document.getElementById('optionsProfilePic').src = base64;
+                document.getElementById('doctorNavProfilePic').src = base64;
+                currentOptionsPicBase64 = base64;
+                showToast("Preview updated! Click Save Personal Info to commit.", false);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function loadDoctorData() {
+            try {
+                const res = await fetch('/api/doctor/profile');
+                if (!res.ok) throw new Error('Failed to fetch doc profile');
+                const data = await res.json();
+                if (data.success && data.doctor) {
+                    const doc = data.doctor;
+                    document.querySelector('.nav-profile-name').textContent = doc.fullName;
+
+                    if (doc.profilePicture && doc.profilePicture.trim() !== '') {
+                        document.getElementById('doctorNavProfilePic').src = doc.profilePicture;
+                        document.getElementById('optionsProfilePic').src = doc.profilePicture;
+                    }
+
+                    const settingsName = document.getElementById('settingsName');
+                    if (settingsName) settingsName.value = doc.fullName || '';
+                    const settingsPhone = document.getElementById('settingsPhone');
+                    if (settingsPhone) settingsPhone.value = doc.phone || '';
+                }
+            } catch (e) { console.error('Error loading doctor data', e); }
+        }
+
+        function saveDoctorProfile() {
+            const name = document.getElementById('settingsName').value;
+            const phone = document.getElementById('settingsPhone').value;
+            const payload = { fullName: name, phone: phone };
+            if (currentOptionsPicBase64 !== null) {
+                payload.profilePicture = currentOptionsPicBase64;
+            }
+
+            fetch('/api/settings/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    showToast('Personal info saved successfully!');
+                    loadDoctorData();
+                    currentOptionsPicBase64 = null;
+                } else alert('Failed: ' + data.message);
+            }).catch(e => { console.error(e); alert('Error saving profile'); });
+        }
+
+        function saveDoctorPassword() {
+            const currentPass = document.getElementById('settingsCurrentPass').value;
+            const newPass = document.getElementById('settingsNewPass').value;
+            const confirmPass = document.getElementById('settingsConfirmPass').value;
+
+            if (newPass !== confirmPass) { alert("New passwords do not match."); return; }
+            if (!currentPass || !newPass) { alert("Please fill in all password fields."); return; }
+
+            const payload = { currentPassword: currentPass, newPassword: newPass };
+
+            fetch('/api/settings/password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    showToast('Password updated successfully!');
+                    document.getElementById('settingsCurrentPass').value = '';
+                    document.getElementById('settingsNewPass').value = '';
+                    document.getElementById('settingsConfirmPass').value = '';
+                } else alert("Failed: " + data.message);
+            }).catch(e => { console.error(e); alert("Error saving password"); });
+        }
+
+        window.addEventListener('load', loadDoctorData);
     </script>
 </body>
 

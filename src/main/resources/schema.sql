@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS doctors (
     id                        INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id                   INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
     license_number            TEXT,
+    phone                     TEXT,
     assigned_room             TEXT,
     specialization            TEXT,
     consultation_duration_min INTEGER DEFAULT 30,

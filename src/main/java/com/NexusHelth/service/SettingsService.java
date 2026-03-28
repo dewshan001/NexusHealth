@@ -16,12 +16,22 @@ public class SettingsService {
                 + (profilePicture != null && !profilePicture.isEmpty() ? ", profile_picture = ?" : "")
                 + " WHERE id = ?";
         String updatePatient = "UPDATE patients SET phone = ? WHERE user_id = ?";
+        String updateDoctor = "UPDATE doctors SET phone = ? WHERE user_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection()) {
+            // Ensure the phone column exists in doctors table without crashing if it
+            // already does
+            try (java.sql.Statement stmt = conn.createStatement()) {
+                stmt.execute("ALTER TABLE doctors ADD COLUMN phone TEXT");
+            } catch (Exception ignored) {
+                // Ignored, column likely already exists
+            }
+
             conn.setAutoCommit(false); // Transaction block
 
             try (PreparedStatement uStmt = conn.prepareStatement(updateUser);
-                    PreparedStatement pStmt = conn.prepareStatement(updatePatient)) {
+                    PreparedStatement pStmt = conn.prepareStatement(updatePatient);
+                    PreparedStatement dStmt = conn.prepareStatement(updateDoctor)) {
 
                 uStmt.setString(1, fullName);
                 int paramIndex = 2;
@@ -33,8 +43,12 @@ public class SettingsService {
                 pStmt.setString(1, phone);
                 pStmt.setInt(2, userId);
 
+                dStmt.setString(1, phone);
+                dStmt.setInt(2, userId);
+
                 uStmt.executeUpdate();
                 pStmt.executeUpdate();
+                dStmt.executeUpdate();
 
                 conn.commit();
                 return true;
