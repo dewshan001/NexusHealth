@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS consultations (
 CREATE TABLE IF NOT EXISTS medicines (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     name        TEXT    NOT NULL,
+    batch_number TEXT,
     category    TEXT,
     unit_price  REAL    NOT NULL DEFAULT 0.0,
     stock_level INTEGER NOT NULL DEFAULT 0,
@@ -182,6 +183,23 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 );
 
 -- ─────────────────────────────────────────────
+-- 13. PHARMACIST_ALERTS
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS pharmacist_alerts (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    medicine_id   INTEGER NOT NULL REFERENCES medicines(id) ON DELETE CASCADE,
+    medicine_name TEXT    NOT NULL,
+    alert_type    TEXT    NOT NULL CHECK(alert_type IN ('expiry_soon','low_stock')),
+    severity      TEXT    NOT NULL CHECK(severity IN ('warning','urgent')),
+    message       TEXT    NOT NULL,
+    is_active     INTEGER NOT NULL DEFAULT 1,
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    resolved_at   DATETIME,
+    UNIQUE(medicine_id, alert_type)
+);
+
+-- ─────────────────────────────────────────────
 -- INDEXES
 -- ─────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_appt_date           ON appointments(appointment_date);
@@ -192,6 +210,7 @@ CREATE INDEX IF NOT EXISTS idx_rx_patient          ON prescriptions(patient_id);
 CREATE INDEX IF NOT EXISTS idx_med_status          ON medicines(status);
 CREATE INDEX IF NOT EXISTS idx_txn_date            ON transactions(transacted_at);
 CREATE INDEX IF NOT EXISTS idx_audit_user          ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_ph_alert_active     ON pharmacist_alerts(is_active, severity, updated_at);
 
 -- ─────────────────────────────────────────────
 -- TRIGGER: auto-update updated_at on users
