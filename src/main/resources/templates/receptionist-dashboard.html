@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusHealth - Receptionist Dashboard</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Google Material Icons -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <script th:src="@{/theme.js}"></script>
+
+    <!-- External CSS -->
+    <link rel="stylesheet" th:href="@{/style.css}">
+
+    <style>
+        :root {
+            --rcp-bg-base: #eff4ff;
+            --rcp-blob1: rgba(0, 102, 255, 0.12);
+            --rcp-blob2: rgba(0, 201, 167, 0.1);
+            --rcp-blob3: rgba(120, 40, 255, 0.08);
+            --rcp-nav-bg: rgba(255, 255, 255, 0.82);
+            --rcp-nav-border: rgba(0, 102, 255, 0.1);
+            --rcp-nav-shadow: 0 2px 16px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            --rcp-tab-color: #374151;
+            --rcp-tab-hover: rgba(0, 102, 255, 0.08);
+            --rcp-card-bg: #ffffff;
+            --rcp-card-border: #e5e7eb;
+            --rcp-table-head: #f9fafb;
+            --rcp-table-row-hover: #f3f6ff;
+        }
+
+        :root[data-theme="dark"] {
+            --rcp-bg-base: #0a1628;
+            --rcp-blob1: rgba(0, 102, 255, 0.35);
+            --rcp-blob2: rgba(0, 201, 167, 0.28);
+            --rcp-blob3: rgba(120, 40, 255, 0.18);
+            --rcp-nav-bg: rgba(255, 255, 255, 0.12);
+            --rcp-nav-border: rgba(255, 255, 255, 0.2);
+            --rcp-nav-shadow: 0 2px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            --rcp-tab-color: rgba(255, 255, 255, 0.78);
+            --rcp-tab-hover: rgba(255, 255, 255, 0.12);
+            --rcp-card-bg: rgba(17, 24, 39, 0.82);
+            --rcp-card-border: rgba(148, 163, 184, 0.2);
+            --rcp-table-head: rgba(30, 41, 59, 0.62);
+            --rcp-table-row-hover: rgba(59, 130, 246, 0.12);
+        }
+
+        /* Dashboard Specific Inline Styles */
+        body {
+            background: var(--rcp-bg-base);
+            background-image:
+                radial-gradient(ellipse 80% 60% at 20% 10%, var(--rcp-blob1) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 80% at 80% 90%, var(--rcp-blob2) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 50% at 60% 40%, var(--rcp-blob3) 0%, transparent 50%);
+            background-attachment: fixed;
+            transition: background 0.4s ease;
+        }
+
+        .dashboard-container {
+            display: block;
+            padding: 96px 2rem 2rem;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: var(--rcp-nav-bg);
+            border-bottom: 1px solid var(--rcp-nav-border);
+            box-shadow: var(--rcp-nav-shadow);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            backdrop-filter: blur(28px) saturate(180%);
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .nav-brand .logo-icon {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--primary-medical-blue), #00C9A7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-brand .logo-text {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--primary-medical-blue), #0044aa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .nav-links::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.58rem 0.95rem;
+            border: 1px solid transparent;
+            background: transparent;
+            text-align: left;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--rcp-tab-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .nav-tab:hover {
+            background: var(--rcp-tab-hover);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--primary-medical-blue) 0%, #0056db 100%);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
+        }
+
+        .nav-tab .material-symbols-outlined {
+            font-size: 19px;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .nav-profile-info {
+            text-align: right;
+            line-height: 1.2;
+        }
+
+        .nav-profile-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .nav-profile-role {
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: #9A3412;
+        }
+
+        .nav-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid transparent;
+            background: linear-gradient(#fff, #fff) padding-box,
+                linear-gradient(135deg, var(--primary-medical-blue), #00C9A7) border-box;
+        }
+
+        .theme-toggle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 102, 255, 0.25);
+            background: rgba(0, 102, 255, 0.08);
+            color: #0066FF;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            flex-shrink: 0;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(0, 102, 255, 0.15);
+            border-color: rgba(0, 102, 255, 0.4);
+            transform: rotate(15deg) scale(1.08);
+        }
+
+        .theme-toggle .material-symbols-outlined {
+            font-size: 22px;
+            transition: transform 0.4s ease;
+        }
+
+        :root[data-theme="dark"] .theme-toggle {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        :root[data-theme="dark"] .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.22);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .nav-utility-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.55rem 0.85rem;
+            border: 1px solid var(--rcp-card-border);
+            background: transparent;
+            font-size: 0.83rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .nav-utility-btn:hover {
+            background: var(--rcp-tab-hover);
+            color: var(--primary-medical-blue);
+            border-color: rgba(0, 102, 255, 0.35);
+        }
+
+        .nav-logout {
+            color: #EF4444;
+            border-color: rgba(239, 68, 68, 0.35);
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        .nav-logout:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: white;
+        }
+
+        @media (max-width: 1200px) {
+            .nav-profile-info {
+                display: none;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .top-nav {
+                padding: 0 1rem;
+            }
+
+            .nav-links {
+                flex: 1;
+                margin: 0 0.7rem;
+            }
+
+            .dashboard-container {
+                padding: 92px 1rem 1.5rem;
+            }
+
+            .nav-utility-btn .btn-label {
+                display: none;
+            }
+        }
+
+        /* Content Area */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .content-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-medical-blue);
+        }
+
+        /* Reception Specific Components */
+
+        .recep-card {
+            background: var(--rcp-card-bg);
+            border-radius: var(--border-radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--rcp-card-border);
+            margin-bottom: 1.5rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid var(--rcp-card-border);
+            color: var(--text-primary);
+        }
+
+        .data-table th {
+            background-color: var(--rcp-table-head);
+            color: var(--text-secondary);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .data-table tr:hover {
+            background-color: var(--rcp-table-row-hover);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            border-color: var(--primary-medical-blue);
+        }
+
+        /* Badges */
+        .status-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+
+        .status-confirmed {
+            background: #DEF7EC;
+            color: #03543F;
+        }
+
+        .status-pending {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .status-cancelled {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .payment-unpaid {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .payment-paid {
+            background: #E0F2FE;
+            color: #0369A1;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="top-nav">
+        <a href="/" class="nav-brand">
+            <span class="material-symbols-outlined logo-icon">medical_services</span>
+            <span class="logo-text">NexusHealth</span>
+        </a>
+
+        <div class="nav-links">
+            <button class="nav-tab active" data-tab="patients" onclick="switchTab('patients', event)">
+                <span class="material-symbols-outlined">how_to_reg</span>
+                Patients
+            </button>
+            <button class="nav-tab" data-tab="appointments" onclick="switchTab('appointments', event)">
+                <span class="material-symbols-outlined">event_available</span>
+                Appointments
+            </button>
+            <button class="nav-tab" data-tab="billing" onclick="switchTab('billing', event)">
+                <span class="material-symbols-outlined">point_of_sale</span>
+                Billing
+            </button>
+            <button class="nav-tab" data-tab="options" onclick="switchTab('options', event)">
+                <span class="material-symbols-outlined">settings</span>
+                Options
+            </button>
+        </div>
+
+        <div class="nav-right">
+            <div class="nav-profile">
+                <div class="nav-profile-info">
+                    <div class="nav-profile-name">David Miller</div>
+                    <div class="nav-profile-role">Front Desk Reception</div>
+                </div>
+                <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80"
+                    alt="Receptionist Profile" id="sidebarProfilePic">
+            </div>
+
+            <button class="theme-toggle" id="recepThemeToggle" onclick="toggleTheme()" title="Toggle theme"
+                aria-label="Toggle dark mode" aria-pressed="false">
+                <span class="material-symbols-outlined" id="recepThemeIcon">dark_mode</span>
+            </button>
+
+            <a href="/" class="nav-utility-btn">
+                <span class="material-symbols-outlined">home</span>
+                <span class="btn-label">Home</span>
+            </a>
+
+            <button class="nav-utility-btn nav-logout" onclick="window.location.href='/logout'">
+                <span class="material-symbols-outlined">logout</span>
+                <span class="btn-label">Logout</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="dashboard-container">
+        <!-- Main Content Area -->
+        <div class="dashboard-content-area">
+
+            <!-- PATIENT HANDLING TAB -->
+            <div id="tab-patients" class="tab-content active">
+                <div class="content-header">
+                    <h2 class="content-title">Patient Management Core</h2>
+                    <button class="btn btn-primary" onclick="openModal('registerPatientModal')">+ Register New
+                        Patient</button>
+                </div>
+
+                <div class="recep-card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1.2rem;">Search Patient Records</h3>
+                        <div style="position: relative; width: 400px;">
+                            <span class="material-symbols-outlined"
+                                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">search</span>
+                            <input type="text" placeholder="Search by name, patient ID, phone, or DOB..."
+                                style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); outline: none;">
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Patient ID</th>
+                                    <th>Full Name</th>
+                                    <th>Contact No.</th>
+                                    <th>Date of Birth</th>
+                                    <th>Last Visit</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="font-family: monospace; color: var(--text-secondary);">P-1092</td>
+                                    <td style="font-weight:600;">Emily Chen</td>
+                                    <td>+1 (555) 123-4567</td>
+                                    <td>Oct 12, 1990</td>
+                                    <td>Today</td>
+                                    <td>
+                                        <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
+                                            onclick="showToast('Opened patient profile editor')">Update Details</button>
+                                        <button class="btn btn-primary" style="padding:0.3rem 0.6rem;"
+                                            onclick="switchTab('appointments', null); showToast('Quick-Booking activated for Emily Chen')">Book</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-family: monospace; color: var(--text-secondary);">P-8472</td>
+                                    <td style="font-weight:600;">Marcus Johnson</td>
+                                    <td>+1 (555) 987-6543</td>
+                                    <td>Jan 05, 1985</td>
+                                    <td>Oct 12, 2025</td>
+                                    <td>
+                                        <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
+                                            onclick="showToast('Opened patient profile editor')">Update Details</button>
+                                        <button class="btn btn-primary" style="padding:0.3rem 0.6rem;"
+                                            onclick="switchTab('appointments', null); showToast('Quick-Booking activated for Marcus Johnson')">Book</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- APPOINTMENT CONTROL TAB -->
+            <div id="tab-appointments" class="tab-content">
+                <div class="content-header">
+                    <h2 class="content-title">Master Schedule Control</h2>
+                    <div style="display: flex; gap: 1rem;">
+                        <input type="date" class="form-input" value="2026-03-18">
+                        <button class="btn btn-primary" onclick="openModal('bookAppointmentModal')">+ Book Slot</button>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+
+                    <!-- Doctor Filters -->
+                    <div class="recep-card" style="height: fit-content;">
+                        <h3
+                            style="font-size: 1.1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                            Filter by Doctor</h3>
+                        <div class="form-group" style="margin-bottom: 0.5rem;">
+                            <label
+                                style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;">
+                                <input type="radio" name="docFilter" checked>
+                                <span style="font-weight: 600;">All Doctors</span>
+                            </label>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0.5rem;">
+                            <label
+                                style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;">
+                                <input type="radio" name="docFilter">
+                                <span style="font-weight: 500;">Dr. Sarah Jenkins (Cardiology)</span>
+                            </label>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0.5rem;">
+                            <label
+                                style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;">
+                                <input type="radio" name="docFilter">
+                                <span style="font-weight: 500;">Dr. Michael Chen (Gen. Practice)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Today's Schedule -->
+                    <div class="recep-card">
+                        <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem;">Appointments for Today</h3>
+
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Status</th>
+                                    <th>Controls</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="font-weight: 600;">09:00 AM</td>
+                                    <td>Emily Chen</td>
+                                    <td>Dr. Jenkins</td>
+                                    <td><span class="status-badge status-confirmed">Confirmed</span></td>
+                                    <td>
+                                        <button class="btn btn-outline"
+                                            style="padding:0.2rem 0.5rem; font-size: 0.8rem;"
+                                            onclick="showToast('Open Quick-Edit')">Reschedule</button>
+                                        <button class="btn btn-outline"
+                                            style="padding:0.2rem 0.5rem; color:#EF4444; border-color:#FEE2E2; font-size: 0.8rem;"
+                                            onclick="showToast('Appointment successfully unbooked.', true)">Cancel</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;">09:30 AM</td>
+                                    <td>James Morrison</td>
+                                    <td>Dr. Chen</td>
+                                    <td><span class="status-badge status-pending">Pending Check-in</span></td>
+                                    <td>
+                                        <button class="btn btn-primary"
+                                            style="padding:0.2rem 0.5rem; font-size: 0.8rem;"
+                                            onclick="showToast('Patient checked in and doctor notified!')">Check
+                                            In</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;">10:00 AM</td>
+                                    <td><span style="color: var(--text-muted); font-style: italic;">Available
+                                            Slot</span></td>
+                                    <td>Dr. Jenkins</td>
+                                    <td>-</td>
+                                    <td>
+                                        <button class="btn btn-outline-primary"
+                                            style="padding:0.2rem 0.5rem; font-size: 0.8rem;"
+                                            onclick="openModal('bookAppointmentModal')">Book Here</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td
+                                        style="font-weight: 600; text-decoration: line-through; color: var(--text-muted);">
+                                        10:30 AM</td>
+                                    <td>Sarah Connor</td>
+                                    <td>Dr. Chen</td>
+                                    <td><span class="status-badge status-cancelled">Cancelled</span></td>
+                                    <td>-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- BILLING MANAGEMENT TAB -->
+            <div id="tab-billing" class="tab-content">
+                <div class="content-header">
+                    <h2 class="content-title">Billing & Payment Hub</h2>
+                    <button class="btn btn-primary" onclick="openModal('generateBillModal')">+ Generate New
+                        Bill</button>
+                </div>
+
+                <div class="recep-card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1.2rem;">Pending vs Completed Bills</h3>
+                        <div style="display: flex; gap: 1rem;">
+                            <select class="form-select" style="width: auto; padding: 0.5rem 1rem;">
+                                <option>All Statuses</option>
+                                <option>Unpaid</option>
+                                <option>Paid (Completed)</option>
+                            </select>
+                            <div style="position: relative; width: 250px;">
+                                <span class="material-symbols-outlined"
+                                    style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">search</span>
+                                <input type="text" placeholder="Search Invoice ID..."
+                                    style="width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); outline: none;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice ID</th>
+                                <th>Patient Name</th>
+                                <th>Services</th>
+                                <th>Total Due ($)</th>
+                                <th>Discount</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-family: monospace;">INV-9021</td>
+                                <td style="font-weight: 600;">Emily Chen</td>
+                                <td>Consultation + Meds</td>
+                                <td style="font-weight: 700; font-size: 1.1rem;">$165.50</td>
+                                <td><span style="color:#059669; font-size: 0.85rem;">10% (Ins.)</span></td>
+                                <td><span class="status-badge payment-unpaid">Unpaid</span></td>
+                                <td>
+                                    <button class="btn btn-primary" style="padding:0.4rem 0.8rem;"
+                                        onclick="openModal('recordPaymentModal', 'Emily Chen', 'INV-9021', '165.50')">Pay
+                                        Now</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: monospace;">INV-9020</td>
+                                <td style="font-weight: 600;">Jason Bourne</td>
+                                <td>General Cons.</td>
+                                <td style="font-weight: 700; font-size: 1.1rem;">$100.00</td>
+                                <td>-</td>
+                                <td><span class="status-badge payment-paid">Paid (Card)</span></td>
+                                <td>
+                                    <button class="btn btn-outline" style="padding:0.4rem 0.8rem;"><span
+                                            class="material-symbols-outlined"
+                                            style="font-size: 16px; margin-right:4px;">print</span> Print
+                                        Receipt</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- OPTIONS TAB -->
+            <div id="tab-options" class="tab-content">
+                <div class="content-header">
+                    <h2 class="content-title">Receptionist Account Options</h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 2rem; margin-bottom: 2rem;">
+
+                    <!-- Profile Picture Change -->
+                    <div
+                        style="background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); border-radius: var(--border-radius-md); padding: 2rem; text-align: center; height: fit-content;">
+                        <h3
+                            style="margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; text-align: left;">
+                            Profile Picture</h3>
+                        <div style="position: relative; display: inline-block; margin-bottom: 1.5rem;">
+                            <img id="optionsProfilePic"
+                                src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80"
+                                alt="Current Profile"
+                                style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; padding: 4px; background: linear-gradient(135deg, var(--primary-medical-blue), #00C9A7);">
+                            <label for="profileUpload"
+                                style="position: absolute; bottom: 5px; right: 5px; background: var(--primary-medical-blue); color: white; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.15); border: 2.5px solid white; transition: background 0.2s;">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">photo_camera</span>
+                            </label>
+                            <input type="file" id="profileUpload" accept="image/*" style="display: none;"
+                                onchange="updateProfilePic(event)">
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Allowed
+                            formats: JPG, PNG. Max size: 5MB.</p>
+                        <button class="btn btn-outline-primary" style="width: 100%; font-size: 0.9rem;">Remove
+                            Picture</button>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 2rem;">
+                        <!-- Personal Info -->
+                        <div
+                            style="background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); border-radius: var(--border-radius-md); padding: 2.5rem;">
+                            <h3
+                                style="margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                                Personal Information</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <div>
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" class="form-input" value="David Miller">
+                                </div>
+                                <div>
+                                    <label class="form-label">Contact Number</label>
+                                    <input type="tel" class="form-input" value="+1 (555) 111-2222">
+                                </div>
+                            </div>
+                            <div style="margin-top: 1.5rem; text-align: right;">
+                                <button class="btn btn-primary" onclick="showToast('Profile info saved!')">Save
+                                    Info</button>
+                            </div>
+                        </div>
+
+                        <!-- Security Tab -->
+                        <div
+                            style="background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); border-radius: var(--border-radius-md); padding: 2.5rem;">
+                            <h3
+                                style="margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                                Change Password</h3>
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+                                <div>
+                                    <label class="form-label">Current Password</label>
+                                    <input type="password" class="form-input" placeholder="••••••••">
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                    <div>
+                                        <label class="form-label">New Password</label>
+                                        <input type="password" class="form-input" placeholder="Min 8 characters">
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Confirm New Password</label>
+                                        <input type="password" class="form-input">
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 1.5rem; text-align: right;">
+                                <button class="btn btn-primary" onclick="showToast('Password updated securely!')">Update
+                                    Password</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modals -->
+
+    <!-- Register Patient Modal -->
+    <div class="modal-overlay" id="registerPatientModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
+        <div class="modal-content"
+            style="background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.3rem;">Register New Patient</h3>
+                <span class="material-symbols-outlined" style="cursor: pointer; color: var(--text-secondary);"
+                    onclick="closeModal('registerPatientModal')">close</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <input type="text" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date of Birth</label>
+                    <input type="date" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gender</label>
+                    <select class="form-select">
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Contact Number</label>
+                    <input type="tel" class="form-input" placeholder="+1 (xxx) xxx-xxxx">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input">
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                <button class="btn btn-outline" onclick="closeModal('registerPatientModal')">Cancel</button>
+                <button class="btn btn-primary"
+                    onclick="closeModal('registerPatientModal'); showToast('New patient profile registered successfully!')">Complete
+                    Registration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Payment Modal -->
+    <div class="modal-overlay" id="recordPaymentModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
+        <div class="modal-content"
+            style="background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 450px; width: 90%;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                <h3 style="font-size: 1.3rem;">Process Payment</h3>
+                <span class="material-symbols-outlined" style="cursor: pointer; color: var(--text-secondary);"
+                    onclick="closeModal('recordPaymentModal')">close</span>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Invoice <span id="payInvoiceId"
+                        style="font-weight: 600;">INV-0000</span> for</p>
+                <h2 id="payPatientName" style="color: var(--primary-medical-blue); margin: 0.25rem 0;">Patient Name</h2>
+                <h1 id="payAmount" style="font-size: 2.5rem; font-weight: 800; margin-top: 0.5rem;">$0.00</h1>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Apply Discount Rate</label>
+                <select class="form-select">
+                    <option>None (0%)</option>
+                    <option>Senior Citizen (15%)</option>
+                    <option>Standard Insurance (10%)</option>
+                    <option>Premium Insurance (25%)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Payment Method</label>
+                <div style="display:flex; gap: 1rem;">
+                    <label
+                        style="flex:1; border: 1px solid var(--primary-medical-blue); border-radius: var(--border-radius-sm); padding: 0.75rem; text-align: center; cursor: pointer; background: #EBF5FF;">
+                        <input type="radio" name="payMethod" checked style="display:block; margin: 0 auto 0.5rem auto;">
+                        <strong>Credit Card</strong>
+                    </label>
+                    <label
+                        style="flex:1; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 0.75rem; text-align: center; cursor: pointer;">
+                        <input type="radio" name="payMethod" style="display:block; margin: 0 auto 0.5rem auto;">
+                        <strong>Cash</strong>
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; justify-content: center;">
+                <button class="btn btn-primary" style="width: 100%; font-size: 1.1rem; padding: 0.8rem;"
+                    onclick="closeModal('recordPaymentModal'); showToast('Payment successfully processed! Receipt ready to print.')"><span
+                        class="material-symbols-outlined" style="vertical-align: middle; margin-right: 4px;">lock</span>
+                    Finalize Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generate Bill Modal (Simplistic for Demo) -->
+    <div class="modal-overlay" id="generateBillModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
+        <div class="modal-content"
+            style="background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 500px; width: 90%;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                <h3 style="font-size: 1.3rem;">Create New Bill</h3>
+                <span class="material-symbols-outlined" style="cursor: pointer; color: var(--text-secondary);"
+                    onclick="closeModal('generateBillModal')">close</span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Patient Record</label>
+                <input type="text" class="form-input" placeholder="Search Patient ID or Name...">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">Consultation Type</label>
+                    <select class="form-select">
+                        <option>General Checkup ($100)</option>
+                        <option>Specialist Cardiology ($150)</option>
+                        <option>Follow-up Visit ($50)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Pharmacy Add-ons</label>
+                    <input type="number" class="form-input" placeholder="Amount ($)">
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                <button class="btn btn-outline" onclick="closeModal('generateBillModal')">Cancel</button>
+                <button class="btn btn-primary"
+                    onclick="closeModal('generateBillModal'); showToast('Invoice generated and sent to patient flow.', false)">Save
+                    & Generate Invoice</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blank Book Appointment modal (for quick clicking) -->
+    <div class="modal-overlay" id="bookAppointmentModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
+        <div class="modal-content"
+            style="background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 500px; width: 90%;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                <h3 style="font-size: 1.3rem;">Manually Schedule Appointment</h3>
+                <span class="material-symbols-outlined" style="cursor: pointer; color: var(--text-secondary);"
+                    onclick="closeModal('bookAppointmentModal')">close</span>
+            </div>
+
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Select doctor, date, and time slot to lock
+                in a new booking manually (double-booking protection is globally active).</p>
+
+            <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                <button class="btn btn-outline" onclick="closeModal('bookAppointmentModal')">Cancel</button>
+                <button class="btn btn-primary"
+                    onclick="closeModal('bookAppointmentModal'); showToast('Booking confirmed & locked.')">Confirm
+                    Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Layout Toast -->
+    <div id="recep-toast"
+        style="visibility: hidden; min-width: 300px; background-color: var(--success-soft-green); color: #fff; text-align: center; border-radius: var(--border-radius-md); padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; transform: translateX(-50%); box-shadow: var(--shadow-lg); font-weight: 500; transition: opacity 0.4s, bottom 0.4s; opacity: 0; display:flex; align-items:center; justify-content:center;">
+        <span class="material-symbols-outlined" style="margin-right: 8px;">info</span>
+        <span id="recep-toast-msg">Operation successful!</span>
+    </div>
+
+    <script>
+        // Tab Switching Logic
+        function switchTab(tabId, event) {
+            document.querySelectorAll('.nav-tab[data-tab]').forEach(btn => btn.classList.remove('active'));
+            if (event) {
+                event.currentTarget.classList.add('active');
+            } else {
+                const targetBtn = document.querySelector(`.nav-tab[data-tab="${tabId}"]`);
+                if (targetBtn) targetBtn.classList.add('active');
+            }
+
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        function syncThemeToggleIcon(theme) {
+            const icon = document.getElementById('recepThemeIcon');
+            const toggleBtn = document.getElementById('recepThemeToggle');
+            const isDark = theme === 'dark';
+
+            if (icon) {
+                icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+            }
+
+            if (toggleBtn) {
+                toggleBtn.setAttribute('aria-pressed', String(isDark));
+                toggleBtn.setAttribute('title', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+            }
+        }
+
+        function toggleTheme() {
+            const icon = document.getElementById('recepThemeIcon');
+            if (icon) {
+                icon.style.transform = 'rotate(360deg)';
+                setTimeout(() => { icon.style.transform = ''; }, 400);
+            }
+
+            if (window.NexusTheme && typeof window.NexusTheme.toggleTheme === 'function') {
+                const nextTheme = window.NexusTheme.toggleTheme();
+                syncThemeToggleIcon(nextTheme);
+                return;
+            }
+
+            const currentIsDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const fallbackTheme = currentIsDark ? 'light' : 'dark';
+            if (fallbackTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+            syncThemeToggleIcon(fallbackTheme);
+        }
+
+        (function initThemeToggle() {
+            const currentTheme = (window.NexusTheme && typeof window.NexusTheme.getCurrentTheme === 'function')
+                ? window.NexusTheme.getCurrentTheme()
+                : (document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+            syncThemeToggleIcon(currentTheme);
+
+            window.addEventListener('nexus-theme-changed', function (event) {
+                if (event && event.detail && event.detail.theme) {
+                    syncThemeToggleIcon(event.detail.theme);
+                }
+            });
+        })();
+
+        // Generic Toast Notification
+        function showToast(message, isError = false) {
+            var toast = document.getElementById("recep-toast");
+            var msgEl = document.getElementById("recep-toast-msg");
+
+            msgEl.innerText = message;
+            toast.style.backgroundColor = isError ? '#EF4444' : 'var(--success-soft-green)';
+
+            toast.style.visibility = "visible";
+            toast.style.opacity = "1";
+            toast.style.bottom = "50px";
+
+            setTimeout(function () {
+                toast.style.opacity = "0";
+                toast.style.bottom = "30px";
+                setTimeout(() => { toast.style.visibility = "hidden"; }, 400);
+            }, 3000);
+        }
+
+        // Modal Logic
+        function openModal(modalId, patientName = null, invoiceId = null, amount = null) {
+            document.getElementById(modalId).style.display = 'flex';
+
+            // Populate Payment modal if opened with data
+            if (modalId === 'recordPaymentModal' && patientName) {
+                document.getElementById('payPatientName').innerText = patientName;
+                document.getElementById('payInvoiceId').innerText = invoiceId;
+                document.getElementById('payAmount').innerText = '$' + amount;
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Options Image Upload
+        function updateProfilePic(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('optionsProfilePic').src = e.target.result;
+                    document.getElementById('sidebarProfilePic').src = e.target.result;
+                    showToast('Profile picture updated successfully!');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</body>
+
+</html>
