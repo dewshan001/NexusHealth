@@ -857,26 +857,38 @@
                             <div
                                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                                 <strong style="color:var(--text-secondary); font-size:0.9rem;">Height:</strong>
-                                <input type="text" id="vitals-height" placeholder="e.g. 165 cm"
-                                    style="width: 100px; text-align: right; border: 1px solid transparent; background: transparent; font-weight: 600; outline: none; padding: 0.2rem;"
-                                    onfocus="this.style.border='1px solid var(--border-color)'; this.style.background='var(--panel-input-bg)';"
-                                    onblur="this.style.border='1px solid transparent'; this.style.background='transparent';">
+                                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                                    <input type="text" id="vitals-height" placeholder="e.g. 165"
+                                        style="width: 70px; text-align: right; border: 1px solid transparent; background: transparent; font-weight: 600; outline: none; padding: 0.2rem;"
+                                        onfocus="this.style.border='1px solid var(--border-color)'; this.style.background='var(--panel-input-bg)';"
+                                        onblur="this.style.border='1px solid transparent'; this.style.background='transparent';">
+                                    <span
+                                        style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">cm</span>
+                                </div>
                             </div>
                             <div
                                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                                 <strong style="color:var(--text-secondary); font-size:0.9rem;">Weight:</strong>
-                                <input type="text" id="vitals-weight" placeholder="e.g. 64 kg"
-                                    style="width: 100px; text-align: right; border: 1px solid transparent; background: transparent; font-weight: 600; outline: none; padding: 0.2rem;"
-                                    onfocus="this.style.border='1px solid var(--border-color)'; this.style.background='var(--panel-input-bg)';"
-                                    onblur="this.style.border='1px solid transparent'; this.style.background='transparent';">
+                                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                                    <input type="text" id="vitals-weight" placeholder="e.g. 64"
+                                        style="width: 70px; text-align: right; border: 1px solid transparent; background: transparent; font-weight: 600; outline: none; padding: 0.2rem;"
+                                        onfocus="this.style.border='1px solid var(--border-color)'; this.style.background='var(--panel-input-bg)';"
+                                        onblur="this.style.border='1px solid transparent'; this.style.background='transparent';">
+                                    <span
+                                        style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">kg</span>
+                                </div>
                             </div>
                             <div
                                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                                 <strong style="color:var(--text-secondary); font-size:0.9rem;">Heart Rate:</strong>
-                                <input type="text" id="vitals-heart-rate" placeholder="e.g. 72 bpm"
-                                    style="width: 100px; text-align: right; border: 1px solid transparent; background: transparent; font-weight: 600; outline: none; padding: 0.2rem; color: var(--primary-medical-blue);"
-                                    onfocus="this.style.border='1px solid var(--border-color)'; this.style.background='var(--panel-input-bg)';"
-                                    onblur="this.style.border='1px solid transparent'; this.style.background='transparent';">
+                                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                                    <input type="text" id="vitals-heart-rate" placeholder="e.g. 72"
+                                        style="width: 70px; text-align: right; border: 1px solid transparent; background: transparent; font-weight: 600; outline: none; padding: 0.2rem; color: var(--primary-medical-blue);"
+                                        onfocus="this.style.border='1px solid var(--border-color)'; this.style.background='var(--panel-input-bg)';"
+                                        onblur="this.style.border='1px solid transparent'; this.style.background='transparent';">
+                                    <span
+                                        style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">bpm</span>
+                                </div>
                             </div>
                             <button class="btn btn-outline" style="width: 100%; margin-top: 1rem; padding: 0.5rem;"
                                 onclick="savePatientVitals()">Save Vitals</button>
