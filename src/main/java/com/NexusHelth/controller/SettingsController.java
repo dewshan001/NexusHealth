@@ -1,6 +1,7 @@
 package com.NexusHelth.controller;
 
 import com.NexusHelth.model.User;
+import com.NexusHelth.service.ClinicSettingsService;
 import com.NexusHelth.service.SettingsService;
 import com.NexusHelth.util.DatabaseConnection;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,23 @@ import java.util.Map;
 public class SettingsController {
 
     private final SettingsService settingsService = new SettingsService();
+    private final ClinicSettingsService clinicSettingsService = new ClinicSettingsService();
+
+    /**
+     * Read-only endpoint to fetch the current global appointment/channeling fee.
+     * Used by the patient booking/payment UI to display the live fee.
+     */
+    @GetMapping("/appointment-fee")
+    public Map<String, Object> getAppointmentFee() {
+        Map<String, Object> response = new HashMap<>();
+        Map<String, Object> data = new HashMap<>();
+        double fee = clinicSettingsService.getAppointmentFee();
+        data.put("fee", fee);
+        response.put("success", true);
+        response.put("message", "Appointment fee retrieved");
+        response.put("data", data);
+        return response;
+    }
 
     @GetMapping("/admin-profile")
     public Map<String, Object> getAdminProfile(HttpSession session) {

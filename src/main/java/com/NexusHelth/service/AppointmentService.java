@@ -16,7 +16,7 @@ import java.sql.Statement;
 public class AppointmentService {
 
     // Static appointment fee - can be set from config
-    private static double appointmentFee = 500.0;
+    private static volatile double appointmentFee = 500.0;
 
     // Getter and Setter for appointment fee
     public static double getAppointmentFee() {
@@ -473,15 +473,39 @@ public class AppointmentService {
             conn = DatabaseConnection.getConnection();
             conn.setAutoCommit(false);
 
+            // Always read the latest persisted fee from DB so new invoices reflect receptionist updates.
+            double effectiveFee = appointmentFee;
+            try (Statement stmt = conn.createStatement()) {
+                stmt.executeUpdate("INSERT OR IGNORE INTO clinic_settings (id, appointment_fee) VALUES (1, 500.0)");
+                stmt.executeUpdate("UPDATE clinic_settings SET appointment_fee = 500.0 WHERE id = 1 AND (appointment_fee IS NULL OR appointment_fee <= 0)");
+            } catch (Exception ignored) {
+                // Best-effort safety net; DatabaseInitializer/ClinicSettingsService also ensure defaults.
+            }
+
+            try (PreparedStatement pstmt = conn.prepareStatement("SELECT appointment_fee FROM clinic_settings WHERE id = 1")) {
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        double persistedFee = rs.getDouble(1);
+                        if (persistedFee > 0) {
+                            effectiveFee = persistedFee;
+                            // Keep runtime cache in sync for other call sites.
+                            AppointmentService.setAppointmentFee(persistedFee);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️  Could not load appointment fee from DB, using cached fee: " + e.getMessage());
+            }
+
             int invoiceId;
-            try (PreparedStatement pstmt = conn.prepareStatement(invoiceInsertSql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement pstmt = conn.prepareStatement(invoiceInsertSql)) {
                 pstmt.setString(1, invoiceNumber);
                 pstmt.setInt(2, patientId);
                 pstmt.setInt(3, doctorId);
                 pstmt.setString(4, patientName);
-                pstmt.setDouble(5, appointmentFee);  // consultation_amount
-                pstmt.setDouble(6, appointmentFee);  // subtotal
-                pstmt.setDouble(7, appointmentFee);  // total_amount
+                pstmt.setDouble(5, effectiveFee);  // consultation_amount
+                pstmt.setDouble(6, effectiveFee);  // subtotal
+                pstmt.setDouble(7, effectiveFee);  // total_amount
 
                 int affectedRows = pstmt.executeUpdate();
                 if (affectedRows <= 0) {
@@ -489,12 +513,15 @@ public class AppointmentService {
                     return false;
                 }
 
-                try (ResultSet keys = pstmt.getGeneratedKeys()) {
-                    if (!keys.next()) {
+                // SQLite JDBC driver may not support getGeneratedKeys(); use last_insert_rowid() instead.
+                String idQuery = "SELECT last_insert_rowid() as id";
+                try (PreparedStatement idPstmt = conn.prepareStatement(idQuery);
+                     ResultSet rs = idPstmt.executeQuery()) {
+                    if (!rs.next()) {
                         conn.rollback();
                         return false;
                     }
-                    invoiceId = keys.getInt(1);
+                    invoiceId = rs.getInt("id");
                 }
             }
 
@@ -517,7 +544,7 @@ public class AppointmentService {
                 pstmt.setInt(1, invoiceId);
                 pstmt.setString(2, transactionCode);
                 pstmt.setString(3, department);
-                pstmt.setDouble(4, appointmentFee);
+                pstmt.setDouble(4, effectiveFee);
                 pstmt.executeUpdate();
             }
 

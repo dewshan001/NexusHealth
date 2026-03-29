@@ -1913,6 +1913,9 @@
             dateInput.min = today;
             dateInput.value = today;
 
+            // Load the current appointment fee for the payment modal display.
+            refreshAppointmentFeeDisplay();
+
             // Set up payment input listeners for real-time validation
             document.getElementById('cardholderName').addEventListener('blur', validateCardholderName);
             document.getElementById('cardNumber').addEventListener('blur', validateCardNumber);
@@ -1933,6 +1936,31 @@
                 document.getElementById('cvvError').textContent = '';
             });
         });
+
+        // ─── Appointment Fee (live) ─────────────────
+        async function refreshAppointmentFeeDisplay() {
+            try {
+                const res = await fetch('/api/settings/appointment-fee', { credentials: 'include' });
+                const data = await res.json();
+                if (!data || !data.success || !data.data || typeof data.data.fee === 'undefined') {
+                    return;
+                }
+
+                const feeNum = Number(data.data.fee);
+                if (!isFinite(feeNum) || feeNum <= 0) {
+                    return;
+                }
+
+                const feeText = 'Rs. ' + feeNum.toFixed(2);
+                const feeEl = document.getElementById('appointmentFeeDisplay');
+                if (feeEl) feeEl.textContent = feeText;
+                const totalEl = document.getElementById('totalAmountDisplay');
+                if (totalEl) totalEl.textContent = feeText;
+            } catch (e) {
+                // Non-blocking; keep existing display value.
+                console.warn('Could not refresh appointment fee display:', e);
+            }
+        }
 
         function selectDoctor(el, docId) {
             document.querySelectorAll('.doc-select-card').forEach(c => c.classList.remove('selected'));
@@ -2008,7 +2036,7 @@
             document.getElementById('confirmBtn').disabled = !(selectedDocId && selectedTime && document.getElementById('appointment-date').value);
         }
 
-        function confirmBooking() {
+        async function confirmBooking() {
             // Reset payment form
             document.getElementById('paymentForm').reset();
             document.querySelectorAll('.payment-error').forEach(el => el.textContent = '');
@@ -2020,6 +2048,9 @@
             // Reset payment button state
             document.getElementById('payNowBtn').disabled = false;
             document.getElementById('payNowBtn').innerText = 'Pay Now';
+
+            // Ensure the modal shows the latest fee before user pays.
+            await refreshAppointmentFeeDisplay();
 
             // Open payment modal
             document.getElementById('paymentModal').classList.add('active');
