@@ -300,7 +300,7 @@ public class UserService {
      * Get user by ID (with all details)
      */
     public User getUserById(int userId) {
-        String query = "SELECT id, full_name, email, role, status, profile_picture FROM users WHERE id = ?";
+        String query = "SELECT id, full_name, email, role, status, phone, profile_picture FROM users WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
@@ -313,6 +313,8 @@ public class UserService {
                     user.setEmail(rs.getString("email"));
                     user.setRole(rs.getString("role"));
                     user.setStatus(rs.getString("status"));
+                    user.setPhone(rs.getString("phone"));
+                    user.setProfilePicture(rs.getString("profile_picture"));
                     return user;
                 }
             }
@@ -329,12 +331,13 @@ public class UserService {
     public boolean updateUserProfile(int userId, String fullName, String phone) {
         System.out.println("\n👤 USER SERVICE: Updating profile for user ID: " + userId);
 
-        String query = "UPDATE users SET full_name = ? WHERE id = ?";
+        String query = "UPDATE users SET full_name = ?, phone = ? WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
             pstmt.setString(1, fullName);
-            pstmt.setInt(2, userId);
+            pstmt.setString(2, phone != null ? phone : "");
+            pstmt.setInt(3, userId);
 
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows > 0) {
@@ -414,6 +417,30 @@ public class UserService {
             }
         } catch (SQLException e) {
             System.out.println("❌ Error updating profile picture: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    /**
+     * Delete user profile picture
+     */
+    public boolean deleteProfilePicture(int userId) {
+        System.out.println("\n🗑️ USER SERVICE: Deleting profile picture for user ID: " + userId);
+        
+        String query = "UPDATE users SET profile_picture = NULL WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            
+            pstmt.setInt(1, userId);
+            
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("✅ Profile picture deleted successfully");
+                return true;
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error deleting profile picture: " + e.getMessage());
             e.printStackTrace();
         }
         return false;

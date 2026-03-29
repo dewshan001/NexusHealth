@@ -174,7 +174,7 @@ public class AppointmentService {
     public List<Map<String, Object>> getAppointmentsByDate(String date) {
         List<Map<String, Object>> appointments = new ArrayList<>();
         String query = "SELECT a.id, a.appointment_time, a.status, a.doctor_id, u.full_name AS patient_name, " +
-                "p.patient_code, d.full_name AS doctor_name, d.specialization " +
+                "p.patient_code, d.full_name AS doctor_name, doc.specialization " +
                 "FROM appointments a " +
                 "JOIN patients p ON a.patient_id = p.id " +
                 "JOIN users u ON p.user_id = u.id " +

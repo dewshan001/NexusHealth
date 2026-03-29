@@ -685,7 +685,7 @@
                         </div>
                         <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Allowed
                             formats: JPG, PNG. Max size: 5MB.</p>
-                        <button class="btn btn-outline-primary" style="width: 100%; font-size: 0.9rem;">Remove
+                        <button class="btn btn-outline-primary" style="width: 100%; font-size: 0.9rem;" onclick="removeProfilePicture()">Remove
                             Picture</button>
                     </div>
 
@@ -1104,15 +1104,46 @@
         // Options Image Upload
         function updateProfilePic(event) {
             const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    document.getElementById('optionsProfilePic').src = e.target.result;
-                    document.getElementById('sidebarProfilePic').src = e.target.result;
-                    showToast('Profile picture updated successfully!');
-                }
-                reader.readAsDataURL(file);
+            if (!file) return;
+
+            // Validate file size (max 5MB)
+            const maxFileSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxFileSize) {
+                showToast('File size exceeds 5MB limit', true);
+                return;
             }
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showToast('Please select an image file (JPG or PNG)', true);
+                return;
+            }
+
+            // Create FormData for multipart upload
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Upload file to backend
+            fetch('/api/receptionist/profile/picture', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        // Use base64 data directly from response
+                        const base64Image = data.data.profilePicture;
+                        document.getElementById('optionsProfilePic').src = base64Image;
+                        document.getElementById('sidebarProfilePic').src = base64Image;
+                        showToast('Profile picture uploaded successfully!');
+                    } else {
+                        showToast(data.message || 'Failed to upload profile picture', true);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error uploading file:', error);
+                    showToast('Error uploading file', true);
+                });
         }
 
         // ==================== INITIALIZATION ====================
@@ -1731,8 +1762,13 @@
                     if (data.success && data.data) {
                         document.getElementById('navProfileName').innerText = data.data.fullName || 'Receptionist';
                         document.getElementById('profileFullName').value = data.data.fullName || '';
-                        // Note: Phone field not stored in users table, only in patients/doctors tables
-                        document.getElementById('profilePhone').value = '';
+                        document.getElementById('profilePhone').value = data.data.phone || '';
+                        
+                        // Load profile picture if it exists
+                        if (data.data.profilePicture) {
+                            document.getElementById('optionsProfilePic').src = data.data.profilePicture;
+                            document.getElementById('sidebarProfilePic').src = data.data.profilePicture;
+                        }
                     }
                 })
                 .catch(error => {
@@ -1744,8 +1780,15 @@
             const fullName = document.getElementById('profileFullName').value.trim();
             const phone = document.getElementById('profilePhone').value.trim();
 
+            // Validation
             if (!fullName) {
                 showToast('Full name is required', true);
+                return;
+            }
+
+            // Optional: Validate phone format if provided
+            if (phone && !/^\+?[\d\s\-()]+$/.test(phone)) {
+                showToast('Invalid phone number format', true);
                 return;
             }
 
@@ -1794,6 +1837,12 @@
                 return;
             }
 
+            // Optional: Validate password strength (at least one uppercase, one lowercase, one digit)
+            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+                showToast('Password should contain uppercase, lowercase, and numbers for security', true);
+                return;
+            }
+
             const params = new URLSearchParams({
                 currentPassword: currentPassword,
                 newPassword: newPassword,
@@ -1819,6 +1868,34 @@
                 .catch(error => {
                     console.error('Error changing password:', error);
                     showToast('Error changing password', true);
+                });
+        }
+
+        /**
+         * Remove receptionist profile picture
+         */
+        function removeProfilePicture() {
+            if (!confirm('Are you sure you want to remove your profile picture?')) {
+                return;
+            }
+
+            fetch('/api/receptionist/profile/picture', {
+                method: 'DELETE'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reset to default image
+                        document.getElementById('optionsProfilePic').src = 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80';
+                        document.getElementById('sidebarProfilePic').src = 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80';
+                        showToast('Profile picture removed successfully!');
+                    } else {
+                        showToast(data.message || 'Failed to remove profile picture', true);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing profile picture:', error);
+                    showToast('Error removing profile picture', true);
                 });
         }
 

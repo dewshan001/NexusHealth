@@ -33,6 +33,20 @@ public class PharmacistPrescriptionController {
         return ResponseEntity.ok(Map.of("success", true, "data", prescriptions));
     }
 
+    @GetMapping("/dispensed")
+    public ResponseEntity<?> getDispensedPrescriptions(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String patientName,
+            HttpSession session) {
+        if (!isAuthorized(session)) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
+        }
+
+        List<Map<String, Object>> prescriptions = service.getDispensedPrescriptions(startDate, endDate, patientName);
+        return ResponseEntity.ok(Map.of("success", true, "data", prescriptions));
+    }
+
     @PostMapping("/{id}/dispense")
     public ResponseEntity<?> dispensePrescription(@PathVariable int id, HttpSession session) {
         User user = (User) session.getAttribute("user");

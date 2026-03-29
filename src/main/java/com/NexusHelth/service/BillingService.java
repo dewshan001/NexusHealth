@@ -50,11 +50,10 @@ public class BillingService {
         List<Invoice> invoices = new ArrayList<>();
         System.out.println("📊 BILLING SERVICE: Fetching invoices (status: " + (statusFilter != null ? statusFilter : "all") + ")");
 
-        String query = "SELECT id, prescription_id, patient_id, appointment_id, total_amount, " +
-                "discount, amount_paid, payment_status, created_at FROM invoices";
+        String query = "SELECT id, patient_id, total_amount, discount_amount, status, created_at FROM invoices";
 
         if (statusFilter != null && !statusFilter.isEmpty()) {
-            query += " WHERE payment_status = ?";
+            query += " WHERE status = ?";
         }
         query += " ORDER BY created_at DESC";
 
@@ -67,17 +66,20 @@ public class BillingService {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    Invoice invoice = new Invoice(
-                            rs.getInt("id"),
-                            rs.getInt("prescription_id"),
-                            rs.getInt("patient_id"),
-                            rs.getInt("appointment_id"),
-                            rs.getDouble("total_amount"),
-                            rs.getDouble("discount"),
-                            rs.getDouble("amount_paid"),
-                            rs.getString("payment_status"),
-                            LocalDateTime.parse(rs.getString("created_at"), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-                    );
+                    Invoice invoice = new Invoice();
+                    invoice.setId(rs.getInt("id"));
+                    invoice.setPatientId(rs.getInt("patient_id"));
+                    invoice.setTotalAmount(rs.getDouble("total_amount"));
+                    invoice.setDiscount(rs.getDouble("discount_amount"));
+                    invoice.setPaymentStatus(rs.getString("status"));
+                    String createdAt = rs.getString("created_at");
+                    if (createdAt != null && !createdAt.isEmpty()) {
+                        try {
+                            invoice.setCreatedAt(LocalDateTime.parse(createdAt, dateFormatter));
+                        } catch (Exception e) {
+                            System.out.println("⚠️ Warning: Could not parse created_at date: " + createdAt);
+                        }
+                    }
                     invoices.add(invoice);
                 }
             }

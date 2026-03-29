@@ -16,6 +16,14 @@ import java.util.Map;
 import java.util.HashMap;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
+import java.util.Base64;
 
 @RestController
 @RequestMapping("/api/receptionist")
@@ -509,6 +517,115 @@ public class ReceptionistController {
             return new StandardResponse(true, "Password changed successfully", null);
         } else {
             return new StandardResponse(false, "Failed to change password - current password may be incorrect", null);
+        }
+    }
+    
+    /**
+     * Upload receptionist profile picture (base64 encoded to database)
+     */
+    @PostMapping("/profile/picture")
+    public StandardResponse uploadProfilePicture(
+            @RequestParam("file") MultipartFile file,
+            HttpSession session) {
+        System.out.println("\n[📷] POST /api/receptionist/profile/picture");
+
+        User user = (User) session.getAttribute("user");
+        if (!isReceptionist(user)) {
+            return new StandardResponse(false, "Unauthorized - receptionist role required", null);
+        }
+
+        // Validate file exists
+        if (file.isEmpty()) {
+            return new StandardResponse(false, "No file uploaded", null);
+        }
+
+        // Validate file size (max 5MB)
+        long maxFileSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.getSize() > maxFileSize) {
+            return new StandardResponse(false, "File size exceeds maximum allowed (5MB)", null);
+        }
+
+        // Validate file type by MIME type
+        String contentType = file.getContentType();
+        if (contentType == null || (!contentType.equals("image/jpeg") && 
+            !contentType.equals("image/png") && !contentType.equals("image/jpg"))) {
+            return new StandardResponse(false, "Invalid file type - only JPG and PNG are allowed", null);
+        }
+
+        try {
+            // Encode image to base64
+            byte[] fileBytes = file.getBytes();
+            String base64Image = "data:" + contentType + ";base64," + 
+                                Base64.getEncoder().encodeToString(fileBytes);
+
+            // Save base64 string directly to database
+            boolean success = userService.updateProfilePicture(user.getId(), base64Image);
+
+            if (success) {
+                // Update session user object
+                user.setProfilePicture(base64Image);
+                session.setAttribute("user", user);
+                
+                Map<String, String> response = new HashMap<>();
+                response.put("profilePicture", base64Image);
+                
+                return new StandardResponse(true, "Profile picture uploaded successfully", response);
+            } else {
+                return new StandardResponse(false, "Failed to save profile picture to database", null);
+            }
+        } catch (IOException e) {
+            System.out.println("❌ Error uploading file: " + e.getMessage());
+            e.printStackTrace();
+            return new StandardResponse(false, "Error uploading file: " + e.getMessage(), null);
+        } catch (Exception e) {
+            System.out.println("❌ Unexpected error during file upload: " + e.getMessage());
+            e.printStackTrace();
+            return new StandardResponse(false, "Unexpected error during upload", null);
+        }
+    }
+    
+    /**
+     * Delete receptionist profile picture
+     */
+    @DeleteMapping("/profile/picture")
+    public StandardResponse deleteProfilePicture(HttpSession session) {
+        System.out.println("\n[🗑️] DELETE /api/receptionist/profile/picture");
+
+        User user = (User) session.getAttribute("user");
+        if (!isReceptionist(user)) {
+            return new StandardResponse(false, "Unauthorized - receptionist role required", null);
+        }
+
+        String currentPicture = user.getProfilePicture();
+        if (currentPicture == null || currentPicture.isEmpty()) {
+            return new StandardResponse(false, "No profile picture to delete", null);
+        }
+
+        try {
+            // Delete file from disk
+            Path path = Paths.get(currentPicture);
+            Files.deleteIfExists(path);
+
+            // Update database to remove profile picture reference
+            boolean success = userService.deleteProfilePicture(user.getId());
+
+            if (success) {
+                // Update session user object
+                user.setProfilePicture(null);
+                session.setAttribute("user", user);
+                
+                return new StandardResponse(true, "Profile picture deleted successfully", null);
+            } else {
+                return new StandardResponse(false, "Failed to delete profile picture from database", null);
+            }
+        } catch (IOException e) {
+            System.out.println("❌ Error deleting file: " + e.getMessage());
+            e.printStackTrace();
+            return new StandardResponse(false, "Error deleting file: " + e.getMessage(), null);
+        } catch (Exception e) {
+            System.out.println("❌ Unexpected error during file deletion: " + e.getMessage());
+            e.printStackTrace();
+            return new StandardResponse(false, "Unexpected error during deletion", null);
         }
     }
 

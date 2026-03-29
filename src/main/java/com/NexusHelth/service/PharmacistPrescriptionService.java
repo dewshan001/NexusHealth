@@ -13,6 +13,79 @@ import java.util.Map;
 
 public class PharmacistPrescriptionService {
 
+    public List<Map<String, Object>> getDispensedPrescriptions(String startDate, String endDate, String patientName) {
+        List<Map<String, Object>> dispensedPrescriptions = new ArrayList<>();
+
+        // Build dynamic SQL query with optional filtering
+        StringBuilder sqlBuilder = new StringBuilder(
+                "SELECT p.id as prescription_id, p.issued_at, p.dispensed_at, p.status, " +
+                        "pat.patient_code, u_pat.full_name as patient_name, " +
+                        "u_doc.full_name as doctor_name, u_pharm.full_name as pharmacist_name " +
+                        "FROM prescriptions p " +
+                        "JOIN patients pat ON p.patient_id = pat.id " +
+                        "JOIN users u_pat ON pat.user_id = u_pat.id " +
+                        "JOIN doctors d ON p.doctor_id = d.id " +
+                        "JOIN users u_doc ON d.user_id = u_doc.id " +
+                        "LEFT JOIN users u_pharm ON p.dispensed_by = u_pharm.id " +
+                        "WHERE p.status = 'dispensed'");
+
+        // Add optional date filter
+        if (startDate != null && !startDate.isEmpty()) {
+            sqlBuilder.append(" AND DATE(p.dispensed_at) >= ?");
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            sqlBuilder.append(" AND DATE(p.dispensed_at) <= ?");
+        }
+
+        // Add optional patient name filter
+        if (patientName != null && !patientName.isEmpty()) {
+            sqlBuilder.append(" AND u_pat.full_name LIKE ?");
+        }
+
+        sqlBuilder.append(" ORDER BY p.dispensed_at DESC");
+
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sqlBuilder.toString())) {
+
+            int paramIndex = 1;
+
+            // Set date parameters
+            if (startDate != null && !startDate.isEmpty()) {
+                pstmt.setString(paramIndex++, startDate);
+            }
+            if (endDate != null && !endDate.isEmpty()) {
+                pstmt.setString(paramIndex++, endDate);
+            }
+
+            // Set patient name parameter
+            if (patientName != null && !patientName.isEmpty()) {
+                pstmt.setString(paramIndex, "%" + patientName + "%");
+            }
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> prescription = new HashMap<>();
+                    int prescriptionId = rs.getInt("prescription_id");
+                    prescription.put("id", prescriptionId);
+                    prescription.put("orderId", "RX-" + (10000 + prescriptionId)); // Format RX-10024
+                    prescription.put("patientName", rs.getString("patient_name"));
+                    prescription.put("doctorName", "Dr. " + rs.getString("doctor_name"));
+                    prescription.put("issuedAt", rs.getString("issued_at"));
+                    prescription.put("dispensedAt", rs.getString("dispensed_at"));
+                    prescription.put("dispensedBy", rs.getString("pharmacist_name"));
+                    prescription.put("status", rs.getString("status"));
+                    prescription.put("items", getPrescriptionItems(prescriptionId, conn));
+
+                    dispensedPrescriptions.add(prescription);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return dispensedPrescriptions;
+    }
+
     public List<Map<String, Object>> getPendingPrescriptions() {
         List<Map<String, Object>> pendingPrescriptions = new ArrayList<>();
 

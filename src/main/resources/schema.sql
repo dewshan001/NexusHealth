@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash   TEXT    NOT NULL,
     role            TEXT    NOT NULL CHECK(role IN ('admin','doctor','receptionist','pharmacist','patient')),
     status          TEXT    NOT NULL DEFAULT 'active' CHECK(status IN ('active','inactive','deactivated','suspended')),
+    phone           TEXT,
     profile_picture TEXT,
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP

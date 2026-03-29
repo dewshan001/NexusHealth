@@ -481,6 +481,10 @@
                 <span class="material-symbols-outlined">receipt_long</span>
                 Prescriptions
             </button>
+            <button class="nav-tab" data-tab="dispensed" onclick="switchTab('dispensed', event)">
+                <span class="material-symbols-outlined">local_pharmacy</span>
+                Dispensed
+            </button>
             <button class="nav-tab" data-tab="inventory" onclick="switchTab('inventory', event)">
                 <span class="material-symbols-outlined">inventory_2</span>
                 Inventory
@@ -554,6 +558,56 @@
                             <tr>
                                 <td colspan="6" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">
                                     Loading pending prescriptions...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DISPENSED PRESCRIPTIONS TAB -->
+            <div id="tab-dispensed" class="tab-content">
+                <div class="content-header">
+                    <h2 class="content-title">Dispensed Prescriptions</h2>
+                </div>
+
+                <!-- Filters Section -->
+                <div class="pharma-card" style="margin-bottom: 2rem; padding: 1.5rem;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-primary);">Filter Results</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 2fr auto auto; gap: 1rem; align-items: flex-end;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="margin-bottom: 0.4rem;">From Date</label>
+                            <input type="date" id="filtStartDate" class="form-input" style="margin-bottom: 0;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="margin-bottom: 0.4rem;">To Date</label>
+                            <input type="date" id="filtEndDate" class="form-input" style="margin-bottom: 0;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="margin-bottom: 0.4rem;">Patient Name</label>
+                            <input type="text" id="filtPatientName" class="form-input" placeholder="Search by patient name..." style="margin-bottom: 0;">
+                        </div>
+                        <button class="btn btn-primary" onclick="applyDispensedFilters()" style="padding: 0.75rem 1.5rem;">Apply</button>
+                        <button class="btn btn-outline" onclick="resetDispensedFilters()" style="padding: 0.75rem 1.5rem;">Reset</button>
+                    </div>
+                </div>
+
+                <!-- Dispensed Prescriptions Table -->
+                <div class="pharma-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Patient Name</th>
+                                <th>Prescribed By</th>
+                                <th>Dispensed Date</th>
+                                <th>Dispensed By</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dispensedTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">
+                                    Loading dispensed prescriptions...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -950,8 +1004,11 @@
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
 
+            // Load tab-specific data
             if (tabId === 'alerts') {
                 loadSystemAlerts();
+            } else if (tabId === 'dispensed') {
+                loadDispensedPrescriptions();
             }
         }
 
@@ -1573,6 +1630,141 @@
             }
         }
 
+        // Dispensed Prescriptions Logic
+        let dispensedPrescriptionsCache = [];
+
+        async function loadDispensedPrescriptions(startDate = null, endDate = null, patientName = null) {
+            try {
+                let url = '/api/pharmacist/prescriptions/dispensed';
+                const params = new URLSearchParams();
+                
+                if (startDate) params.append('startDate', startDate);
+                if (endDate) params.append('endDate', endDate);
+                if (patientName) params.append('patientName', patientName);
+                
+                if (params.toString()) {
+                    url += '?' + params.toString();
+                }
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (!result.success) {
+                    showToast(result.error || 'Failed to load dispensed prescriptions', true);
+                    return;
+                }
+
+                dispensedPrescriptionsCache = result.data || [];
+                renderDispensedPrescriptions(dispensedPrescriptionsCache);
+            } catch (error) {
+                showToast('Failed to connect to dispensed prescriptions service', true);
+                console.error(error);
+            }
+        }
+
+        function renderDispensedPrescriptions(prescriptions) {
+            const tbody = document.getElementById('dispensedTableBody');
+            if (!tbody) return;
+
+            if (!prescriptions || prescriptions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">No dispensed prescriptions found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = prescriptions.map(rx => {
+                // Format dispensed date/time
+                let dispensedTimeStr = escapeHtml(rx.dispensedAt);
+                try {
+                    const date = new Date(rx.dispensedAt.replace(' ', 'T'));
+                    if (!Number.isNaN(date.getTime())) {
+                        dispensedTimeStr = date.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }) + ' ' + 
+                                         date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    }
+                } catch (e) { }
+
+                return `<tr>
+                    <td style="font-family: monospace; color: var(--text-secondary);">${escapeHtml(rx.orderId)}</td>
+                    <td style="font-weight:600;">${escapeHtml(rx.patientName)}</td>
+                    <td>${escapeHtml(rx.doctorName)}</td>
+                    <td>${dispensedTimeStr}</td>
+                    <td>${escapeHtml(rx.dispensedBy || 'N/A')}</td>
+                    <td>
+                        <button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;"
+                            onclick="viewDispensedInvoice(${rx.id})">View Invoice</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function applyDispensedFilters() {
+            const startDate = document.getElementById('filtStartDate').value;
+            const endDate = document.getElementById('filtEndDate').value;
+            const patientName = document.getElementById('filtPatientName').value;
+            
+            loadDispensedPrescriptions(startDate, endDate, patientName);
+        }
+
+        function resetDispensedFilters() {
+            document.getElementById('filtStartDate').value = '';
+            document.getElementById('filtEndDate').value = '';
+            document.getElementById('filtPatientName').value = '';
+            
+            loadDispensedPrescriptions();
+        }
+
+        function viewDispensedInvoice(prescriptionId) {
+            const rx = dispensedPrescriptionsCache.find(p => p.id === prescriptionId);
+            if (!rx) {
+                showToast('Prescription not found', true);
+                return;
+            }
+
+            // Display invoice modal with the prescription data
+            currentInvoiceData = {
+                invoiceId: prescriptionId + 1000,
+                patientName: rx.patientName,
+                items: rx.items || [],
+                success: true
+            };
+            
+            // Populate invoice header
+            document.getElementById('invoiceNumber').textContent = 'INV-' + (prescriptionId + 1000);
+            document.getElementById('invoicePatientName').textContent = rx.patientName || 'Unknown Patient';
+            document.getElementById('invoiceDate').textContent = new Date().toLocaleDateString();
+
+            // Populate invoice items table
+            const itemsTable = document.getElementById('invoiceItemsTable');
+            itemsTable.innerHTML = '';
+            
+            let subtotal = 0;
+            if (rx.items && rx.items.length > 0) {
+                rx.items.forEach(item => {
+                    const lineTotal = (item.quantity || 1) * (item.unitPrice || 0);
+                    subtotal += lineTotal;
+                    
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid var(--ph-card-border)';
+                    row.innerHTML = `
+                        <td style="text-align: left; padding: 0.75rem;">${escapeHtml(item.medicineName || 'Unknown')}</td>
+                        <td style="text-align: center; padding: 0.75rem;">${item.quantity || 0}</td>
+                        <td style="text-align: right; padding: 0.75rem;">$${(item.unitPrice || 0).toFixed(2)}</td>
+                        <td style="text-align: right; padding: 0.75rem; font-weight: 600;">$${lineTotal.toFixed(2)}</td>`;
+                    itemsTable.appendChild(row);
+                });
+            }
+
+            // Set invoice totals
+            document.getElementById('invoiceSubtotal').textContent = '$' + subtotal.toFixed(2);
+            document.getElementById('invoiceDiscount').textContent = '$0.00';
+            document.getElementById('invoiceTotal').textContent = '$' + subtotal.toFixed(2);
+
+            // Set PDF download handler to use existing downloadInvoicePDF function
+            const downloadBtn = document.getElementById('downloadInvoicePdfBtn');
+            downloadBtn.onclick = () => downloadInvoicePDF();
+
+            document.getElementById('invoiceModal').style.display = 'flex';
+        }
+
         // Invoice Modal Functions
         let currentInvoiceData = null;
 
@@ -1692,6 +1884,7 @@
             loadInventory();
             loadSystemAlerts();
             loadPendingPrescriptions();
+            loadDispensedPrescriptions();
         });
     </script>
 </body>

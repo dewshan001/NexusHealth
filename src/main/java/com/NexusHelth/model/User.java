@@ -11,6 +11,8 @@ public class User implements Serializable {
     private String password;
     private String role;
     private String status;
+    private String phone;
+    private String profilePicture;
     
     public User() {
     }
@@ -70,5 +72,21 @@ public class User implements Serializable {
     
     public void setStatus(String status) {
         this.status = status;
+    }
+    
+    public String getPhone() {
+        return phone;
+    }
+    
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+    
+    public String getProfilePicture() {
+        return profilePicture;
+    }
+    
+    public void setProfilePicture(String profilePicture) {
+        this.profilePicture = profilePicture;
     }
 }
