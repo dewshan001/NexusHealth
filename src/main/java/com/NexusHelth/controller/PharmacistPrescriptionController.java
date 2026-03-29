@@ -2,6 +2,7 @@ package com.NexusHelth.controller;
 
 import com.NexusHelth.model.User;
 import com.NexusHelth.service.PharmacistPrescriptionService;
+import com.NexusHelth.service.PharmacistInvoiceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
@@ -15,9 +16,11 @@ import java.util.Map;
 public class PharmacistPrescriptionController {
 
     private final PharmacistPrescriptionService service;
+    private final PharmacistInvoiceService invoiceService;
 
     public PharmacistPrescriptionController() {
         this.service = new PharmacistPrescriptionService();
+        this.invoiceService = new PharmacistInvoiceService();
     }
 
     @GetMapping("/pending")
@@ -44,6 +47,13 @@ public class PharmacistPrescriptionController {
         if (!success) {
             response.put("error", "Failed to dispense prescription. It may not be pending.");
             return ResponseEntity.badRequest().body(response);
+        }
+
+        // Get the generated invoice details
+        Map<String, Object> invoiceData = invoiceService.generateInvoiceForPrescription(id);
+        if ((Boolean) invoiceData.get("success")) {
+            response.put("invoiceId", invoiceData.get("invoiceId"));
+            response.put("invoiceData", invoiceData);
         }
 
         return ResponseEntity.ok(response);

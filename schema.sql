@@ -175,6 +175,8 @@ CREATE TABLE invoices (
 
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
 
+    prescription_id INTEGER REFERENCES prescriptions(id),
+
     patient_id     INTEGER NOT NULL REFERENCES patients(id),
 
     appointment_id INTEGER REFERENCES appointments(id),
@@ -190,6 +192,25 @@ CREATE TABLE invoices (
                    CHECK(payment_status IN ('unpaid','partial','paid','waived')),
 
     created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+
+);
+CREATE TABLE invoice_items (
+
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    invoice_id  INTEGER NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+
+    medicine_id INTEGER NOT NULL REFERENCES medicines(id),
+
+    medicine_name TEXT NOT NULL,
+
+    quantity    INTEGER NOT NULL,
+
+    unit_price  REAL    NOT NULL,
+
+    line_total  REAL    NOT NULL,
+
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
 
 );
 CREATE TABLE transactions (

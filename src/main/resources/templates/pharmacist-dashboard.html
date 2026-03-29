@@ -14,6 +14,8 @@
     <!-- Google Material Icons -->
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script th:src="@{/theme.js}"></script>
 
     <!-- External CSS -->
@@ -853,6 +855,83 @@
         </div>
     </div>
 
+    <!-- Invoice Modal -->
+    <div class="modal-overlay" id="invoiceModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
+        <div class="modal-content"
+            style="background: var(--ph-card-bg); color: var(--text-primary); border: 1px solid var(--ph-card-border); box-shadow: var(--shadow-lg); padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 700px; width: 95%; max-height: 85vh; overflow-y: auto;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--ph-card-border); padding-bottom: 1rem;">
+                <div>
+                    <h3 style="font-size: 1.3rem; color: var(--primary-medical-blue); margin-bottom: 0.25rem;">Invoice</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);" id="invoiceNumber">INV-0</p>
+                </div>
+                <span class="material-symbols-outlined" style="cursor: pointer; color: var(--text-secondary); font-size: 28px;"
+                    onclick="closeModal('invoiceModal')">close</span>
+            </div>
+
+            <!-- Invoice Header Info -->
+            <div
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: var(--bg-light-gray); padding: 1rem; border-radius: var(--border-radius-sm);">
+                <div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Patient Name</p>
+                    <p style="font-weight: 600;" id="invoicePatientName">-</p>
+                </div>
+                <div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Date</p>
+                    <p style="font-weight: 600;" id="invoiceDate">-</p>
+                </div>
+            </div>
+
+            <!-- Invoice Items Table -->
+            <div style="margin-bottom: 2rem;">
+                <h4 style="margin-bottom: 0.75rem; color: var(--text-primary); font-weight: 600; font-size: 0.95rem;">Medications Dispensed</h4>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="background: var(--ph-table-head); border-bottom: 2px solid var(--ph-card-border);">
+                                <th style="text-align: left; padding: 0.75rem; color: var(--text-secondary);">Medicine</th>
+                                <th style="text-align: center; padding: 0.75rem; color: var(--text-secondary);">Qty</th>
+                                <th style="text-align: right; padding: 0.75rem; color: var(--text-secondary);">Unit Price</th>
+                                <th style="text-align: right; padding: 0.75rem; color: var(--text-secondary);">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoiceItemsTable">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Invoice Total -->
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 2rem;">
+                <div style="width: 350px;">
+                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--ph-card-border);">
+                        <span style="color: var(--text-secondary);">Subtotal:</span>
+                        <span id="invoiceSubtotal" style="font-weight: 500;">$0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; margin-bottom: 1rem;">
+                        <span style="color: var(--text-secondary);">Discount:</span>
+                        <span id="invoiceDiscount" style="font-weight: 500;">$0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; background: var(--primary-medical-blue); color: white; padding: 1rem; border-radius: var(--border-radius-sm); font-weight: 700; font-size: 1.1rem;">
+                        <span>Total Amount:</span>
+                        <span id="invoiceTotal">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Actions -->
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid var(--ph-card-border); padding-top: 1.5rem;">
+                <button class="btn btn-outline" onclick="closeModal('invoiceModal')">Close</button>
+                <button class="btn btn-primary" id="downloadInvoicePdfBtn" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">download</span>
+                    Download PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Global Layout Toast -->
     <div id="pharma-toast"
         style="visibility: hidden; min-width: 300px; background-color: var(--success-soft-green); color: #fff; text-align: center; border-radius: var(--border-radius-md); padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; transform: translateX(-50%); box-shadow: var(--shadow-lg); font-weight: 500; transition: opacity 0.4s, bottom 0.4s; opacity: 0; display:flex; align-items:center; justify-content:center;">
@@ -1477,7 +1556,14 @@
                 }
 
                 closeModal('viewRxModal');
-                showToast('Prescription processed and marked as Dispensed!');
+                
+                // If invoice was generated, display the invoice modal
+                if (result.invoiceData && result.invoiceData.success) {
+                    displayInvoiceModal(result.invoiceData);
+                } else {
+                    showToast('Prescription processed and marked as Dispensed!');
+                }
+                
                 loadPendingPrescriptions();
                 loadInventory(); // Refresh inventory as stock is deducted
                 loadSystemAlerts(); // Refresh alerts just in case stock dropped below threshold
@@ -1485,6 +1571,120 @@
                 showToast('Failed to connect to API', true);
                 console.error(error);
             }
+        }
+
+        // Invoice Modal Functions
+        let currentInvoiceData = null;
+
+        function displayInvoiceModal(invoiceData) {
+            currentInvoiceData = invoiceData;
+            
+            // Populate invoice header
+            document.getElementById('invoiceNumber').textContent = 'INV-' + (invoiceData.invoiceId || 0);
+            document.getElementById('invoicePatientName').textContent = invoiceData.patientName || 'Unknown Patient';
+            document.getElementById('invoiceDate').textContent = new Date().toLocaleDateString();
+
+            // Populate invoice items table
+            const itemsTable = document.getElementById('invoiceItemsTable');
+            itemsTable.innerHTML = '';
+            
+            let subtotal = 0;
+            if (invoiceData.items && invoiceData.items.length > 0) {
+                invoiceData.items.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid var(--ph-card-border)';
+                    row.innerHTML = `
+                        <td style="text-align: left; padding: 0.75rem;">${item.medicineName}</td>
+                        <td style="text-align: center; padding: 0.75rem;">${item.quantity}</td>
+                        <td style="text-align: right; padding: 0.75rem;">$${item.unitPrice.toFixed(2)}</td>
+                        <td style="text-align: right; padding: 0.75rem; font-weight: 600;">$${item.lineTotal.toFixed(2)}</td>
+                    `;
+                    itemsTable.appendChild(row);
+                    subtotal += item.lineTotal;
+                });
+            }
+
+            // Update totals
+            const discount = invoiceData.discount || 0;
+            const total = invoiceData.totalAmount || subtotal;
+            
+            document.getElementById('invoiceSubtotal').textContent = '$' + subtotal.toFixed(2);
+            document.getElementById('invoiceDiscount').textContent = '$' + discount.toFixed(2);
+            document.getElementById('invoiceTotal').textContent = '$' + total.toFixed(2);
+
+            // Setup PDF download button
+            const pdfBtn = document.getElementById('downloadInvoicePdfBtn');
+            pdfBtn.onclick = () => downloadInvoicePDF();
+
+            // Show the modal
+            openModal('invoiceModal');
+            showToast('Prescription dispensed and invoice generated successfully!');
+        }
+
+        function downloadInvoicePDF() {
+            if (!currentInvoiceData) {
+                showToast('No invoice data available', true);
+                return;
+            }
+
+            // Using client-side PDF generation with jsPDF and html2pdf
+            // For simplicity, we're creating an HTML representation and converting to PDF
+            const element = document.getElementById('invoiceModal').querySelector('.modal-content');
+            const opt = {
+                margin: 10,
+                filename: `invoice-${currentInvoiceData.invoiceId || 'unknown'}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
+                pagebreak: { mode: ['css', 'legacy'] }
+            };
+
+            // Check if html2pdf is available, if not use a fallback
+            if (typeof html2pdf !== 'undefined') {
+                html2pdf().set(opt).from(element).save();
+            } else {
+                // Fallback: Create a simple text PDF representation
+                const pdfContent = generatePDFContent();
+                downloadAsText(pdfContent, `invoice-${currentInvoiceData.invoiceId || 'unknown'}.txt`);
+            }
+        }
+
+        function generatePDFContent() {
+            if (!currentInvoiceData) return '';
+
+            let content = '=== NEXUSHEALTH PHARMACY INVOICE ===\n\n';
+            content += `Invoice Number: INV-${currentInvoiceData.invoiceId || 0}\n`;
+            content += `Date: ${new Date().toLocaleDateString()}\n`;
+            content += `Patient: ${currentInvoiceData.patientName || 'Unknown'}\n\n`;
+            
+            content += '--- MEDICATIONS DISPENSED ---\n';
+            let total = 0;
+            if (currentInvoiceData.items && currentInvoiceData.items.length > 0) {
+                content += 'Medicine\t\tQty\tUnit Price\tTotal\n';
+                content += '-------------------------------------------\n';
+                currentInvoiceData.items.forEach(item => {
+                    content += `${item.medicineName}\t${item.quantity}\t$${item.unitPrice.toFixed(2)}\t$${item.lineTotal.toFixed(2)}\n`;
+                    total += item.lineTotal;
+                });
+            }
+            
+            content += '\n-------------------------------------------\n';
+            content += `Subtotal:\t\t\t$${total.toFixed(2)}\n`;
+            content += `Discount:\t\t\t$${(currentInvoiceData.discount || 0).toFixed(2)}\n`;
+            content += `Total Amount:\t\t\t$${(currentInvoiceData.totalAmount || total).toFixed(2)}\n`;
+            content += '\n=== Thank you for using NexusHealth ===\n';
+
+            return content;
+        }
+
+        function downloadAsText(content, filename) {
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
+            element.setAttribute('download', filename);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
         }
 
         document.addEventListener('DOMContentLoaded', function () {

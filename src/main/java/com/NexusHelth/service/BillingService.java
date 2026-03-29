@@ -21,67 +21,26 @@ public class BillingService {
     private static final double PREMIUM_INSURANCE_DISCOUNT = 0.25;
 
     /**
-     * Generate a new bill/invoice for a patient
+     * Generate a new bill/invoice for a patient (legacy method - now uses prescription-based invoicing)
+     * This is deprecated - use PharmacistInvoiceService for prescription-based billing
      */
+    @Deprecated
     public Invoice generateBill(int patientId, String patientName, int doctorId, 
                                String consultationType, double consultationAmount, 
                                double pharmacyAddons, String discountType) {
         System.out.println("\n📝 BILLING SERVICE: Generating bill for patient ID: " + patientId);
 
-        Invoice invoice = new Invoice(patientId, doctorId, patientName, consultationType, 
-                                     consultationAmount, pharmacyAddons, discountType);
-
-        // Calculate subtotal
+        // Create invoice with new model
         double subtotal = consultationAmount + pharmacyAddons;
-        invoice.setSubtotal(subtotal);
-
-        // Calculate discount
         double discountAmount = calculateDiscount(subtotal, discountType);
-        invoice.setDiscountAmount(discountAmount);
-
-        // Calculate total
         double total = subtotal - discountAmount;
-        invoice.setTotalAmount(total);
 
-        // Generate invoice number
-        String invoiceNumber = generateInvoiceNumber();
-        invoice.setInvoiceNumber(invoiceNumber);
+        Invoice invoice = new Invoice(0, patientId, 0, total, discountAmount, "unpaid");
+        
+        System.out.println("✅ Bill prepared (Note: Use PharmacistInvoiceService for database persistence)");
+        System.out.println("   Total Amount: $" + String.format("%.2f", total));
 
-        // Set creation timestamp
-        invoice.setCreatedAt(LocalDateTime.now().format(dateFormatter));
-
-        // Save to database
-        String query = "INSERT INTO invoices (patient_id, doctor_id, patient_name, consultation_type, " +
-                "consultation_amount, pharmacy_addons, subtotal, discount_type, discount_amount, " +
-                "total_amount, status, invoice_number, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'unpaid', ?, ?)";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-
-            pstmt.setInt(1, patientId);
-            pstmt.setInt(2, doctorId);
-            pstmt.setString(3, patientName);
-            pstmt.setString(4, consultationType);
-            pstmt.setDouble(5, consultationAmount);
-            pstmt.setDouble(6, pharmacyAddons);
-            pstmt.setDouble(7, subtotal);
-            pstmt.setString(8, discountType);
-            pstmt.setDouble(9, discountAmount);
-            pstmt.setDouble(10, total);
-            pstmt.setString(11, invoiceNumber);
-            pstmt.setString(12, invoice.getCreatedAt());
-
-            pstmt.executeUpdate();
-            System.out.println("✅ Bill generated successfully: " + invoiceNumber);
-            System.out.println("   Total Amount: $" + String.format("%.2f", total));
-
-            return invoice;
-        } catch (SQLException e) {
-            System.out.println("❌ Error generating bill: " + e.getMessage());
-            e.printStackTrace();
-        }
-        return null;
+        return invoice;
     }
 
     /**
@@ -91,13 +50,11 @@ public class BillingService {
         List<Invoice> invoices = new ArrayList<>();
         System.out.println("📊 BILLING SERVICE: Fetching invoices (status: " + (statusFilter != null ? statusFilter : "all") + ")");
 
-        String query = "SELECT id, patient_id, doctor_id, patient_name, consultation_type, " +
-                "consultation_amount, pharmacy_addons, subtotal, discount_type, discount_amount, " +
-                "total_amount, status, payment_method, created_at, paid_at, invoice_number " +
-                "FROM invoices";
+        String query = "SELECT id, prescription_id, patient_id, appointment_id, total_amount, " +
+                "discount, amount_paid, payment_status, created_at FROM invoices";
 
         if (statusFilter != null && !statusFilter.isEmpty()) {
-            query += " WHERE status = ?";
+            query += " WHERE payment_status = ?";
         }
         query += " ORDER BY created_at DESC";
 
@@ -110,24 +67,17 @@ public class BillingService {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    Invoice invoice = new Invoice();
-                    invoice.setId(rs.getInt("id"));
-                    invoice.setPatientId(rs.getInt("patient_id"));
-                    invoice.setDoctorId(rs.getInt("doctor_id"));
-                    invoice.setPatientName(rs.getString("patient_name"));
-                    invoice.setConsultationType(rs.getString("consultation_type"));
-                    invoice.setConsultationAmount(rs.getDouble("consultation_amount"));
-                    invoice.setPharmacyAddons(rs.getDouble("pharmacy_addons"));
-                    invoice.setSubtotal(rs.getDouble("subtotal"));
-                    invoice.setDiscountType(rs.getString("discount_type"));
-                    invoice.setDiscountAmount(rs.getDouble("discount_amount"));
-                    invoice.setTotalAmount(rs.getDouble("total_amount"));
-                    invoice.setStatus(rs.getString("status"));
-                    invoice.setPaymentMethod(rs.getString("payment_method"));
-                    invoice.setCreatedAt(rs.getString("created_at"));
-                    invoice.setPaidAt(rs.getString("paid_at"));
-                    invoice.setInvoiceNumber(rs.getString("invoice_number"));
-
+                    Invoice invoice = new Invoice(
+                            rs.getInt("id"),
+                            rs.getInt("prescription_id"),
+                            rs.getInt("patient_id"),
+                            rs.getInt("appointment_id"),
+                            rs.getDouble("total_amount"),
+                            rs.getDouble("discount"),
+                            rs.getDouble("amount_paid"),
+                            rs.getString("payment_status"),
+                            LocalDateTime.parse(rs.getString("created_at"), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                    );
                     invoices.add(invoice);
                 }
             }
@@ -146,14 +96,13 @@ public class BillingService {
     public boolean recordPayment(int invoiceId, String paymentMethod, double paidAmount) {
         System.out.println("\n💳 BILLING SERVICE: Recording payment for invoice ID: " + invoiceId);
 
-        String query = "UPDATE invoices SET status = 'paid', payment_method = ?, paid_at = ? WHERE id = ?";
+        String query = "UPDATE invoices SET payment_status = 'paid', amount_paid = amount_paid + ? WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-            pstmt.setString(1, paymentMethod);
-            pstmt.setString(2, LocalDateTime.now().format(dateFormatter));
-            pstmt.setInt(3, invoiceId);
+            pstmt.setDouble(1, paidAmount);
+            pstmt.setInt(2, invoiceId);
 
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows > 0) {
@@ -173,10 +122,8 @@ public class BillingService {
      * Get invoice by ID
      */
     public Invoice getInvoiceById(int invoiceId) {
-        String query = "SELECT id, patient_id, doctor_id, patient_name, consultation_type, " +
-                "consultation_amount, pharmacy_addons, subtotal, discount_type, discount_amount, " +
-                "total_amount, status, payment_method, created_at, paid_at, invoice_number " +
-                "FROM invoices WHERE id = ?";
+        String query = "SELECT id, prescription_id, patient_id, appointment_id, total_amount, " +
+                "discount, amount_paid, payment_status, created_at FROM invoices WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -185,25 +132,17 @@ public class BillingService {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    Invoice invoice = new Invoice();
-                    invoice.setId(rs.getInt("id"));
-                    invoice.setPatientId(rs.getInt("patient_id"));
-                    invoice.setDoctorId(rs.getInt("doctor_id"));
-                    invoice.setPatientName(rs.getString("patient_name"));
-                    invoice.setConsultationType(rs.getString("consultation_type"));
-                    invoice.setConsultationAmount(rs.getDouble("consultation_amount"));
-                    invoice.setPharmacyAddons(rs.getDouble("pharmacy_addons"));
-                    invoice.setSubtotal(rs.getDouble("subtotal"));
-                    invoice.setDiscountType(rs.getString("discount_type"));
-                    invoice.setDiscountAmount(rs.getDouble("discount_amount"));
-                    invoice.setTotalAmount(rs.getDouble("total_amount"));
-                    invoice.setStatus(rs.getString("status"));
-                    invoice.setPaymentMethod(rs.getString("payment_method"));
-                    invoice.setCreatedAt(rs.getString("created_at"));
-                    invoice.setPaidAt(rs.getString("paid_at"));
-                    invoice.setInvoiceNumber(rs.getString("invoice_number"));
-
-                    return invoice;
+                    return new Invoice(
+                            rs.getInt("id"),
+                            rs.getInt("prescription_id"),
+                            rs.getInt("patient_id"),
+                            rs.getInt("appointment_id"),
+                            rs.getDouble("total_amount"),
+                            rs.getDouble("discount"),
+                            rs.getDouble("amount_paid"),
+                            rs.getString("payment_status"),
+                            LocalDateTime.parse(rs.getString("created_at"), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                    );
                 }
             }
         } catch (SQLException e) {

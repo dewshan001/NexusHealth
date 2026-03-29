@@ -128,6 +128,11 @@ public class PharmacistPrescriptionService {
                 }
 
                 conn.commit(); // Commit transaction
+                
+                // 4. Generate invoice after successful dispensing
+                PharmacistInvoiceService invoiceService = new PharmacistInvoiceService();
+                Map<String, Object> invoiceResult = invoiceService.generateInvoiceForPrescription(prescriptionId);
+                
                 return true;
 
             } catch (SQLException e) {
