@@ -424,7 +424,7 @@ public class ReceptionistController {
     public StandardResponse recordPayment(
             @RequestParam int invoiceId,
             @RequestParam String paymentMethod,
-            @RequestParam double paidAmount,
+            @RequestParam(required = false) Double paidAmount,
             HttpSession session) {
         System.out.println("\n[💰] POST /api/receptionist/bills/pay");
 
@@ -440,6 +440,43 @@ public class ReceptionistController {
         } else {
             return new StandardResponse(false, "Failed to record payment", null);
         }
+    }
+
+    /**
+     * List dispensed prescriptions that do not yet have a bill generated.
+     */
+    @GetMapping("/prescription-bills/unbilled")
+    public StandardResponse getUnbilledDispensedPrescriptions(HttpSession session) {
+        System.out.println("\n[🧾] GET /api/receptionist/prescription-bills/unbilled");
+
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
+        if (!isReceptionist(user)) {
+            return new StandardResponse(false, "Unauthorized - receptionist role required", null);
+        }
+
+        var rows = billingService.getUnbilledDispensedPrescriptions();
+        return new StandardResponse(true, "Unbilled dispensed prescriptions retrieved", rows);
+    }
+
+    /**
+     * Generate a new bill for a dispensed prescription and persist it to invoices.
+     */
+    @PostMapping("/prescription-bills/generate")
+    public StandardResponse generateBillForPrescription(
+            @RequestParam int prescriptionId,
+            @RequestParam(required = false, defaultValue = "0") double discountAmount,
+            HttpSession session) {
+        System.out.println("\n[🧾] POST /api/receptionist/prescription-bills/generate");
+
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
+        if (!isReceptionist(user)) {
+            return new StandardResponse(false, "Unauthorized - receptionist role required", null);
+        }
+
+        Map<String, Object> res = billingService.generateBillForDispensedPrescription(prescriptionId, discountAmount);
+        boolean success = Boolean.TRUE.equals(res.get("success"));
+        String message = res.get("message") != null ? res.get("message").toString() : (success ? "Success" : "Failed");
+        return new StandardResponse(success, message, res);
     }
 
     // ===================== RECEPTIONIST PROFILE ENDPOINTS =====================

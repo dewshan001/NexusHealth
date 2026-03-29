@@ -32,6 +32,11 @@ public class PharmacistInvoiceService {
                 "WHERE pi.prescription_id = ?";
         
         String getConsultationSql = "SELECT appointment_id FROM consultations WHERE id = ?";
+
+        String getPatientNameSql = "SELECT u.full_name AS patient_name " +
+            "FROM patients pat " +
+            "JOIN users u ON pat.user_id = u.id " +
+            "WHERE pat.id = ?";
         
         String insertInvoiceSql = "INSERT INTO invoices (prescription_id, patient_id, appointment_id, total_amount, " +
                 "discount, payment_status, created_at) VALUES (?, ?, ?, ?, 0.0, 'unpaid', CURRENT_TIMESTAMP)";
@@ -144,6 +149,16 @@ public class PharmacistInvoiceService {
                 result.put("appointmentId", appointmentId);
                 result.put("totalAmount", totalAmount);
                 result.put("items", items);
+
+                // Helpful display fields
+                try (PreparedStatement nameStmt = conn.prepareStatement(getPatientNameSql)) {
+                    nameStmt.setInt(1, patientId);
+                    try (ResultSet nameRs = nameStmt.executeQuery()) {
+                        if (nameRs.next()) {
+                            result.put("patientName", nameRs.getString("patient_name"));
+                        }
+                    }
+                }
                 
                 return result;
 
@@ -224,6 +239,51 @@ public class PharmacistInvoiceService {
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            result.put("found", false);
+            result.put("error", e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * Find the most recent invoice created for a prescription.
+     * Returns the same shape as getInvoiceById().
+     */
+    public Map<String, Object> getInvoiceByPrescriptionId(int prescriptionId) {
+        Map<String, Object> result = new HashMap<>();
+        String sql = "SELECT id FROM invoices WHERE prescription_id = ? ORDER BY created_at DESC LIMIT 1";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            // Some deployments use the newer billing invoices schema (schema.sql) which does not
+            // include prescription_id. In that case, there is no persisted invoice to fetch.
+            boolean hasPrescriptionIdColumn = false;
+            try (PreparedStatement pragmaStmt = conn.prepareStatement("PRAGMA table_info(invoices)");
+                 ResultSet rs = pragmaStmt.executeQuery()) {
+                while (rs.next()) {
+                    String col = rs.getString("name");
+                    if ("prescription_id".equalsIgnoreCase(col)) {
+                        hasPrescriptionIdColumn = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!hasPrescriptionIdColumn) {
+                result.put("found", false);
+                return result;
+            }
+
+            pstmt.setInt(1, prescriptionId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    int invoiceId = rs.getInt("id");
+                    return getInvoiceById(invoiceId);
+                }
+            }
+            result.put("found", false);
+        } catch (SQLException e) {
             result.put("found", false);
             result.put("error", e.getMessage());
         }

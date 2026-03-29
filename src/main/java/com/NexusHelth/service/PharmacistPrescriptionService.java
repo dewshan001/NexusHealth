@@ -13,6 +13,16 @@ import java.util.Map;
 
 public class PharmacistPrescriptionService {
 
+    public static class DispenseResult {
+        public final boolean success;
+        public final String message;
+
+        public DispenseResult(boolean success, String message) {
+            this.success = success;
+            this.message = message;
+        }
+    }
+
     public List<Map<String, Object>> getDispensedPrescriptions(String startDate, String endDate, String patientName) {
         List<Map<String, Object>> dispensedPrescriptions = new ArrayList<>();
 
@@ -127,7 +137,7 @@ public class PharmacistPrescriptionService {
 
     private List<Map<String, Object>> getPrescriptionItems(int prescriptionId, Connection conn) throws SQLException {
         List<Map<String, Object>> items = new ArrayList<>();
-        String sql = "SELECT pi.dosage, pi.frequency, pi.instructions, pi.quantity, m.name as medicine_name " +
+        String sql = "SELECT pi.dosage, pi.frequency, pi.instructions, pi.quantity, m.name as medicine_name, m.unit_price " +
                 "FROM prescription_items pi " +
                 "JOIN medicines m ON pi.medicine_id = m.id " +
                 "WHERE pi.prescription_id = ?";
@@ -141,7 +151,11 @@ public class PharmacistPrescriptionService {
                     item.put("dosage", rs.getString("dosage"));
                     item.put("frequency", rs.getString("frequency"));
                     item.put("instructions", rs.getString("instructions"));
-                    item.put("quantity", rs.getInt("quantity"));
+                    int quantity = rs.getInt("quantity");
+                    double unitPrice = rs.getDouble("unit_price");
+                    item.put("quantity", quantity);
+                    item.put("unitPrice", unitPrice);
+                    item.put("lineTotal", quantity * unitPrice);
                     items.add(item);
                 }
             }
@@ -149,10 +163,10 @@ public class PharmacistPrescriptionService {
         return items;
     }
 
-    public boolean dispensePrescription(int prescriptionId, int pharmacistId) {
+    public DispenseResult dispensePrescription(int prescriptionId, int pharmacistId) {
         String checkStatusSql = "SELECT status FROM prescriptions WHERE id = ?";
         String getItemsSql = "SELECT medicine_id, quantity FROM prescription_items WHERE prescription_id = ?";
-        String updateStockSql = "UPDATE medicines SET stock_level = stock_level - ? WHERE id = ?";
+        String updateStockSql = "UPDATE medicines SET stock_level = stock_level - ? WHERE id = ? AND stock_level >= ?";
         String updatePrescriptionSql = "UPDATE prescriptions SET status = 'dispensed', dispensed_at = CURRENT_TIMESTAMP, dispensed_by = ? WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection()) {
@@ -165,10 +179,12 @@ public class PharmacistPrescriptionService {
                     try (ResultSet rs = checkStmt.executeQuery()) {
                         if (rs.next()) {
                             if (!"pending".equals(rs.getString("status"))) {
-                                return false; // Already dispensed or cancelled
+                                conn.rollback();
+                                return new DispenseResult(false, "Prescription is not pending");
                             }
                         } else {
-                            return false; // Not found
+                            conn.rollback();
+                            return new DispenseResult(false, "Prescription not found");
                         }
                     }
                 }
@@ -184,20 +200,41 @@ public class PharmacistPrescriptionService {
                     }
                 }
 
+                if (medQuantities.isEmpty()) {
+                    conn.rollback();
+                    return new DispenseResult(false, "Prescription has no items");
+                }
+
                 try (PreparedStatement updateStockStmt = conn.prepareStatement(updateStockSql)) {
                     for (int[] mq : medQuantities) {
-                        updateStockStmt.setInt(1, mq[1]); // quantity
-                        updateStockStmt.setInt(2, mq[0]); // medicine_id
-                        updateStockStmt.addBatch();
+                        int medicineId = mq[0];
+                        int quantity = mq[1];
+
+                        if (quantity <= 0) {
+                            conn.rollback();
+                            return new DispenseResult(false, "Invalid prescription item quantity");
+                        }
+
+                        updateStockStmt.setInt(1, quantity); // subtract
+                        updateStockStmt.setInt(2, medicineId);
+                        updateStockStmt.setInt(3, quantity); // guard
+                        int rows = updateStockStmt.executeUpdate();
+                        if (rows <= 0) {
+                            conn.rollback();
+                            return new DispenseResult(false, "Insufficient stock to dispense one or more items");
+                        }
                     }
-                    updateStockStmt.executeBatch();
                 }
 
                 // 3. Mark as dispensed
                 try (PreparedStatement updatePrescriptionStmt = conn.prepareStatement(updatePrescriptionSql)) {
                     updatePrescriptionStmt.setInt(1, pharmacistId);
                     updatePrescriptionStmt.setInt(2, prescriptionId);
-                    updatePrescriptionStmt.executeUpdate();
+                    int rows = updatePrescriptionStmt.executeUpdate();
+                    if (rows <= 0) {
+                        conn.rollback();
+                        return new DispenseResult(false, "Failed to update prescription status");
+                    }
                 }
 
                 conn.commit(); // Commit transaction
@@ -205,19 +242,19 @@ public class PharmacistPrescriptionService {
                 // 4. Generate invoice after successful dispensing
                 PharmacistInvoiceService invoiceService = new PharmacistInvoiceService();
                 Map<String, Object> invoiceResult = invoiceService.generateInvoiceForPrescription(prescriptionId);
-                
-                return true;
+
+                return new DispenseResult(true, "Prescription dispensed successfully");
 
             } catch (SQLException e) {
                 conn.rollback(); // Rollback on error
                 e.printStackTrace();
-                return false;
+                return new DispenseResult(false, "Failed to dispense prescription");
             } finally {
                 conn.setAutoCommit(true); // Reset auto-commit
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
+            return new DispenseResult(false, "Failed to dispense prescription");
         }
     }
 }

@@ -137,6 +137,7 @@ CREATE TABLE IF NOT EXISTS prescription_items (
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS invoices (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+    prescription_id         INTEGER REFERENCES prescriptions(id),
     invoice_number         TEXT    UNIQUE NOT NULL,
     patient_id             INTEGER NOT NULL REFERENCES patients(id),
     doctor_id              INTEGER REFERENCES doctors(id),
@@ -232,23 +233,7 @@ CREATE INDEX IF NOT EXISTS idx_ph_alert_active     ON pharmacist_alerts(is_activ
 -- Note: SQLite trigger created via application layer to avoid parsing issues
 
 -- ─────────────────────────────────────────────
--- 14. SPECIALIZATIONS
--- ─────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS specializations (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    title       TEXT    NOT NULL UNIQUE,
-    description TEXT
-);
-
--- ─────────────────────────────────────────────
 -- SEED DATA
 -- ─────────────────────────────────────────────
 INSERT OR IGNORE INTO clinic_settings (id, clinic_name, address, phone, email)
 VALUES (1, 'NexusHealth', '123 Wellness Ave, Suite 400', '(555) 123-4567', 'contact@nexushealth.com');
-
-INSERT OR IGNORE INTO specializations (title, description) VALUES
-    ('Cardiology',     'Heart and cardiovascular system'),
-    ('Pediatrics',     'Medical care for infants and children'),
-    ('Dermatology',    'Skin, hair and nail conditions'),
-    ('General Practice','Primary and preventive care'),
-    ('Neurology',      'Brain and nervous system disorders');

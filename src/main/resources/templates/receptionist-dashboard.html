@@ -574,7 +574,7 @@
                     <h2 class="content-title">Master Schedule Control</h2>
                     <div style="display: flex; gap: 1rem;">
                         <input id="appointmentDate" type="date" class="form-input" 
-                            value="2026-03-18" onchange="loadAppointments(this.value)">
+                            onchange="loadAppointments(this.value)">
                         <button class="btn btn-primary" onclick="openModal('bookAppointmentModal')">+ Book Slot</button>
                     </div>
                 </div>
@@ -625,7 +625,7 @@
             <div id="tab-billing" class="tab-content">
                 <div class="content-header">
                     <h2 class="content-title">Billing & Payment Hub</h2>
-                    <button class="btn btn-primary" onclick="openModal('generateBillModal')">+ Generate New
+                    <button class="btn btn-primary" onclick="openGenerateBillModal()">+ Generate New
                         Bill</button>
                 </div>
 
@@ -871,12 +871,12 @@
                 <div style="display:flex; gap: 1rem;">
                     <label
                         style="flex:1; border: 1px solid var(--primary-medical-blue); border-radius: var(--border-radius-sm); padding: 0.75rem; text-align: center; cursor: pointer; background: #EBF5FF;">
-                        <input type="radio" name="payMethod" checked style="display:block; margin: 0 auto 0.5rem auto;">
+                        <input type="radio" name="payMethod" value="credit_card" checked style="display:block; margin: 0 auto 0.5rem auto;">
                         <strong>Credit Card</strong>
                     </label>
                     <label
                         style="flex:1; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 0.75rem; text-align: center; cursor: pointer;">
-                        <input type="radio" name="payMethod" style="display:block; margin: 0 auto 0.5rem auto;">
+                        <input type="radio" name="payMethod" value="cash" style="display:block; margin: 0 auto 0.5rem auto;">
                         <strong>Cash</strong>
                     </label>
                 </div>
@@ -884,14 +884,14 @@
 
             <div style="margin-top: 2rem; display: flex; justify-content: center;">
                 <button class="btn btn-primary" style="width: 100%; font-size: 1.1rem; padding: 0.8rem;"
-                    onclick="closeModal('recordPaymentModal'); showToast('Payment successfully processed! Receipt ready to print.')"><span
+                    onclick="processPayment()"><span
                         class="material-symbols-outlined" style="vertical-align: middle; margin-right: 4px;">lock</span>
                     Finalize Payment</button>
             </div>
         </div>
     </div>
 
-    <!-- Generate Bill Modal (Simplistic for Demo) -->
+    <!-- Generate Bill Modal (Prescription-based) -->
     <div class="modal-overlay" id="generateBillModal"
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
         <div class="modal-content"
@@ -904,30 +904,43 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Patient Record</label>
-                <input type="text" class="form-input" placeholder="Search Patient ID or Name...">
+                <label class="form-label">Dispensed Prescription (Unbilled)</label>
+                <select id="billPrescriptionSelect" class="form-select" onchange="onBillPrescriptionChange()">
+                    <option value="">Loading...</option>
+                </select>
             </div>
 
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
-                    <label class="form-label">Consultation Type</label>
-                    <select class="form-select">
-                        <option>General Checkup (Rs.100)</option>
-                        <option>Specialist Cardiology (Rs.150)</option>
-                        <option>Follow-up Visit (Rs.50)</option>
-                    </select>
+                    <label class="form-label">Patient ID</label>
+                    <input id="billPatientId" type="text" class="form-input" readonly>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Pharmacy Add-ons</label>
-                    <input type="number" class="form-input" placeholder="Amount ($)">
+                    <label class="form-label">Prescription ID</label>
+                    <input id="billPrescriptionId" type="text" class="form-input" readonly>
                 </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">Subtotal (Rs.)</label>
+                    <input id="billSubtotal" type="text" class="form-input" readonly value="Rs.0.00">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Discount (Rs.)</label>
+                    <input id="billDiscount" type="number" min="0" step="0.01" class="form-input" value="0" oninput="recalcBillTotals()">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Total Due (Rs.)</label>
+                <input id="billTotal" type="text" class="form-input" readonly value="Rs.0.00">
             </div>
 
             <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
                 <button class="btn btn-outline" onclick="closeModal('generateBillModal')">Cancel</button>
                 <button class="btn btn-primary"
-                    onclick="closeModal('generateBillModal'); showToast('Invoice generated and sent to patient flow.', false)">Save
-                    & Generate Invoice</button>
+                    onclick="generatePrescriptionBill()">Save & Generate Invoice</button>
             </div>
         </div>
     </div>
@@ -1460,15 +1473,20 @@
         let allAppointments = []; // Store all appointments for client-side filtering
         let currentRescheduleId = null; // Store appointment ID being rescheduled
 
+        function getLocalISODate(d = new Date()) {
+            const tzOffsetMs = d.getTimezoneOffset() * 60000;
+            return new Date(d.getTime() - tzOffsetMs).toISOString().split('T')[0];
+        }
+
         function loadAppointmentsForToday() {
             console.log("📅 Loading today's appointments...");
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalISODate();
             document.getElementById('appointmentDate').value = today;
             loadAppointments(today);
         }
 
         function loadAppointments(date = null) {
-            const appointmentDate = date || document.getElementById('appointmentDate').value || new Date().toISOString().split('T')[0];
+            const appointmentDate = date || document.getElementById('appointmentDate').value || getLocalISODate();
             console.log("📅 Loading appointments for:", appointmentDate);
 
             fetch('/api/receptionist/appointments?date=' + appointmentDate, {
@@ -1546,7 +1564,7 @@
                                   appt.status === 'scheduled' ? 'status-pending' :
                                   appt.status === 'cancelled' ? 'status-cancelled' : 'status-pending';
 
-                const isDisabled = appt.status === 'completed' || appt.status === 'cancelled';
+                const isCompleted = appt.status === 'completed';
 
                 row.innerHTML = `
                     <td style="font-weight: 600;">${appt.time}</td>
@@ -1554,12 +1572,14 @@
                     <td>${appt.doctorName || 'N/A'}</td>
                     <td><span class="status-badge ${statusClass}">${appt.status.charAt(0).toUpperCase() + appt.status.slice(1)}</span></td>
                     <td style="display: flex; gap: 0.5rem;">
-                        <button class="btn btn-outline" style="padding:0.3rem 0.7rem; font-size: 0.8rem; ${isDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}"
-                            onclick="rescheduleAppointmentModal(${appt.id})" ${isDisabled ? 'disabled' : ''}>Reschedule</button>
-                        <button class="btn btn-outline" style="padding:0.3rem 0.7rem; color:#EF4444; border-color:#FEE2E2; font-size: 0.8rem; ${isDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}"
-                            onclick="cancelAppointmentConfirm(${appt.id})" ${isDisabled ? 'disabled' : ''}>Cancel</button>
+                        ${isCompleted ? '' : `
+                        <button class="btn btn-outline" style="padding:0.3rem 0.7rem; font-size: 0.8rem;"
+                            onclick="rescheduleAppointmentModal(${appt.id})">Reschedule</button>
+                        <button class="btn btn-outline" style="padding:0.3rem 0.7rem; color:#EF4444; border-color:#FEE2E2; font-size: 0.8rem;"
+                            onclick="cancelAppointmentConfirm(${appt.id})">Cancel</button>
                         <button class="btn btn-outline" style="padding:0.3rem 0.7rem; color:#10B981; border-color:#D1FAE5; font-size: 0.8rem; ${appt.status === 'confirmed' ? 'opacity: 0.5; cursor: not-allowed;' : ''}"
                             onclick="checkInAppointment(${appt.id})" ${appt.status === 'confirmed' ? 'disabled' : ''}>Check-In</button>
+                        `}
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -1884,17 +1904,23 @@
             bills.forEach(bill => {
                 const row = document.createElement('tr');
                 const statusClass = bill.status === 'paid' ? 'payment-paid' : 'payment-unpaid';
-                const discountDisplay = bill.discountAmount > 0 ? `${bill.discountType} (${(bill.discountAmount / bill.subtotal * 100).toFixed(0)}%)` : '-';
+                const subtotal = Number(bill.subtotal || 0);
+                const discountAmount = Number(bill.discountAmount || 0);
+                const discountPct = subtotal > 0 ? ((discountAmount / subtotal) * 100) : 0;
+                const discountDisplay = discountAmount > 0 ? `${bill.discountType || 'discount'} (${discountPct.toFixed(0)}%)` : '-';
                 const statusBadge = bill.status === 'paid' ? `Paid (${bill.paymentMethod || 'Unknown'})` : 'Unpaid';
+                const safePatientName = (bill.patientName || '').replace(/'/g, "\\'");
+                const safeInvoiceNumber = (bill.invoiceNumber || '').replace(/'/g, "\\'");
+                const totalAmount = Number(bill.totalAmount || 0);
                 const actionButton = bill.status === 'paid' 
                     ? `<button class="btn btn-outline" style="padding:0.4rem 0.8rem;"><span class="material-symbols-outlined" style="font-size: 16px; margin-right:4px;">print</span> Print Receipt</button>`
-                    : `<button class="btn btn-primary" style="padding:0.4rem 0.8rem;" onclick="openPaymentModal(${bill.id}, '${bill.patientName}', '${bill.invoiceNumber}', ${bill.totalAmount})">Pay Now</button>`;
+                    : `<button class="btn btn-primary" style="padding:0.4rem 0.8rem;" onclick="openPaymentModal(${bill.id}, '${safePatientName}', '${safeInvoiceNumber}', ${totalAmount})">Pay Now</button>`;
 
                 row.innerHTML = `
                     <td style="font-family: monospace;">${bill.invoiceNumber}</td>
                     <td style="font-weight: 600;">${bill.patientName}</td>
                     <td>${bill.consultationType}</td>
-                    <td style="font-weight: 700; font-size: 1.1rem;">$${bill.totalAmount.toFixed(2)}</td>
+                    <td style="font-weight: 700; font-size: 1.1rem;">Rs.${totalAmount.toFixed(2)}</td>
                     <td><span style="color:#059669; font-size: 0.85rem;">${discountDisplay}</span></td>
                     <td><span class="status-badge ${statusClass}">${statusBadge}</span></td>
                     <td>${actionButton}</td>
@@ -1903,10 +1929,127 @@
             });
         }
 
+        function openGenerateBillModal() {
+            openModal('generateBillModal');
+            loadUnbilledDispensedPrescriptions();
+        }
+
+        function loadUnbilledDispensedPrescriptions() {
+            const select = document.getElementById('billPrescriptionSelect');
+            select.innerHTML = '<option value="">Loading...</option>';
+
+            fetch('/api/receptionist/prescription-bills/unbilled', { credentials: 'include' })
+                .then(response => {
+                    if (response.status === 401) {
+                        window.location.href = "/login";
+                        return;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data) return;
+                    const rows = (data.success && Array.isArray(data.data)) ? data.data : [];
+                    window.__unbilledDispensedPrescriptions = rows;
+
+                    if (rows.length === 0) {
+                        select.innerHTML = '<option value="">No unbilled dispensed prescriptions</option>';
+                        document.getElementById('billPatientId').value = '';
+                        document.getElementById('billPrescriptionId').value = '';
+                        document.getElementById('billSubtotal').value = 'Rs.0.00';
+                        document.getElementById('billDiscount').value = 0;
+                        document.getElementById('billTotal').value = 'Rs.0.00';
+                        return;
+                    }
+
+                    select.innerHTML = '<option value="">-- Select a prescription --</option>';
+                    rows.forEach(r => {
+                        const opt = document.createElement('option');
+                        opt.value = r.prescriptionId;
+                        const subtotal = Number(r.subtotal || 0);
+                        opt.textContent = `#${r.prescriptionId} — ${r.patientName} — Rs.${subtotal.toFixed(2)}`;
+                        select.appendChild(opt);
+                    });
+
+                    select.value = rows[0].prescriptionId;
+                    onBillPrescriptionChange();
+                })
+                .catch(err => {
+                    console.error('Error loading unbilled prescriptions:', err);
+                    select.innerHTML = '<option value="">Failed to load prescriptions</option>';
+                });
+        }
+
+        function onBillPrescriptionChange() {
+            const select = document.getElementById('billPrescriptionSelect');
+            const prescriptionId = Number(select.value || 0);
+            const rows = window.__unbilledDispensedPrescriptions || [];
+            const selected = rows.find(r => Number(r.prescriptionId) === prescriptionId);
+
+            if (!selected) {
+                document.getElementById('billPatientId').value = '';
+                document.getElementById('billPrescriptionId').value = '';
+                document.getElementById('billSubtotal').value = 'Rs.0.00';
+                document.getElementById('billTotal').value = 'Rs.0.00';
+                return;
+            }
+
+            document.getElementById('billPatientId').value = selected.patientId;
+            document.getElementById('billPrescriptionId').value = selected.prescriptionId;
+            const subtotal = Number(selected.subtotal || 0);
+            document.getElementById('billSubtotal').value = `Rs.${subtotal.toFixed(2)}`;
+            recalcBillTotals();
+        }
+
+        function recalcBillTotals() {
+            const subtotalText = document.getElementById('billSubtotal').value || 'Rs.0.00';
+            const subtotal = Number(String(subtotalText).replace(/[^0-9.]/g, '')) || 0;
+            let discount = Number(document.getElementById('billDiscount').value || 0);
+            if (discount < 0) discount = 0;
+            if (discount > subtotal) discount = subtotal;
+            document.getElementById('billDiscount').value = discount;
+            const total = subtotal - discount;
+            document.getElementById('billTotal').value = `Rs.${total.toFixed(2)}`;
+        }
+
+        function generatePrescriptionBill() {
+            const prescriptionId = Number(document.getElementById('billPrescriptionId').value || 0);
+            const discountAmount = Number(document.getElementById('billDiscount').value || 0);
+
+            if (!prescriptionId) {
+                showToast('Please select a prescription', true);
+                return;
+            }
+
+            const params = new URLSearchParams({
+                prescriptionId: prescriptionId,
+                discountAmount: discountAmount
+            });
+
+            fetch('/api/receptionist/prescription-bills/generate', {
+                method: 'POST',
+                body: params,
+                credentials: 'include'
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.success) {
+                        closeModal('generateBillModal');
+                        loadBills();
+                        showToast('Bill generated successfully');
+                    } else {
+                        showToast((data && data.message) ? data.message : 'Failed to generate bill', true);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error generating bill:', err);
+                    showToast('Error generating bill', true);
+                });
+        }
+
         function openPaymentModal(invoiceId, patientName, invoiceNumber, amount) {
             document.getElementById('payPatientName').innerText = patientName;
             document.getElementById('payInvoiceId').innerText = invoiceNumber;
-            document.getElementById('payAmount').innerText = '$' + amount.toFixed(2);
+            document.getElementById('payAmount').innerText = 'Rs.' + Number(amount || 0).toFixed(2);
             document.getElementById('recordPaymentModal').dataset.invoiceId = invoiceId;
             openModal('recordPaymentModal');
         }
@@ -1914,9 +2057,8 @@
         function processPayment() {
             const invoiceId = document.getElementById('recordPaymentModal').dataset.invoiceId;
             const paymentMethod = document.querySelector('input[name="payMethod"]:checked').value;
-            const discountType = document.querySelector('select').value;
             const amountText = document.getElementById('payAmount').innerText;
-            const amount = parseFloat(amountText.replace('$', ''));
+            const amount = parseFloat(String(amountText).replace(/[^0-9.]/g, ''));
 
             const params = new URLSearchParams({
                 invoiceId: invoiceId,

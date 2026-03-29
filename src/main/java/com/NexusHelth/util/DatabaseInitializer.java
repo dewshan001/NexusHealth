@@ -18,6 +18,13 @@ public class DatabaseInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement()) {
+
+            // Remove deprecated tables from existing databases
+            try {
+                stmt.execute("DROP TABLE IF EXISTS specializations");
+            } catch (Exception e) {
+                System.err.println("⚠️  Could not drop deprecated table 'specializations': " + e.getMessage());
+            }
             
             // Read schema.sql from classpath (works both in development and JAR)
             InputStream inputStream = getClass().getClassLoader().getResourceAsStream("schema.sql");
@@ -51,6 +58,10 @@ public class DatabaseInitializer implements CommandLineRunner {
             ensureClinicSettingsFeeColumn(conn);
             ensureDefaultAppointmentFee(conn);
 
+            // Ensure prescription-linked billing support exists
+            ensureInvoicesPrescriptionIdColumn(conn);
+            ensureInvoicesPrescriptionIdIndex(conn);
+
             // Hydrate runtime fee cache from DB
             double persistedFee = loadAppointmentFee(conn);
             if (persistedFee > 0) {
@@ -66,6 +77,32 @@ public class DatabaseInitializer implements CommandLineRunner {
         } catch (Exception e) {
             System.err.println("❌ Error initializing database: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private void ensureInvoicesPrescriptionIdColumn(Connection conn) {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("ALTER TABLE invoices ADD COLUMN prescription_id INTEGER");
+            System.out.println("✅ Migrated invoices: added prescription_id column");
+        } catch (Exception e) {
+            String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
+            if (msg.contains("duplicate column") || msg.contains("already exists")) {
+                return;
+            }
+            System.err.println("⚠️  invoices migration warning: " + e.getMessage());
+        }
+    }
+
+    private void ensureInvoicesPrescriptionIdIndex(Connection conn) {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_invoices_prescription_id ON invoices(prescription_id)");
+        } catch (Exception e) {
+            // Avoid noisy startup logs on older DBs; index is only an optimization.
+            String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
+            if (msg.contains("no such column") || msg.contains("duplicate") || msg.contains("already exists")) {
+                return;
+            }
+            System.err.println("⚠️  invoices index warning: " + e.getMessage());
         }
     }
 

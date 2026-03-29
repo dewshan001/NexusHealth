@@ -120,23 +120,29 @@ public class DoctorDataController {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Patient code is required"));
         }
 
+        if (request.appointmentId == null || request.appointmentId <= 0) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", "Appointment id is required"));
+        }
+
         if (request.medications == null || request.medications.isEmpty()) {
             return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "message", "At least one medication is required"));
         }
 
-        boolean success = prescriptionService.createPrescription(doctor.getId(), request.patientCode,
-                request.medications);
+        DoctorPrescriptionService.PrescriptionResult result = prescriptionService.createPrescription(doctor.getId(),
+            request.appointmentId, request.patientCode, request.medications);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-        response.put("message", success ? "Prescription saved successfully" : "Failed to save prescription");
+        response.put("success", result.success);
+        response.put("message", result.message);
         return ResponseEntity.ok(response);
     }
 
     public static class PrescriptionRequest {
         public String patientName;
         public String patientCode;
+        public Integer appointmentId;
         public List<Map<String, String>> medications;
     }
 }

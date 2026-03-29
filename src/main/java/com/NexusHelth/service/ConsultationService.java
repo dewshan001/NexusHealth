@@ -15,12 +15,13 @@ public class ConsultationService {
     public List<Map<String, Object>> getPatientHistory(String patientCode) {
         List<Map<String, Object>> history = new ArrayList<>();
         String query = "SELECT c.diagnosis, c.notes, c.consulted_at, u.full_name AS doctor_name " +
-                "FROM consultations c " +
-                "JOIN patients p ON c.patient_id = p.id " +
-                "JOIN doctors d ON c.doctor_id = d.id " +
-                "JOIN users u ON d.user_id = u.id " +
-                "WHERE p.patient_code = ? " +
-                "ORDER BY c.consulted_at DESC";
+            "FROM consultations c " +
+            "JOIN appointments a ON c.appointment_id = a.id " +
+            "JOIN patients p ON c.patient_id = p.id " +
+            "JOIN doctors d ON c.doctor_id = d.id " +
+            "JOIN users u ON d.user_id = u.id " +
+            "WHERE p.patient_code = ? AND LOWER(a.status) = 'completed' " +
+            "ORDER BY c.consulted_at DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -46,47 +47,198 @@ public class ConsultationService {
     public boolean saveConsultation(int appointmentId, int doctorId, String patientCode, String diagnosis,
             String notes) {
         String patientQuery = "SELECT id FROM patients WHERE patient_code = ?";
+        String appointmentValidateQuery = "SELECT doctor_id, patient_id, status FROM appointments WHERE id = ?";
+        String findConsultationQuery = "SELECT id FROM consultations WHERE appointment_id = ?";
         String insertQuery = "INSERT INTO consultations (appointment_id, doctor_id, patient_id, diagnosis, notes) VALUES (?, ?, ?, ?, ?)";
-        String updateApptQuery = "UPDATE appointments SET status = 'completed' WHERE id = ?";
+        String updateQuery = "UPDATE consultations SET diagnosis = ?, notes = ?, consulted_at = CURRENT_TIMESTAMP WHERE appointment_id = ? AND doctor_id = ? AND patient_id = ?";
 
         int patientId = -1;
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-            // Get patient ID
-            try (PreparedStatement pstmt = conn.prepareStatement(patientQuery)) {
-                pstmt.setString(1, patientCode);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next()) {
-                        patientId = rs.getInt("id");
-                    } else {
-                        return false;
+            conn.setAutoCommit(false);
+            try {
+                // Get patient ID from patientCode
+                try (PreparedStatement pstmt = conn.prepareStatement(patientQuery)) {
+                    pstmt.setString(1, patientCode);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) {
+                            patientId = rs.getInt("id");
+                        } else {
+                            conn.rollback();
+                            return false;
+                        }
                     }
                 }
-            }
 
-            // Insert consultation
-            try (PreparedStatement pstmt = conn.prepareStatement(insertQuery)) {
-                pstmt.setInt(1, appointmentId);
-                pstmt.setInt(2, doctorId);
-                pstmt.setInt(3, patientId);
-                pstmt.setString(4, diagnosis);
-                pstmt.setString(5, notes);
-                pstmt.executeUpdate();
-            }
+                // Validate appointment eligibility: must be confirmed and match doctor/patient
+                int apptDoctorId = -1;
+                int apptPatientId = -1;
+                String apptStatus = null;
+                try (PreparedStatement pstmt = conn.prepareStatement(appointmentValidateQuery)) {
+                    pstmt.setInt(1, appointmentId);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (!rs.next()) {
+                            conn.rollback();
+                            return false;
+                        }
+                        apptDoctorId = rs.getInt("doctor_id");
+                        apptPatientId = rs.getInt("patient_id");
+                        apptStatus = rs.getString("status");
+                    }
+                }
 
-            // Update appointment status to completed
-            try (PreparedStatement pstmt = conn.prepareStatement(updateApptQuery)) {
-                pstmt.setInt(1, appointmentId);
-                pstmt.executeUpdate();
-            }
+                if (apptDoctorId != doctorId || apptPatientId != patientId || apptStatus == null
+                        || !"confirmed".equalsIgnoreCase(apptStatus)) {
+                    conn.rollback();
+                    return false;
+                }
 
-            return true;
+                // Insert or update consultation notes (appointment is NOT completed here)
+                boolean consultationExists = false;
+                try (PreparedStatement pstmt = conn.prepareStatement(findConsultationQuery)) {
+                    pstmt.setInt(1, appointmentId);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        consultationExists = rs.next();
+                    }
+                }
+
+                if (consultationExists) {
+                    try (PreparedStatement pstmt = conn.prepareStatement(updateQuery)) {
+                        pstmt.setString(1, diagnosis);
+                        pstmt.setString(2, notes);
+                        pstmt.setInt(3, appointmentId);
+                        pstmt.setInt(4, doctorId);
+                        pstmt.setInt(5, patientId);
+                        int rows = pstmt.executeUpdate();
+                        if (rows <= 0) {
+                            conn.rollback();
+                            return false;
+                        }
+                    }
+                } else {
+                    try (PreparedStatement pstmt = conn.prepareStatement(insertQuery)) {
+                        pstmt.setInt(1, appointmentId);
+                        pstmt.setInt(2, doctorId);
+                        pstmt.setInt(3, patientId);
+                        pstmt.setString(4, diagnosis);
+                        pstmt.setString(5, notes);
+                        pstmt.executeUpdate();
+                    }
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ignored) {
+                    // Best effort rollback
+                }
+                throw e;
+            } finally {
+                try {
+                    conn.setAutoCommit(true);
+                } catch (SQLException ignored) {
+                    // Best effort restore
+                }
+            }
 
         } catch (SQLException e) {
             System.err.println("Error saving consultation: " + e.getMessage());
             e.printStackTrace();
         }
         return false;
+    }
+
+    public boolean completeConsultation(int appointmentId, int doctorId, String patientCode) {
+        String patientQuery = "SELECT id FROM patients WHERE patient_code = ?";
+        String appointmentValidateQuery = "SELECT doctor_id, patient_id, status FROM appointments WHERE id = ?";
+        String consultationExistsQuery = "SELECT id FROM consultations WHERE appointment_id = ? AND doctor_id = ? AND patient_id = ?";
+        String updateApptQuery = "UPDATE appointments SET status = 'completed' WHERE id = ? AND status = 'confirmed'";
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                int patientId = -1;
+                try (PreparedStatement pstmt = conn.prepareStatement(patientQuery)) {
+                    pstmt.setString(1, patientCode);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) {
+                            patientId = rs.getInt("id");
+                        } else {
+                            conn.rollback();
+                            return false;
+                        }
+                    }
+                }
+
+                int apptDoctorId;
+                int apptPatientId;
+                String apptStatus;
+                try (PreparedStatement pstmt = conn.prepareStatement(appointmentValidateQuery)) {
+                    pstmt.setInt(1, appointmentId);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (!rs.next()) {
+                            conn.rollback();
+                            return false;
+                        }
+                        apptDoctorId = rs.getInt("doctor_id");
+                        apptPatientId = rs.getInt("patient_id");
+                        apptStatus = rs.getString("status");
+                    }
+                }
+
+                if (apptDoctorId != doctorId || apptPatientId != patientId || apptStatus == null
+                        || !"confirmed".equalsIgnoreCase(apptStatus)) {
+                    conn.rollback();
+                    return false;
+                }
+
+                boolean hasConsultation;
+                try (PreparedStatement pstmt = conn.prepareStatement(consultationExistsQuery)) {
+                    pstmt.setInt(1, appointmentId);
+                    pstmt.setInt(2, doctorId);
+                    pstmt.setInt(3, patientId);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        hasConsultation = rs.next();
+                    }
+                }
+
+                if (!hasConsultation) {
+                    conn.rollback();
+                    return false;
+                }
+
+                try (PreparedStatement pstmt = conn.prepareStatement(updateApptQuery)) {
+                    pstmt.setInt(1, appointmentId);
+                    int rows = pstmt.executeUpdate();
+                    if (rows <= 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ignored) {
+                    // Best effort rollback
+                }
+                throw e;
+            } finally {
+                try {
+                    conn.setAutoCommit(true);
+                } catch (SQLException ignored) {
+                    // Best effort restore
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error completing consultation: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public Map<String, Object> getPatientVitals(String patientCode) {
@@ -133,11 +285,12 @@ public class ConsultationService {
     public List<Map<String, Object>> getDoctorConsultationHistory(int doctorId) {
         List<Map<String, Object>> history = new ArrayList<>();
         String query = "SELECT c.id, u.full_name AS patient_name, p.patient_code, c.diagnosis, c.notes, c.consulted_at " +
-                "FROM consultations c " +
-                "JOIN patients p ON c.patient_id = p.id " +
-                "JOIN users u ON p.user_id = u.id " +
-                "WHERE c.doctor_id = ? " +
-                "ORDER BY c.consulted_at DESC";
+            "FROM consultations c " +
+            "JOIN appointments a ON c.appointment_id = a.id " +
+            "JOIN patients p ON c.patient_id = p.id " +
+            "JOIN users u ON p.user_id = u.id " +
+            "WHERE c.doctor_id = ? AND LOWER(a.status) = 'completed' " +
+            "ORDER BY c.consulted_at DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {

@@ -1545,7 +1545,7 @@
             </div>
 
             <div class="section-card">
-                <div class="section-card-title">Recent Transactions</div>
+                <div class="section-card-title">Appointment Bills</div>
                 <div class="payment-table-wrapper">
                     <table class="payment-table">
                         <thead>
@@ -1563,6 +1563,32 @@
                                 <td colspan="6" style="padding:2rem; color:var(--text-muted);">
                                     <span class="material-symbols-outlined" style="font-size:48px; display:block; margin-bottom:0.5rem;">payment</span>
                                     Loading payment history...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-card-title">Prescription Bills</div>
+                <div class="payment-table-wrapper">
+                    <table class="payment-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Service</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Pay</th>
+                                <th>Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prescriptionBillsTableBody">
+                            <tr style="text-align:center;">
+                                <td colspan="6" style="padding:2rem; color:var(--text-muted);">
+                                    <span class="material-symbols-outlined" style="font-size:48px; display:block; margin-bottom:0.5rem;">receipt_long</span>
+                                    Loading prescription bills...
                                 </td>
                             </tr>
                         </tbody>
@@ -1740,12 +1766,12 @@
     <div class="modal-overlay" id="paymentModal">
         <div class="modal-content" style="max-width:420px;">
             <h2 style="margin-bottom:0.5rem;">Complete Payment 💳</h2>
-            <p style="color:#6B7280; margin-bottom:1.5rem; font-size:0.9rem;">Enter your card details to book this appointment</p>
+            <p id="paymentModalSubtitle" style="color:#6B7280; margin-bottom:1.5rem; font-size:0.9rem;">Enter your card details to book this appointment</p>
             
             <!-- Appointment Fee Display -->
             <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:12px; margin-bottom:1.5rem;">
                 <div style="display:flex; justify-content:space-between; color:rgba(255,255,255,0.7); margin-bottom:8px;">
-                    <span>Appointment Fee:</span>
+                    <span id="paymentPrimaryLabel">Appointment Fee:</span>
                     <span id="appointmentFeeDisplay" class="text-primary">Rs. 500</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; color:rgba(255,255,255,0.9); font-weight:600; font-size:1.1rem;">
@@ -1846,6 +1872,37 @@
         let selectedDocId = null;
         let selectedTime = null;
 
+        let paymentContext = {
+            type: 'appointment',
+            invoiceId: null
+        };
+
+        function resetPaymentModalUI() {
+            document.getElementById('paymentForm').reset();
+            document.querySelectorAll('.payment-error').forEach(el => el.textContent = '');
+            document.getElementById('paymentErrorMsg').style.display = 'none';
+            document.querySelectorAll('.payment-input').forEach(el => {
+                el.classList.remove('success', 'error');
+            });
+
+            const btn = document.getElementById('payNowBtn');
+            btn.disabled = false;
+            btn.innerText = 'Pay Now';
+        }
+
+        function setPaymentModalPurpose({ subtitle, primaryLabel, amountText }) {
+            const subtitleEl = document.getElementById('paymentModalSubtitle');
+            if (subtitleEl) subtitleEl.textContent = subtitle;
+
+            const primaryLabelEl = document.getElementById('paymentPrimaryLabel');
+            if (primaryLabelEl) primaryLabelEl.textContent = primaryLabel;
+
+            const feeEl = document.getElementById('appointmentFeeDisplay');
+            if (feeEl) feeEl.textContent = amountText;
+            const totalEl = document.getElementById('totalAmountDisplay');
+            if (totalEl) totalEl.textContent = amountText;
+        }
+
         function loadDoctors() {
             fetch('/api/appointments/doctors', { credentials: 'include' })
                 .then(res => res.json())
@@ -1908,7 +1965,7 @@
 
         // Set min date to today
         document.addEventListener("DOMContentLoaded", () => {
-            const today = new Date().toISOString().split('T')[0];
+            const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
             const dateInput = document.getElementById('appointment-date');
             dateInput.min = today;
             dateInput.value = today;
@@ -2037,22 +2094,36 @@
         }
 
         async function confirmBooking() {
-            // Reset payment form
-            document.getElementById('paymentForm').reset();
-            document.querySelectorAll('.payment-error').forEach(el => el.textContent = '');
-            document.getElementById('paymentErrorMsg').style.display = 'none';
-            document.querySelectorAll('.payment-input').forEach(el => {
-                el.classList.remove('success', 'error');
-            });
-
-            // Reset payment button state
-            document.getElementById('payNowBtn').disabled = false;
-            document.getElementById('payNowBtn').innerText = 'Pay Now';
+            paymentContext = { type: 'appointment', invoiceId: null };
+            resetPaymentModalUI();
 
             // Ensure the modal shows the latest fee before user pays.
             await refreshAppointmentFeeDisplay();
 
+            setPaymentModalPurpose({
+                subtitle: 'Enter your card details to book this appointment',
+                primaryLabel: 'Appointment Fee:',
+                amountText: (document.getElementById('totalAmountDisplay') && document.getElementById('totalAmountDisplay').textContent) ? document.getElementById('totalAmountDisplay').textContent : 'Rs. 0.00'
+            });
+
             // Open payment modal
+            document.getElementById('paymentModal').classList.add('active');
+        }
+
+        function openInvoicePayment(invoiceId, totalAmount) {
+            const amountNum = Number(totalAmount);
+            const safeAmount = isFinite(amountNum) && amountNum > 0 ? amountNum : 0;
+            const amountText = 'Rs. ' + safeAmount.toFixed(2);
+
+            paymentContext = { type: 'invoice', invoiceId };
+            resetPaymentModalUI();
+
+            setPaymentModalPurpose({
+                subtitle: 'Enter your card details to pay this prescription bill',
+                primaryLabel: 'Bill Amount:',
+                amountText
+            });
+
             document.getElementById('paymentModal').classList.add('active');
         }
 
@@ -2267,8 +2338,58 @@
                 return;
             }
 
-            // All validations passed, proceed with appointment booking
-            proceedWithBooking();
+            // All validations passed, proceed based on payment context
+            if (paymentContext && paymentContext.type === 'invoice') {
+                proceedWithInvoicePayment();
+            } else {
+                proceedWithBooking();
+            }
+        }
+
+        function proceedWithInvoicePayment() {
+            const invoiceId = paymentContext && paymentContext.invoiceId ? paymentContext.invoiceId : null;
+            const btn = document.getElementById('payNowBtn');
+            btn.disabled = true;
+            btn.innerText = "Processing...";
+
+            if (!invoiceId) {
+                document.getElementById('paymentErrorMsg').textContent = 'Missing invoice details. Please refresh and try again.';
+                document.getElementById('paymentErrorMsg').style.display = 'block';
+                btn.disabled = false;
+                btn.innerText = 'Pay Now';
+                return;
+            }
+
+            const body = new URLSearchParams();
+            body.append('paymentMethod', 'credit_card');
+
+            fetch('/api/patient/invoices/' + invoiceId + '/pay', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body,
+                credentials: 'include'
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.success) {
+                        document.getElementById('paymentModal').classList.remove('active');
+                        showSavedToast('Payment successful!');
+                        loadPaymentHistory();
+                        loadPatientData();
+                    } else {
+                        document.getElementById('paymentErrorMsg').textContent = (data && data.message) ? data.message : 'Payment failed. Please try again.';
+                        document.getElementById('paymentErrorMsg').style.display = 'block';
+                        btn.disabled = false;
+                        btn.innerText = 'Pay Now';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('paymentErrorMsg').textContent = 'Connection error. Please try again.';
+                    document.getElementById('paymentErrorMsg').style.display = 'block';
+                    btn.disabled = false;
+                    btn.innerText = 'Pay Now';
+                });
         }
 
         // Verify time slot is still available before booking
@@ -2396,22 +2517,30 @@
         // ─── Load Payment History ────────────────── 
         function loadPaymentHistory() {
             const tbody = document.getElementById('paymentHistoryTableBody');
+            const rxTbody = document.getElementById('prescriptionBillsTableBody');
             
             fetch('/api/patient/invoices', { credentials: 'include' })
                 .then(res => res.json())
                 .then(data => {
-                    if (data.success && data.data && data.data.length > 0) {
-                        tbody.innerHTML = data.data.map(inv => {
+                    const allInvoices = (data && data.success && Array.isArray(data.data)) ? data.data : [];
+                    const isPrescription = (inv) => (inv && inv.consultationType && String(inv.consultationType).toLowerCase() === 'pharmacy prescription');
+
+                    const appointmentInvoices = allInvoices.filter(inv => !isPrescription(inv));
+                    const prescriptionInvoices = allInvoices.filter(inv => isPrescription(inv));
+
+                    if (appointmentInvoices.length > 0) {
+                        tbody.innerHTML = appointmentInvoices.map(inv => {
                             const dateStr = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A';
                             const statusClass = inv.status && inv.status.toLowerCase() === 'paid' ? 'status-paid' : 'status-unpaid';
                             const statusText = inv.status && inv.status.toLowerCase() === 'paid' ? 'Paid' : 'Unpaid';
                             const doctorName = inv.doctorName ? inv.doctorName : '—';
+                            const amount = Number(inv.totalAmount || 0);
                             return `
                                 <tr>
                                     <td>${dateStr}</td>
                                     <td>${inv.consultationType || 'Consultation'}</td>
                                     <td>${doctorName}</td>
-                                    <td><strong>Rs.${(inv.totalAmount || 0).toFixed(2)}</strong></td>
+                                    <td><strong>Rs.${(isFinite(amount) ? amount : 0).toFixed(2)}</strong></td>
                                     <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                                     <td>
                                         <button class="btn btn-outline-primary"
@@ -2429,10 +2558,53 @@
                             <tr style="text-align:center;">
                                 <td colspan="6" style="padding:2rem; color:var(--text-muted);">
                                     <span class="material-symbols-outlined" style="font-size:48px; display:block; margin-bottom:0.5rem;">inbox</span>
-                                    No invoices found
+                                    No appointment invoices found
                                 </td>
                             </tr>
                         `;
+                    }
+
+                    if (rxTbody) {
+                        if (prescriptionInvoices.length > 0) {
+                            rxTbody.innerHTML = prescriptionInvoices.map(inv => {
+                                const dateStr = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A';
+                                const isPaid = inv.status && inv.status.toLowerCase() === 'paid';
+                                const statusClass = isPaid ? 'status-paid' : 'status-unpaid';
+                                const statusText = isPaid ? 'Paid' : 'Unpaid';
+                                const amount = Number(inv.totalAmount || 0);
+                                const safeAmount = isFinite(amount) ? amount : 0;
+                                const payCell = isPaid
+                                    ? '<span style="color:var(--text-muted);">—</span>'
+                                    : `<button class="btn btn-primary" style="padding:0.3rem 0.75rem; font-size:0.8rem;" onclick="openInvoicePayment(${inv.invoiceId}, ${safeAmount})">Pay</button>`;
+
+                                return `
+                                    <tr>
+                                        <td>${dateStr}</td>
+                                        <td>${inv.consultationType || 'Pharmacy Prescription'}</td>
+                                        <td><strong>Rs.${safeAmount.toFixed(2)}</strong></td>
+                                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                                        <td>${payCell}</td>
+                                        <td>
+                                            <button class="btn btn-outline-primary"
+                                                style="padding:0.3rem 0.65rem; font-size:0.8rem;"
+                                                onclick="viewReceipt(${inv.invoiceId})">
+                                                <span class="material-symbols-outlined"
+                                                    style="font-size:15px; margin-right:3px;">download</span>Receipt
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('');
+                        } else {
+                            rxTbody.innerHTML = `
+                                <tr style="text-align:center;">
+                                    <td colspan="6" style="padding:2rem; color:var(--text-muted);">
+                                        <span class="material-symbols-outlined" style="font-size:48px; display:block; margin-bottom:0.5rem;">inbox</span>
+                                        No prescription bills found
+                                    </td>
+                                </tr>
+                            `;
+                        }
                     }
                 })
                 .catch(err => {
@@ -2444,6 +2616,16 @@
                             </td>
                         </tr>
                     `;
+
+                    if (rxTbody) {
+                        rxTbody.innerHTML = `
+                            <tr style="text-align:center;">
+                                <td colspan="6" style="padding:2rem; color:var(--text-danger);">
+                                    Error loading prescription bills. Please try again later.
+                                </td>
+                            </tr>
+                        `;
+                    }
                 });
         }
 

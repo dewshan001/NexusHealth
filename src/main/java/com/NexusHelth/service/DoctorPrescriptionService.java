@@ -11,29 +11,33 @@ import java.util.Map;
 
 public class DoctorPrescriptionService {
 
+    public static class PrescriptionResult {
+        public final boolean success;
+        public final String message;
+
+        public PrescriptionResult(boolean success, String message) {
+            this.success = success;
+            this.message = message;
+        }
+    }
+
     /**
      * Creates a prescription and its items in the database.
      *
      * @param doctorId    the doctors table id (NOT user id)
+         * @param appointmentId the appointment id for the active consultation
      * @param patientCode the patient_code from patients table
      * @param medications list of maps, each with keys: name, dose, freq
-     * @return true on success
+         * @return result with success flag and message
      */
-    public boolean createPrescription(int doctorId, String patientCode, List<Map<String, String>> medications) {
+        public PrescriptionResult createPrescription(int doctorId, int appointmentId, String patientCode,
+            List<Map<String, String>> medications) {
         String findPatientSql = "SELECT id FROM patients WHERE patient_code = ?";
-        String findConsultationSql = "SELECT c.id FROM consultations c " +
-                "JOIN appointments a ON c.appointment_id = a.id " +
-                "WHERE c.patient_id = ? AND c.doctor_id = ? " +
-                "ORDER BY c.consulted_at DESC LIMIT 1";
-        String findAppointmentSql = "SELECT id FROM appointments " +
-                "WHERE patient_id = ? AND doctor_id = ? " +
-                "ORDER BY created_at DESC LIMIT 1";
-        String createConsultationSql = "INSERT INTO consultations (appointment_id, doctor_id, patient_id, diagnosis, notes) "
-                +
-                "VALUES (?, ?, ?, 'Prescription Issued', 'Auto-created for prescription')";
+        String findAppointmentSql = "SELECT doctor_id, patient_id, status FROM appointments WHERE id = ?";
+        String findConsultationSql = "SELECT id FROM consultations WHERE appointment_id = ? AND doctor_id = ? AND patient_id = ?";
         String insertPrescriptionSql = "INSERT INTO prescriptions (consultation_id, doctor_id, patient_id, status) " +
                 "VALUES (?, ?, ?, 'pending')";
-        String findMedicineSql = "SELECT id FROM medicines WHERE LOWER(name) = LOWER(?)";
+        String findMedicineSql = "SELECT id FROM medicines WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))";
         String insertItemSql = "INSERT INTO prescription_items (prescription_id, medicine_id, dosage, frequency, instructions, quantity) "
                 +
                 "VALUES (?, ?, ?, ?, ?, ?)";
@@ -54,14 +58,41 @@ public class DoctorPrescriptionService {
                 }
                 if (patientId == -1) {
                     conn.rollback();
-                    return false; // Patient not found
+                    return new PrescriptionResult(false, "Patient not found");
                 }
 
-                // 2. Find or create consultation
+                // 2. Validate appointment (must be checked-in/confirmed and belong to this doctor/patient)
+                int apptDoctorId = -1;
+                int apptPatientId = -1;
+                String apptStatus = null;
+                try (PreparedStatement pstmt = conn.prepareStatement(findAppointmentSql)) {
+                    pstmt.setInt(1, appointmentId);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) {
+                            apptDoctorId = rs.getInt("doctor_id");
+                            apptPatientId = rs.getInt("patient_id");
+                            apptStatus = rs.getString("status");
+                        }
+                    }
+                }
+
+                if (apptDoctorId != doctorId || apptPatientId != patientId) {
+                    conn.rollback();
+                    return new PrescriptionResult(false, "Appointment does not match this doctor/patient");
+                }
+
+                if (apptStatus == null || !"confirmed".equalsIgnoreCase(apptStatus)) {
+                    conn.rollback();
+                    return new PrescriptionResult(false,
+                            "Prescription not allowed for appointment status: " + (apptStatus == null ? "unknown" : apptStatus));
+                }
+
+                // 3. Require an existing consultation (notes must be submitted first)
                 int consultationId = -1;
                 try (PreparedStatement pstmt = conn.prepareStatement(findConsultationSql)) {
-                    pstmt.setInt(1, patientId);
+                    pstmt.setInt(1, appointmentId);
                     pstmt.setInt(2, doctorId);
+                    pstmt.setInt(3, patientId);
                     try (ResultSet rs = pstmt.executeQuery()) {
                         if (rs.next()) {
                             consultationId = rs.getInt("id");
@@ -70,43 +101,11 @@ public class DoctorPrescriptionService {
                 }
 
                 if (consultationId == -1) {
-                    // Need to find an appointment first, then auto-create a consultation
-                    int appointmentId = -1;
-                    try (PreparedStatement pstmt = conn.prepareStatement(findAppointmentSql)) {
-                        pstmt.setInt(1, patientId);
-                        pstmt.setInt(2, doctorId);
-                        try (ResultSet rs = pstmt.executeQuery()) {
-                            if (rs.next()) {
-                                appointmentId = rs.getInt("id");
-                            }
-                        }
-                    }
-
-                    if (appointmentId == -1) {
-                        conn.rollback();
-                        return false; // No appointment found for this patient/doctor
-                    }
-
-                    try (PreparedStatement pstmt = conn.prepareStatement(createConsultationSql)) {
-                        pstmt.setInt(1, appointmentId);
-                        pstmt.setInt(2, doctorId);
-                        pstmt.setInt(3, patientId);
-                        pstmt.executeUpdate();
-                    }
-                    try (java.sql.Statement s = conn.createStatement();
-                            ResultSet keys = s.executeQuery("SELECT last_insert_rowid()")) {
-                        if (keys.next()) {
-                            consultationId = keys.getInt(1);
-                        }
-                    }
-                }
-
-                if (consultationId == -1) {
                     conn.rollback();
-                    return false;
+                    return new PrescriptionResult(false, "Please submit consultation notes before issuing a prescription");
                 }
 
-                // 3. Insert prescription
+                // 4. Insert prescription
                 int prescriptionId = -1;
                 try (PreparedStatement pstmt = conn.prepareStatement(insertPrescriptionSql)) {
                     pstmt.setInt(1, consultationId);
@@ -123,22 +122,56 @@ public class DoctorPrescriptionService {
 
                 if (prescriptionId == -1) {
                     conn.rollback();
-                    return false;
+                    return new PrescriptionResult(false, "Failed to create prescription");
                 }
 
-                // 4. Insert each medication item
+                // 5. Insert each medication item
                 for (Map<String, String> med : medications) {
                     String medName = med.get("name");
+                    medName = medName == null ? null : medName.trim();
                     String dose = med.getOrDefault("dose", "");
                     String freq = med.getOrDefault("freq", "");
 
+                    int requestedMedicineId = -1;
+                    String medicineIdStr = med.get("medicineId");
+                    if (medicineIdStr == null || medicineIdStr.trim().isEmpty()) {
+                        medicineIdStr = med.get("id");
+                    }
+                    if (medicineIdStr != null && !medicineIdStr.trim().isEmpty()) {
+                        try {
+                            requestedMedicineId = Integer.parseInt(medicineIdStr.trim());
+                        } catch (NumberFormatException ignored) {
+                            requestedMedicineId = -1;
+                        }
+                    }
+
+                    if ((medName == null || medName.isEmpty()) && requestedMedicineId <= 0) {
+                        conn.rollback();
+                        return new PrescriptionResult(false, "Medication name is required");
+                    }
+
                     // Look up medicine_id by name
                     int medicineId = -1;
-                    try (PreparedStatement pstmt = conn.prepareStatement(findMedicineSql)) {
-                        pstmt.setString(1, medName);
-                        try (ResultSet rs = pstmt.executeQuery()) {
-                            if (rs.next()) {
-                                medicineId = rs.getInt("id");
+                    if (requestedMedicineId > 0) {
+                        // Verify medicine exists
+                        String verifySql = "SELECT id FROM medicines WHERE id = ?";
+                        try (PreparedStatement pstmt = conn.prepareStatement(verifySql)) {
+                            pstmt.setInt(1, requestedMedicineId);
+                            try (ResultSet rs = pstmt.executeQuery()) {
+                                if (rs.next()) {
+                                    medicineId = rs.getInt("id");
+                                }
+                            }
+                        }
+                    }
+
+                    if (medicineId == -1) {
+                        try (PreparedStatement pstmt = conn.prepareStatement(findMedicineSql)) {
+                            pstmt.setString(1, medName);
+                            try (ResultSet rs = pstmt.executeQuery()) {
+                                if (rs.next()) {
+                                    medicineId = rs.getInt("id");
+                                }
                             }
                         }
                     }
@@ -147,7 +180,7 @@ public class DoctorPrescriptionService {
                         // Medicine not in inventory — create a placeholder entry
                         String insertMedSql = "INSERT INTO medicines (name, stock_level, unit_price) VALUES (?, 0, 0.0)";
                         try (PreparedStatement pstmt = conn.prepareStatement(insertMedSql)) {
-                            pstmt.setString(1, medName);
+                            pstmt.setString(1, medName == null ? "" : medName.trim());
                             pstmt.executeUpdate();
                         }
                         try (java.sql.Statement s = conn.createStatement();
@@ -178,18 +211,18 @@ public class DoctorPrescriptionService {
                 }
 
                 conn.commit();
-                return true;
+                return new PrescriptionResult(true, "Prescription saved successfully");
 
             } catch (SQLException e) {
                 conn.rollback();
                 e.printStackTrace();
-                return false;
+                return new PrescriptionResult(false, "Failed to save prescription");
             } finally {
                 conn.setAutoCommit(true);
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
+            return new PrescriptionResult(false, "Failed to save prescription");
         }
     }
 }

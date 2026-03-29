@@ -1635,6 +1635,7 @@
                 // If invoice was generated, display the invoice modal
                 if (result.invoiceData && result.invoiceData.success) {
                     displayInvoiceModal(result.invoiceData);
+                    showToast('Prescription dispensed and invoice generated successfully!');
                 } else {
                     showToast('Prescription processed and marked as Dispensed!');
                 }
@@ -1739,50 +1740,37 @@
                 return;
             }
 
-            // Display invoice modal with the prescription data
-            currentInvoiceData = {
-                invoiceId: prescriptionId + 1000,
-                patientName: rx.patientName,
-                items: rx.items || [],
-                success: true
-            };
-            
-            // Populate invoice header
-            document.getElementById('invoiceNumber').textContent = 'INV-' + (prescriptionId + 1000);
-            document.getElementById('invoicePatientName').textContent = rx.patientName || 'Unknown Patient';
-            document.getElementById('invoiceDate').textContent = new Date().toLocaleDateString();
-
-            // Populate invoice items table
-            const itemsTable = document.getElementById('invoiceItemsTable');
-            itemsTable.innerHTML = '';
-            
-            let subtotal = 0;
-            if (rx.items && rx.items.length > 0) {
-                rx.items.forEach(item => {
-                    const lineTotal = (item.quantity || 1) * (item.unitPrice || 0);
-                    subtotal += lineTotal;
-                    
-                    const row = document.createElement('tr');
-                    row.style.borderBottom = '1px solid var(--ph-card-border)';
-                    row.innerHTML = `
-                        <td style="text-align: left; padding: 0.75rem;">${escapeHtml(item.medicineName || 'Unknown')}</td>
-                        <td style="text-align: center; padding: 0.75rem;">${item.quantity || 0}</td>
-                        <td style="text-align: right; padding: 0.75rem;">Rs.${(item.unitPrice || 0).toFixed(2)}</td>
-                        <td style="text-align: right; padding: 0.75rem; font-weight: 600;">Rs.${lineTotal.toFixed(2)}</td>`;
-                    itemsTable.appendChild(row);
+            // Prefer fetching the persisted invoice (created at dispense time)
+            fetch(`/api/pharmacist/invoices/by-prescription/${prescriptionId}`, { credentials: 'include' })
+                .then(r => (r.ok ? r.json() : null))
+                .then(payload => {
+                    if (payload && payload.success && payload.data) {
+                        displayInvoiceModal(payload.data);
+                        return;
+                    }
+                    // Fallback: show computed totals using prescription items (includes unitPrice from backend)
+                    displayInvoiceModal({
+                        invoiceId: null,
+                        patientName: rx.patientName,
+                        createdAt: rx.dispensedAt,
+                        items: rx.items || [],
+                        discount: 0,
+                        totalAmount: null,
+                        success: true
+                    });
+                })
+                .catch(() => {
+                    // Hard fallback if invoice fetch fails
+                    displayInvoiceModal({
+                        invoiceId: null,
+                        patientName: rx.patientName,
+                        createdAt: rx.dispensedAt,
+                        items: rx.items || [],
+                        discount: 0,
+                        totalAmount: null,
+                        success: true
+                    });
                 });
-            }
-
-            // Set invoice totals
-            document.getElementById('invoiceSubtotal').textContent = 'Rs.' + subtotal.toFixed(2);
-            document.getElementById('invoiceDiscount').textContent = 'Rs.0.00';
-            document.getElementById('invoiceTotal').textContent = 'Rs.' + subtotal.toFixed(2);
-
-            // Set PDF download handler to use existing downloadInvoicePDF function
-            const downloadBtn = document.getElementById('downloadInvoicePdfBtn');
-            downloadBtn.onclick = () => downloadInvoicePDF();
-
-            document.getElementById('invoiceModal').style.display = 'flex';
         }
 
         // Invoice Modal Functions
@@ -1790,11 +1778,25 @@
 
         function displayInvoiceModal(invoiceData) {
             currentInvoiceData = invoiceData;
-            
+
+            const resolvedInvoiceId = invoiceData.invoiceId || invoiceData.id || 0;
+            const resolvedPatientName = invoiceData.patientName || invoiceData.patient || 'Unknown Patient';
+            const createdAtRaw = invoiceData.createdAt || invoiceData.created_at || null;
+
             // Populate invoice header
-            document.getElementById('invoiceNumber').textContent = 'INV-' + (invoiceData.invoiceId || 0);
-            document.getElementById('invoicePatientName').textContent = invoiceData.patientName || 'Unknown Patient';
-            document.getElementById('invoiceDate').textContent = new Date().toLocaleDateString();
+            document.getElementById('invoiceNumber').textContent = resolvedInvoiceId ? ('INV-' + resolvedInvoiceId) : 'INV-—';
+            document.getElementById('invoicePatientName').textContent = resolvedPatientName;
+
+            let dateText = new Date().toLocaleDateString();
+            if (createdAtRaw) {
+                try {
+                    const dt = new Date(String(createdAtRaw).replace(' ', 'T'));
+                    if (!Number.isNaN(dt.getTime())) {
+                        dateText = dt.toLocaleDateString();
+                    }
+                } catch (e) { }
+            }
+            document.getElementById('invoiceDate').textContent = dateText;
 
             // Populate invoice items table
             const itemsTable = document.getElementById('invoiceItemsTable');
@@ -1803,26 +1805,30 @@
             let subtotal = 0;
             if (invoiceData.items && invoiceData.items.length > 0) {
                 invoiceData.items.forEach(item => {
+                    const quantity = Number(item.quantity || 0);
+                    const unitPrice = Number(item.unitPrice || item.unit_price || 0);
+                    const lineTotal = Number(item.lineTotal || item.line_total || (quantity * unitPrice) || 0);
+
                     const row = document.createElement('tr');
                     row.style.borderBottom = '1px solid var(--ph-card-border)';
                     row.innerHTML = `
-                        <td style="text-align: left; padding: 0.75rem;">${item.medicineName}</td>
-                        <td style="text-align: center; padding: 0.75rem;">${item.quantity}</td>
-                        <td style="text-align: right; padding: 0.75rem;">$${item.unitPrice.toFixed(2)}</td>
-                        <td style="text-align: right; padding: 0.75rem; font-weight: 600;">$${item.lineTotal.toFixed(2)}</td>
+                        <td style="text-align: left; padding: 0.75rem;">${escapeHtml(item.medicineName || item.medicine_name || 'Unknown')}</td>
+                        <td style="text-align: center; padding: 0.75rem;">${Number.isFinite(quantity) ? quantity : 0}</td>
+                        <td style="text-align: right; padding: 0.75rem;">Rs.${Number.isFinite(unitPrice) ? unitPrice.toFixed(2) : '0.00'}</td>
+                        <td style="text-align: right; padding: 0.75rem; font-weight: 600;">Rs.${Number.isFinite(lineTotal) ? lineTotal.toFixed(2) : '0.00'}</td>
                     `;
                     itemsTable.appendChild(row);
-                    subtotal += item.lineTotal;
+                    subtotal += Number.isFinite(lineTotal) ? lineTotal : 0;
                 });
             }
 
             // Update totals
-            const discount = invoiceData.discount || 0;
-            const total = invoiceData.totalAmount || subtotal;
+            const discount = Number(invoiceData.discount || invoiceData.discountAmount || 0);
+            const total = Number(invoiceData.totalAmount || invoiceData.total_amount || subtotal);
             
-            document.getElementById('invoiceSubtotal').textContent = '$' + subtotal.toFixed(2);
-            document.getElementById('invoiceDiscount').textContent = '$' + discount.toFixed(2);
-            document.getElementById('invoiceTotal').textContent = '$' + total.toFixed(2);
+            document.getElementById('invoiceSubtotal').textContent = 'Rs.' + subtotal.toFixed(2);
+            document.getElementById('invoiceDiscount').textContent = 'Rs.' + (Number.isFinite(discount) ? discount : 0).toFixed(2);
+            document.getElementById('invoiceTotal').textContent = 'Rs.' + (Number.isFinite(total) ? total : subtotal).toFixed(2);
 
             // Setup PDF download button
             const pdfBtn = document.getElementById('downloadInvoicePdfBtn');
@@ -1830,7 +1836,6 @@
 
             // Show the modal
             openModal('invoiceModal');
-            showToast('Prescription dispensed and invoice generated successfully!');
         }
 
         function downloadInvoicePDF() {
@@ -1875,15 +1880,20 @@
                 content += 'Medicine\t\tQty\tUnit Price\tTotal\n';
                 content += '-------------------------------------------\n';
                 currentInvoiceData.items.forEach(item => {
-                    content += `${item.medicineName}\t${item.quantity}\t$${item.unitPrice.toFixed(2)}\t$${item.lineTotal.toFixed(2)}\n`;
-                    total += item.lineTotal;
+                    const quantity = Number(item.quantity || 0);
+                    const unitPrice = Number(item.unitPrice || item.unit_price || 0);
+                    const lineTotal = Number(item.lineTotal || item.line_total || (quantity * unitPrice) || 0);
+                    content += `${item.medicineName || item.medicine_name || 'Unknown'}\t${quantity}\tRs.${unitPrice.toFixed(2)}\tRs.${lineTotal.toFixed(2)}\n`;
+                    total += lineTotal;
                 });
             }
             
             content += '\n-------------------------------------------\n';
-            content += `Subtotal:\t\t\t$${total.toFixed(2)}\n`;
-            content += `Discount:\t\t\t$${(currentInvoiceData.discount || 0).toFixed(2)}\n`;
-            content += `Total Amount:\t\t\t$${(currentInvoiceData.totalAmount || total).toFixed(2)}\n`;
+            const discount = Number(currentInvoiceData.discount || currentInvoiceData.discountAmount || 0);
+            const grandTotal = Number(currentInvoiceData.totalAmount || currentInvoiceData.total_amount || total);
+            content += `Subtotal:\t\t\tRs.${total.toFixed(2)}\n`;
+            content += `Discount:\t\t\tRs.${discount.toFixed(2)}\n`;
+            content += `Total Amount:\t\t\tRs.${grandTotal.toFixed(2)}\n`;
             content += '\n=== Thank you for using NexusHealth ===\n';
 
             return content;

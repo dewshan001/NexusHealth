@@ -62,14 +62,88 @@ public class ConsultationController {
             return new StandardResponse(false, "Doctor profile not found");
         }
 
+        // Enforce receptionist check-in before consultation can begin
+        Map<String, Object> appt = appointmentService.getAppointmentById(appointmentId);
+        if (appt == null) {
+            return new StandardResponse(false, "Appointment not found");
+        }
+
+        Object apptDoctorIdObj = appt.get("doctorId");
+        if (!(apptDoctorIdObj instanceof Integer) || ((Integer) apptDoctorIdObj) != doctor.getId()) {
+            return new StandardResponse(false, "You are not assigned to this appointment");
+        }
+
+        String apptStatus = String.valueOf(appt.get("status") == null ? "" : appt.get("status")).toLowerCase();
+        if (!"confirmed".equals(apptStatus)) {
+            if ("scheduled".equals(apptStatus)) {
+                return new StandardResponse(false, "Patient must be checked in by receptionist before consultation");
+            }
+            return new StandardResponse(false, "Consultation not allowed for appointment status: " + apptStatus);
+        }
+
+        String apptPatientCode = String.valueOf(appt.get("patientCode") == null ? "" : appt.get("patientCode"));
+        if (!apptPatientCode.equals(patientCode)) {
+            return new StandardResponse(false, "Patient does not match the selected appointment");
+        }
+
         boolean success = consultationService.saveConsultation(appointmentId, doctor.getId(), patientCode, diagnosis,
                 notes);
 
         if (success) {
-            return new StandardResponse(true, "Consultation saved successfully");
+            return new StandardResponse(true, "Consultation notes saved successfully");
         } else {
             return new StandardResponse(false, "Failed to save consultation");
         }
+    }
+
+    @PostMapping("/complete")
+    public StandardResponse completeConsultation(
+            @RequestParam int appointmentId,
+            @RequestParam String patientCode,
+            HttpSession session) {
+
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
+        if (user == null || !user.getRole().equals("doctor")) {
+            return new StandardResponse(false, "Authentication required or invalid role");
+        }
+
+        Doctor doctor = appointmentService.getDoctorByUserId(user.getId());
+        if (doctor == null) {
+            return new StandardResponse(false, "Doctor profile not found");
+        }
+
+        Map<String, Object> appt = appointmentService.getAppointmentById(appointmentId);
+        if (appt == null) {
+            return new StandardResponse(false, "Appointment not found");
+        }
+
+        Object apptDoctorIdObj = appt.get("doctorId");
+        if (!(apptDoctorIdObj instanceof Integer) || ((Integer) apptDoctorIdObj) != doctor.getId()) {
+            return new StandardResponse(false, "You are not assigned to this appointment");
+        }
+
+        String apptStatus = String.valueOf(appt.get("status") == null ? "" : appt.get("status")).toLowerCase();
+        if (!"confirmed".equals(apptStatus)) {
+            if ("scheduled".equals(apptStatus)) {
+                return new StandardResponse(false, "Patient must be checked in by receptionist before consultation");
+            }
+            if ("completed".equals(apptStatus)) {
+                return new StandardResponse(false, "Consultation already completed for this appointment");
+            }
+            return new StandardResponse(false, "Consultation completion not allowed for appointment status: " + apptStatus);
+        }
+
+        String apptPatientCode = String.valueOf(appt.get("patientCode") == null ? "" : appt.get("patientCode"));
+        if (!apptPatientCode.equals(patientCode)) {
+            return new StandardResponse(false, "Patient does not match the selected appointment");
+        }
+
+        boolean success = consultationService.completeConsultation(appointmentId, doctor.getId(), patientCode);
+        if (success) {
+            return new StandardResponse(true, "Consultation completed successfully");
+        }
+
+        return new StandardResponse(false, "Cannot complete consultation. Please submit notes first.");
     }
 
     @GetMapping("/patient-vitals")

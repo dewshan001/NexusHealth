@@ -54,12 +54,12 @@ public class PharmacistPrescriptionController {
             return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
         }
 
-        boolean success = service.dispensePrescription(id, user.getId());
+        PharmacistPrescriptionService.DispenseResult result = service.dispensePrescription(id, user.getId());
 
         Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-        if (!success) {
-            response.put("error", "Failed to dispense prescription. It may not be pending.");
+        response.put("success", result.success);
+        if (!result.success) {
+            response.put("error", result.message);
             return ResponseEntity.badRequest().body(response);
         }
 

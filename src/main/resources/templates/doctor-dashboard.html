@@ -959,7 +959,7 @@
                                             style="font-size:14px; vertical-align:middle;">sync</span> Auto-saving
                                         draft...</p>
                                     <div>
-                                        <button class="btn btn-outline" style="margin-right:0.5rem;"
+                                        <button class="btn btn-outline" id="btn-issue-prescription" style="margin-right:0.5rem;"
                                             onclick="jumpToPharmacy()">Issue Prescription</button>
                                         <button class="btn btn-primary" id="btn-complete-consult"
                                             onclick="completeConsultation()">Save
@@ -992,7 +992,7 @@
                         </div>
                         <div>
                             <label class="rx-label">Date</label>
-                            <input type="text" class="rx-input" value="Today, Mar 18, 2026" disabled
+                            <input type="text" class="rx-input" id="rx-date" value="" disabled
                                 style="cursor:not-allowed;">
                         </div>
                     </div>
@@ -1230,6 +1230,10 @@
                 fetchDoctorConsultationHistory();
             }
 
+            if (tabId === 'pharmacy') {
+                updateRxDate();
+            }
+
             const mobileDrawer = document.getElementById('mobileDrawer');
             if (mobileDrawer) {
                 mobileDrawer.classList.remove('open');
@@ -1302,6 +1306,15 @@
             }, 3000);
         }
 
+        function updateRxDate() {
+            const rxDateEl = document.getElementById('rx-date');
+            if (!rxDateEl) return;
+
+            const now = new Date();
+            const formatted = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            rxDateEl.value = `Today, ${formatted}`;
+        }
+
         // 1. Schedule Management - Availability Toggle
         function toggleAvailability() {
             const isLeave = document.getElementById('leaveToggle').checked;
@@ -1321,10 +1334,46 @@
         // 2. Patient Consultations Start Flow
         let currentConsApptId = null;
         let currentConsPatientCode = null;
+        let consultationNotesSaved = false;
 
-        async function startConsultation(apptId, name, id, allergies) {
+        function updateConsultationActionButtons() {
+            const issueBtn = document.getElementById('btn-issue-prescription');
+            if (issueBtn) {
+                issueBtn.disabled = !consultationNotesSaved;
+            }
+
+            const completeBtn = document.getElementById('btn-complete-consult');
+            if (completeBtn) {
+                completeBtn.innerText = consultationNotesSaved ? 'Complete Consultation' : 'Submit Notes';
+            }
+        }
+
+        function resetConsultationWorkspace() {
+            document.getElementById('consultation-workspace').style.display = 'none';
+            document.getElementById('patient-demographics').style.display = 'none';
+            document.getElementById('consult-empty-state').style.display = 'block';
+            currentConsApptId = null;
+            currentConsPatientCode = null;
+            consultationNotesSaved = false;
+            updateConsultationActionButtons();
+        }
+
+        async function startConsultation(apptId, name, id, allergies, status) {
+            const statusStr = (status || '').toString().toLowerCase();
+            if (statusStr !== 'confirmed') {
+                if (statusStr === 'scheduled') {
+                    showToast('Patient must be checked in by receptionist before consultation.', true);
+                } else if (statusStr === 'completed') {
+                    showToast('Consultation already completed for this appointment.', true);
+                } else {
+                    showToast('Consultation not allowed for appointment status: ' + (statusStr || 'unknown'), true);
+                }
+                return;
+            }
+
             currentConsApptId = apptId;
             currentConsPatientCode = id;
+            consultationNotesSaved = false;
 
             // Populate consultation tab
             document.getElementById('consult-empty-state').style.display = 'none';
@@ -1346,10 +1395,13 @@
 
             // pre-fill pharmacy tab patient name
             document.getElementById('rx-patient-name').value = name;
+            updateRxDate();
 
             // Clear previous notes
             document.getElementById('consultation-diagnosis').value = '';
             document.getElementById('consultation-notes').value = '';
+
+            updateConsultationActionButtons();
 
             // Clear current vitals inputs
             document.getElementById('vitals-blood-type').value = '';
@@ -1466,16 +1518,17 @@
 
             const btn = document.getElementById('btn-complete-consult');
             btn.disabled = true;
-            btn.innerText = "Saving...";
+            btn.innerText = consultationNotesSaved ? "Completing..." : "Submitting...";
 
             try {
+                // Always save/update notes first
                 const formData = new URLSearchParams();
                 formData.append('appointmentId', currentConsApptId);
                 formData.append('patientCode', currentConsPatientCode);
                 formData.append('diagnosis', diagnosis);
                 formData.append('notes', notes);
 
-                const response = await fetch('/api/consultations/save', {
+                const saveResponse = await fetch('/api/consultations/save', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
@@ -1484,35 +1537,65 @@
                     credentials: 'include'
                 });
 
-                const result = await response.json();
+                const saveResult = await saveResponse.json();
 
-                if (result.success) {
-                    showToast("Consultation notes saved to patient record successfully.");
+                if (!saveResult.success) {
+                    showToast(saveResult.message || "Failed to save consultation notes", true);
+                    return;
+                }
 
-                    // Reset Workspace
-                    document.getElementById('consultation-workspace').style.display = 'none';
-                    document.getElementById('patient-demographics').style.display = 'none';
-                    document.getElementById('consult-empty-state').style.display = 'block';
-                    currentConsApptId = null;
-                    currentConsPatientCode = null;
+                if (!consultationNotesSaved) {
+                    consultationNotesSaved = true;
+                    updateConsultationActionButtons();
+                    showToast("Notes submitted. You can now issue a prescription or complete the consultation.");
+                    return;
+                }
 
-                    // Refresh Schedule to show complete
+                // Complete consultation (mark appointment completed)
+                const completeForm = new URLSearchParams();
+                completeForm.append('appointmentId', currentConsApptId);
+                completeForm.append('patientCode', currentConsPatientCode);
+
+                const completeResponse = await fetch('/api/consultations/complete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: completeForm,
+                    credentials: 'include'
+                });
+
+                const completeResult = await completeResponse.json();
+
+                if (completeResult.success) {
+                    showToast("Consultation completed successfully.");
+                    resetConsultationWorkspace();
                     fetchTodaySchedule();
                     switchTab('schedule');
                 } else {
-                    showToast(result.message || "Failed to save consultation", true);
+                    showToast(completeResult.message || "Failed to complete consultation", true);
                 }
             } catch (err) {
                 console.error("Save error:", err);
                 showToast("Network error. Could not save consultation.", true);
             } finally {
                 btn.disabled = false;
-                btn.innerText = "Save Notes & Complete";
+                updateConsultationActionButtons();
             }
         }
 
         // Jump to pharmacy
         function jumpToPharmacy() {
+            if (!currentConsApptId || !currentConsPatientCode) {
+                showToast("Start a consultation first.", true);
+                return;
+            }
+
+            if (!consultationNotesSaved) {
+                showToast("Please submit notes before issuing a prescription.", true);
+                return;
+            }
+            updateRxDate();
             switchTab('pharmacy');
         }
 
@@ -1623,7 +1706,11 @@
                 return;
             }
 
-            medications.push({ name, dose, freq });
+            const normalized = (name || '').trim().toLowerCase();
+            const matched = (fetchedMedicinesList || []).find(m => (m.name || '').trim().toLowerCase() === normalized);
+            const medicineId = matched && matched.id ? matched.id : null;
+
+            medications.push({ name, dose, freq, medicineId });
             renderRxTable();
 
             // Clear inputs
@@ -1675,13 +1762,25 @@
                 return;
             }
 
+            if (!currentConsApptId) {
+                showToast("No appointment selected. Please start a consultation first.", true);
+                return;
+            }
+
+            if (!consultationNotesSaved) {
+                showToast("Please submit consultation notes before issuing a prescription.", true);
+                return;
+            }
+
             const payload = {
                 patientName: patient,
                 patientCode: currentConsPatientCode,
+                appointmentId: currentConsApptId,
                 medications: medications.map(m => ({
                     name: m.name,
                     dose: m.dose || '',
-                    freq: m.freq || ''
+                    freq: m.freq || '',
+                    medicineId: m.medicineId ? String(m.medicineId) : ''
                 }))
             };
 
@@ -1701,13 +1800,34 @@
                 .then(data => {
                     if (data.success) {
                         showToast("Digital Prescription successfully transmitted to Pharmacy!");
-                        // reset form after slight delay
-                        setTimeout(() => {
+
+                        // After successful prescription: complete the consultation
+                        const completeForm = new URLSearchParams();
+                        completeForm.append('appointmentId', currentConsApptId);
+                        completeForm.append('patientCode', currentConsPatientCode);
+
+                        return fetch('/api/consultations/complete', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: completeForm,
+                            credentials: 'include'
+                        }).then(r => r.json()).then(completeResult => {
+                            if (completeResult.success) {
+                                showToast("Consultation completed successfully.");
+                                resetConsultationWorkspace();
+                                fetchTodaySchedule();
+                            } else {
+                                showToast(completeResult.message || "Prescription saved, but failed to complete consultation", true);
+                            }
+
+                            // reset form
                             medications = [];
                             renderRxTable();
                             document.getElementById('rx-patient-name').value = '';
                             switchTab('schedule');
-                        }, 1500);
+                        });
                     } else {
                         showToast(data.message || "Failed to save prescription.", true);
                     }
@@ -1771,6 +1891,7 @@
 
         // Initialize Real-time Schedule Fetch
         document.addEventListener('DOMContentLoaded', async () => {
+            updateRxDate();
             fetchTodaySchedule();
             fetchMedicines();
         });
@@ -1784,14 +1905,26 @@
                 if (result.success && result.data && result.data.length > 0) {
                     let htmlContent = '';
                     const appointments = result.data;
-                    let foundCurrent = false;
 
-                    appointments.forEach(appt => {
+                    const nextUpcomingIndex = appointments.findIndex(a => {
+                        const s = (a.status || '').toLowerCase();
+                        return s === 'scheduled' || s === 'confirmed';
+                    });
+
+                    const nextConsultableIndex = appointments.findIndex(a => {
+                        const s = (a.status || '').toLowerCase();
+                        return s === 'confirmed';
+                    });
+
+                    appointments.forEach((appt, idx) => {
                         let statusClass = '';
                         let badgeHtml = '';
                         let actionHtml = '';
 
                         const statusStr = (appt.status || '').toLowerCase();
+
+                        const isNextUpcoming = idx === nextUpcomingIndex;
+                        const isNextConsultable = idx === nextConsultableIndex;
 
                         if (statusStr === 'completed') {
                             statusClass = 'completed';
@@ -1799,20 +1932,26 @@
                                 <div>
                                     <span class="status-badge" style="background:var(--badge-success-bg); color:var(--badge-success-color); padding:0.4rem 0.8rem; border-radius:999px; font-weight:600; font-size:0.8rem; display:inline-block; margin-bottom:0.5rem;">Completed</span>
                                     <br>
-                                    <button class="btn btn-outline-primary" style="padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="startConsultation(${appt.id}, '${appt.patientName}', '${appt.patientCode}', 'None')">View</button>
+                                    <button class="btn btn-outline-primary" style="padding:0.3rem 0.6rem; font-size:0.8rem; opacity:0.6; cursor:not-allowed;" disabled>Completed</button>
                                 </div>
                             `;
                         } else if (statusStr === 'scheduled' || statusStr === 'confirmed') {
-                            if (!foundCurrent) {
+                            if (isNextUpcoming) {
                                 statusClass = 'current';
                                 badgeHtml = `<span class="next-badge">NEXT</span>`;
-                                actionHtml = `<div><button class="btn btn-primary" onclick="startConsultation(${appt.id}, '${appt.patientName}', '${appt.patientCode}', 'None')">Start Consultation</button></div>`;
-                                foundCurrent = true;
                             } else {
-                                actionHtml = `<div><button class="btn btn-outline-primary" onclick="startConsultation(${appt.id}, '${appt.patientName}', '${appt.patientCode}', 'None')">View Details</button></div>`;
+                                statusClass = '';
+                            }
+
+                            if (statusStr === 'confirmed' && isNextConsultable) {
+                                actionHtml = `<div><button class="btn btn-primary" onclick="startConsultation(${appt.id}, '${appt.patientName}', '${appt.patientCode}', 'None', '${appt.status}')">Start Consultation</button></div>`;
+                            } else if (statusStr === 'scheduled') {
+                                actionHtml = `<div><button class="btn btn-outline-primary" style="opacity:0.6; cursor:not-allowed;" disabled>Awaiting Check-In</button></div>`;
+                            } else {
+                                actionHtml = `<div><button class="btn btn-outline-primary" onclick="startConsultation(${appt.id}, '${appt.patientName}', '${appt.patientCode}', 'None', '${appt.status}')">View Details</button></div>`;
                             }
                         } else {
-                            actionHtml = `<div><button class="btn btn-outline-primary" onclick="startConsultation(${appt.id}, '${appt.patientName}', '${appt.patientCode}', 'None')">View Details</button></div>`;
+                            actionHtml = `<div><button class="btn btn-outline-primary" onclick="startConsultation(${appt.id}, '${appt.patientName}', '${appt.patientCode}', 'None', '${appt.status}')">View Details</button></div>`;
                         }
 
                         htmlContent += `

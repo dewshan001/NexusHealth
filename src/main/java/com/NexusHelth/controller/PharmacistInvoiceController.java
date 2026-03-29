@@ -70,6 +70,22 @@ public class PharmacistInvoiceController {
     }
 
     /**
+     * Get invoice details by prescription id (useful for dispensed RX list "View Invoice")
+     */
+    @GetMapping("/by-prescription/{prescriptionId}")
+    public ResponseEntity<?> getInvoiceByPrescription(@PathVariable int prescriptionId, HttpSession session) {
+        if (!isAuthorized(session)) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
+        }
+
+        Map<String, Object> invoice = service.getInvoiceByPrescriptionId(prescriptionId);
+        if ((Boolean) invoice.getOrDefault("found", false)) {
+            return ResponseEntity.ok(Map.of("success", true, "data", invoice));
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
      * Get invoice as PDF (base64 encoded)
      * This endpoint returns the invoice data that can be used client-side to generate PDF
      */
