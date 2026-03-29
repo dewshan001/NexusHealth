@@ -445,4 +445,34 @@ public class UserService {
         }
         return false;
     }
+    
+    /**
+     * Get all patients (users with role = 'patient')
+     */
+    public java.util.List<User> getAllPatients() {
+        String query = "SELECT id, full_name, email, role, status FROM users WHERE role = 'patient' ORDER BY full_name";
+        java.util.List<User> patientList = new java.util.ArrayList<>();
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+             
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                User user = new User();
+                user.setId(rs.getInt("id"));
+                user.setFullName(rs.getString("full_name"));
+                user.setEmail(rs.getString("email"));
+                user.setRole(rs.getString("role"));
+                user.setStatus(rs.getString("status"));
+                patientList.add(user);
+            }
+            
+            System.out.println("✅ Retrieved " + patientList.size() + " patients from database");
+        } catch (SQLException e) {
+            System.out.println("❌ Database error retrieving patients: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return patientList;
+    }
 }

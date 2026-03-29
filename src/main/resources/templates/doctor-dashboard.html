@@ -15,6 +15,7 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <script th:src="@{/theme.js}"></script>
+    <script src="/tab-auth.js"></script>
 
     <!-- External CSS -->
     <link rel="stylesheet" href="/style.css">
@@ -749,7 +750,7 @@
             <a href="/" class="nav-tab" style="text-decoration:none;">
                 <span class="material-symbols-outlined">home</span> Home
             </a>
-            <a href="/logout" class="nav-logout">
+            <a href="javascript:void(0)" class="nav-logout" onclick="handleLogout()">
                 <span class="material-symbols-outlined" style="font-size:18px;">logout</span> Logout
             </a>
             <button class="theme-toggle" id="doctorThemeToggle" onclick="toggleTheme()" title="Toggle theme"
@@ -781,7 +782,7 @@
         <a href="/" class="nav-tab" style="text-decoration:none;">
             <span class="material-symbols-outlined">home</span> Home
         </a>
-        <a href="/logout" class="nav-logout" style="justify-content:center;">
+        <a href="javascript:void(0)" class="nav-logout" style="justify-content:center;" onclick="handleLogout()">
             <span class="material-symbols-outlined" style="font-size:18px;">logout</span> Logout
         </a>
     </div>
@@ -1361,7 +1362,9 @@
 
             // Fetch Vitals
             try {
-                const vRes = await fetch(`/api/consultations/patient-vitals?patientCode=${encodeURIComponent(id)}`);
+                const vRes = await fetch(`/api/consultations/patient-vitals?patientCode=${encodeURIComponent(id)}`, {
+                    credentials: 'include'
+                });
                 const vData = await vRes.json();
                 if (vData.success && vData.data) {
                     document.getElementById('vitals-blood-type').value = vData.data.bloodType || '';
@@ -1380,7 +1383,9 @@
             historyList.innerHTML = '<div style="text-align:center; padding: 2rem;"><span class="material-symbols-outlined" style="animation: spin 1s linear infinite;">sync</span></div>';
 
             try {
-                const response = await fetch(`/api/consultations/history?patientCode=${encodeURIComponent(id)}`);
+                const response = await fetch(`/api/consultations/history?patientCode=${encodeURIComponent(id)}`, {
+                    credentials: 'include'
+                });
                 const result = await response.json();
                 if (result.success && result.data && result.data.length > 0) {
                     let html = '';
@@ -1428,8 +1433,11 @@
             try {
                 const response = await fetch('/api/consultations/patient-vitals', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData,
+                    credentials: 'include'
                 });
                 const result = await response.json();
                 if (result.success) {
@@ -1469,8 +1477,11 @@
 
                 const response = await fetch('/api/consultations/save', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData,
+                    credentials: 'include'
                 });
 
                 const result = await response.json();
@@ -1517,7 +1528,9 @@
             listEl.style.display = 'none';
 
             try {
-                const response = await fetch('/api/consultations/doctor-history');
+                const response = await fetch('/api/consultations/doctor-history', {
+                    credentials: 'include'
+                });
                 const result = await response.json();
 
                 if (result.success && result.data && result.data.length > 0) {
@@ -1575,7 +1588,9 @@
 
         async function fetchMedicines() {
             try {
-                const response = await fetch('/api/doctor/medicines');
+                const response = await fetch('/api/doctor/medicines', {
+                    credentials: 'include'
+                });
                 const result = await response.json();
                 if (result.success && result.data) {
                     fetchedMedicinesList = result.data;
@@ -1676,8 +1691,11 @@
 
             fetch('/api/doctor/prescriptions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload),
+                credentials: 'include'
             })
                 .then(res => res.json())
                 .then(data => {
@@ -1718,8 +1736,41 @@
             }
         }
 
+        // Session Management (cookie-based HttpSession)
+        
+        /**
+         * Helper function to create fetch options.
+         * Automatically includes credentials for cookie-based sessions and per-tab sessionId.
+         */
+        function getFetchOptions(method = 'GET', body = null) {
+            const options = {
+                method: method,
+                credentials: 'include',  // Send JSESSIONID cookie automatically
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            return options;
+        }
+        
+        /**
+         * Handle logout: invalidate session and clear storage.
+         */
+        async function handleLogout() {
+            try {
+                await fetch('/api/logout', getFetchOptions('POST'));
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Error during logout:', error);
+                window.location.href = '/login';
+            }
+        }
+
         // Initialize Real-time Schedule Fetch
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             fetchTodaySchedule();
             fetchMedicines();
         });
@@ -1727,7 +1778,7 @@
         async function fetchTodaySchedule() {
             const listEl = document.getElementById('doctor-schedule-list');
             try {
-                const response = await fetch('/api/appointments/doctor/schedule');
+                const response = await fetch('/api/appointments/doctor/schedule', getFetchOptions('GET'));
                 const result = await response.json();
 
                 if (result.success && result.data && result.data.length > 0) {
@@ -1817,7 +1868,9 @@
 
         async function loadDoctorData() {
             try {
-                const res = await fetch('/api/doctor/profile');
+                const res = await fetch('/api/doctor/profile', {
+                    credentials: 'include'
+                });
                 if (!res.ok) throw new Error('Failed to fetch doc profile');
                 const data = await res.json();
                 if (data.success && data.doctor) {
@@ -1847,8 +1900,11 @@
 
             fetch('/api/settings/profile', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload),
+                credentials: 'include'
             }).then(res => res.json()).then(data => {
                 if (data.success) {
                     showToast('Personal info saved successfully!');
@@ -1870,8 +1926,11 @@
 
             fetch('/api/settings/password', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload),
+                credentials: 'include'
             }).then(res => res.json()).then(data => {
                 if (data.success) {
                     showToast('Password updated successfully!');

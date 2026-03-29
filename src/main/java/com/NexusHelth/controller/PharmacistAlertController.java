@@ -27,7 +27,7 @@ public class PharmacistAlertController {
     }
 
     private boolean isPharmacist(HttpSession session) {
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         return user != null && "pharmacist".equalsIgnoreCase(user.getRole());
     }
 
@@ -43,4 +43,5 @@ public class PharmacistAlertController {
         }
     }
 }
+
 

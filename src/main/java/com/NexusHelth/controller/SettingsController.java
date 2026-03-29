@@ -21,7 +21,7 @@ public class SettingsController {
     @GetMapping("/admin-profile")
     public Map<String, Object> getAdminProfile(HttpSession session) {
         Map<String, Object> response = new HashMap<>();
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             response.put("success", false);
             response.put("message", "Not authenticated");
@@ -63,7 +63,7 @@ public class SettingsController {
     @PostMapping("/profile")
     public StandardResponse updateProfile(@RequestBody ProfileUpdateRequest req, HttpSession session) {
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             return new StandardResponse(false, "Authentication required");
         }
@@ -88,7 +88,7 @@ public class SettingsController {
     @PostMapping("/password")
     public StandardResponse updatePassword(@RequestBody PasswordUpdateRequest req, HttpSession session) {
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             return new StandardResponse(false, "Authentication required");
         }
@@ -112,3 +112,4 @@ public class SettingsController {
         }
     }
 }
+

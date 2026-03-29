@@ -30,7 +30,7 @@ public class PatientDataController {
         System.out.println("🔍 Session Attributes: " + java.util.Collections.list(session.getAttributeNames()));
 
         // Get user from Spring HttpSession (not from custom SessionManager)
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
 
         if (user == null) {
             System.out.println("❌ No user in HttpSession - returning authentication error");
@@ -56,7 +56,7 @@ public class PatientDataController {
     public DashboardResponse getDashboardData(HttpSession session) {
         System.out.println("\n==================== API PATIENT-DASHBOARD REQUEST ====================");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
 
         if (user == null) {
             return new DashboardResponse(false, null, null, "Not authenticated");
@@ -105,7 +105,7 @@ public class PatientDataController {
         System.out.println("📡 API admin/patients endpoint called");
 
         // Get user from session to verify admin access
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
 
         if (user == null || !user.getRole().equals("admin")) {
             System.out.println("❌ Unauthorized access attempt - not an admin");
@@ -131,7 +131,7 @@ public class PatientDataController {
         System.out.println("📡 Updating patient status for ID: " + patientId);
 
         // Get user from session to verify admin access
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
 
         if (user == null || !user.getRole().equals("admin")) {
             System.out.println("❌ Unauthorized access attempt - not an admin");
@@ -170,7 +170,7 @@ public class PatientDataController {
         System.out.println("🗑️  Deleting patient ID: " + patientId);
 
         // Get user from session to verify admin access
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
 
         if (user == null || !user.getRole().equals("admin")) {
             System.out.println("❌ Unauthorized access attempt - not an admin");
@@ -208,7 +208,7 @@ public class PatientDataController {
         System.out.println("\n==================== API CREATE-PATIENT REQUEST ====================");
 
         // Verifying Admin Access
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("admin")) {
             System.out.println("❌ Unauthorized access attempt - not an admin");
             return new StatusUpdateResponse(false, "Unauthorized access");
@@ -243,7 +243,7 @@ public class PatientDataController {
     @GetMapping("/patient/prescriptions")
     public Map<String, Object> getPatientPrescriptions(HttpSession session) {
         Map<String, Object> response = new HashMap<>();
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             response.put("success", false);
             response.put("message", "Not authenticated");
@@ -367,7 +367,7 @@ public class PatientDataController {
         System.out.println("Session ID: " + session.getId());
         System.out.println("Session Attributes: " + java.util.Collections.list(session.getAttributeNames()));
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         System.out.println("User Object: " + user);
         if (user != null) {
             System.out.println("  - ID: " + user.getId());
@@ -430,3 +430,4 @@ public class PatientDataController {
         }
     }
 }
+

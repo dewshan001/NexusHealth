@@ -14,6 +14,7 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <script th:src="@{/theme.js}"></script>
+    <script src="/tab-auth.js"></script>
     <link rel="stylesheet" th:href="@{/style.css}">
 
     <style>
@@ -1401,7 +1402,7 @@
                     src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"
                     alt="Profile">
             </div>
-            <a href="/logout" class="nav-logout">
+            <a href="javascript:void(0)" class="nav-logout" onclick="handleLogout()">
                 <span class="material-symbols-outlined" style="font-size:18px;">logout</span> Logout
             </a>
             <!-- Theme toggle -->
@@ -1846,7 +1847,7 @@
         let selectedTime = null;
 
         function loadDoctors() {
-            fetch('/api/appointments/doctors')
+            fetch('/api/appointments/doctors', { credentials: 'include' })
                 .then(res => res.json())
                 .then(data => {
                     const grid = document.getElementById('doctorGrid');
@@ -1870,6 +1871,39 @@
                     console.error(err);
                     document.getElementById('doctorGrid').innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: red;">Failed to load doctors</div>';
                 });
+        }
+
+        // Session Management (cookie-based HttpSession)
+        
+        /**
+         * Helper function to create fetch options.
+         * Automatically includes credentials for cookie-based sessions and per-tab sessionId.
+         */
+        function getFetchOptions(method = 'GET', body = null) {
+            const options = {
+                method: method,
+                credentials: 'include',  // Send JSESSIONID cookie automatically
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            return options;
+        }
+        
+        /**
+         * Handle logout: invalidate session and clear storage.
+         */
+        async function handleLogout() {
+            try {
+                await fetch('/api/logout', getFetchOptions('POST'));
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Error during logout:', error);
+                window.location.href = '/login';
+            }
         }
 
         // Set min date to today
@@ -1924,7 +1958,7 @@
             if (!date) return;
             container.innerHTML = '<p style="text-align:center; padding: 1rem;">Loading time slots...</p>';
 
-            fetch(`/api/appointments/booked?doctorId=${selectedDocId}&date=${date}`)
+            fetch(`/api/appointments/booked?doctorId=${selectedDocId}&date=${date}`, { credentials: 'include' })
                 .then(res => res.json())
                 .then(data => {
                     const booked = data.success ? data.slots : [];
@@ -2208,7 +2242,7 @@
 
         // Verify time slot is still available before booking
         function verifySlotAvailability(doctorId, date, time) {
-            return fetch(`/api/appointments/booked?doctorId=${doctorId}&date=${date}`)
+            return fetch(`/api/appointments/booked?doctorId=${doctorId}&date=${date}`, { credentials: 'include' })
                 .then(res => res.json())
                 .then(data => {
                     const bookedSlots = data.success ? data.slots : [];
@@ -2249,7 +2283,8 @@
 
                 fetch('/api/appointments/book', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    credentials: 'include'
                 })
                     .then(res => res.json())
                     .then(data => {
@@ -2300,7 +2335,7 @@
         // ─── Receipt ────────────────────────────────
         function viewReceipt(invoiceId) {
             // Fetch invoice details from API
-            fetch('/api/patient/invoices/' + invoiceId)
+            fetch('/api/patient/invoices/' + invoiceId, { credentials: 'include' })
                 .then(res => res.json())
                 .then(data => {
                     if (data.success && data.invoice) {
@@ -2331,7 +2366,7 @@
         function loadPaymentHistory() {
             const tbody = document.getElementById('paymentHistoryTableBody');
             
-            fetch('/api/patient/invoices')
+            fetch('/api/patient/invoices', { credentials: 'include' })
                 .then(res => res.json())
                 .then(data => {
                     if (data.success && data.data && data.data.length > 0) {
@@ -2434,7 +2469,8 @@
             fetch('/api/settings/profile', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                credentials: 'include'
             }).then(res => res.json()).then(data => {
                 if (data.success) {
                     showSavedToast("Profile updated successfully!");
@@ -2467,7 +2503,8 @@
             fetch('/api/settings/password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                credentials: 'include'
             }).then(res => res.json()).then(data => {
                 if (data.success) {
                     showSavedToast("Password updated successfully!");
@@ -2541,10 +2578,17 @@
 
         // Load patient data from API
         function loadPatientData() {
-            fetch('/api/patient/dashboard')
-                .then(response => response.json())
+            fetch('/api/patient/dashboard', { credentials: 'include' })
+                .then(response => {
+                    if (response.status === 401) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.success && data.patient) {
+                    if (data && data.success && data.patient) {
                         const patient = data.patient;
                         const metrics = data.metrics || {};
 
@@ -2635,7 +2679,7 @@
         // ─── Load Prescriptions ─────────────────────
         async function loadPrescriptions() {
             try {
-                const res = await fetch('/api/patient/prescriptions');
+                const res = await fetch('/api/patient/prescriptions', { credentials: 'include' });
                 const data = await res.json();
                 const container = document.getElementById('prescriptionsList');
 

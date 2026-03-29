@@ -42,7 +42,7 @@ public class AppointmentController {
 
         System.out.println("[\uD83D\uDCE1] Booking appointment for Doctor " + doctorId + " at " + date + " " + time);
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("patient")) {
             return new StandardResponse(false, "Authentication required or invalid role");
         }
@@ -88,7 +88,7 @@ public class AppointmentController {
 
         System.out.println("[\uD83D\uDCE1] Fetching doctor schedule for date: " + date);
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("doctor")) {
             return new DoctorScheduleResponse(false, null, "Authentication required or invalid role");
         }
@@ -155,3 +155,4 @@ public class AppointmentController {
         }
     }
 }
+

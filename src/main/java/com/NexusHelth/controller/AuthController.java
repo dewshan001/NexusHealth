@@ -3,15 +3,20 @@ package com.NexusHelth.controller;
 import com.NexusHelth.model.User;
 import com.NexusHelth.service.PatientService;
 import com.NexusHelth.service.UserService;
+import com.NexusHelth.util.TabAuthStore;
 import com.NexusHelth.util.ValidationUtil;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Map;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Controller
 public class AuthController {
@@ -50,9 +55,12 @@ public class AuthController {
             session.setAttribute("user", user);
             session.setAttribute("userId", user.getId());
             session.setMaxInactiveInterval(30 * 60); // 30 minutes
+
+            // Issue per-tab token for multi-account support across tabs
+            String tabToken = TabAuthStore.issueToken(user);
             
             // Verify attributes were set
-            Object userCheck = session.getAttribute("user");
+            Object userCheck = com.NexusHelth.util.AuthSessionUtil.getUser(session);
             Object userIdCheck = session.getAttribute("userId");
             
             System.out.println("✅ User logged in: " + email);
@@ -66,7 +74,8 @@ public class AuthController {
             
             // Redirect to appropriate dashboard based on user role
             String dashboardPath = UserService.getDashboardPath(user.getRole());
-            return "redirect:" + dashboardPath;
+            String encodedToken = URLEncoder.encode(tabToken, StandardCharsets.UTF_8);
+            return "redirect:" + dashboardPath + "#tabToken=" + encodedToken;
         } else {
             System.out.println("❌ Login failed for email: " + email);
             System.out.println("==========================================================\n");
@@ -157,6 +166,22 @@ public class AuthController {
         session.invalidate();
         return "redirect:/login";
     }
+
+    @PostMapping("/api/logout")
+    @ResponseBody
+    public Map<String, Object> apiLogout(HttpServletRequest request) {
+        String token = TabAuthStore.extractToken(request);
+        if (token != null) {
+            TabAuthStore.revoke(token);
+            return Map.of("success", true);
+        }
+
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        return Map.of("success", true);
+    }
     
     @GetMapping("/about")
     public String showAboutPage() {
@@ -170,41 +195,23 @@ public class AuthController {
     
     @GetMapping("/admin-dashboard")
     public String showAdminDashboard(HttpSession session, Model model) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return "redirect:/login";
-        }
-        model.addAttribute("user", user);
         return "admin-dashboard";
     }
     
     @GetMapping("/doctor-dashboard")
     public String showDoctorDashboard(HttpSession session, Model model) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return "redirect:/login";
-        }
-        model.addAttribute("user", user);
         return "doctor-dashboard";
     }
     
     @GetMapping("/pharmacist-dashboard")
     public String showPharmacistDashboard(HttpSession session, Model model) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return "redirect:/login";
-        }
-        model.addAttribute("user", user);
         return "pharmacist-dashboard";
     }
     
     @GetMapping("/receptionist-dashboard")
     public String showReceptionistDashboard(HttpSession session, Model model) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return "redirect:/login";
-        }
-        model.addAttribute("user", user);
         return "receptionist-dashboard";
     }
 }
+
+

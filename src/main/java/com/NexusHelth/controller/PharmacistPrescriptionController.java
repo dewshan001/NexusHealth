@@ -49,7 +49,7 @@ public class PharmacistPrescriptionController {
 
     @PostMapping("/{id}/dispense")
     public ResponseEntity<?> dispensePrescription(@PathVariable int id, HttpSession session) {
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !"pharmacist".equals(user.getRole())) {
             return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
         }
@@ -74,7 +74,8 @@ public class PharmacistPrescriptionController {
     }
 
     private boolean isAuthorized(HttpSession session) {
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         return user != null && "pharmacist".equals(user.getRole());
     }
 }
+

@@ -17,6 +17,7 @@
     <!-- PDF Generation Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script th:src="@{/theme.js}"></script>
+    <script src="/tab-auth.js"></script>
 
     <!-- External CSS -->
     <link rel="stylesheet" th:href="@{/style.css}">
@@ -1132,7 +1133,9 @@
 
         async function loadPharmacistData() {
             try {
-                const response = await fetch('/api/pharmacist/profile');
+                const response = await fetch('/api/pharmacist/profile', {
+                    credentials: 'include'
+                });
                 const result = await response.json();
                 if (result.success && result.pharmacist) {
                     const pharmacist = result.pharmacist;
@@ -1161,8 +1164,11 @@
             try {
                 const res = await fetch('/api/settings/profile', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload),
+                    credentials: 'include'
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -1196,8 +1202,11 @@
             try {
                 const res = await fetch('/api/settings/password', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload),
+                    credentials: 'include'
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -1270,7 +1279,7 @@
             try {
                 const response = await fetch('/api/pharmacist/alerts', {
                     method: 'GET',
-                    credentials: 'same-origin'
+                    credentials: 'include'
                 });
                 const result = await response.json();
 
@@ -1348,7 +1357,7 @@
             try {
                 const response = await fetch('/api/pharmacist/inventory', {
                     method: 'GET',
-                    credentials: 'same-origin'
+                    credentials: 'include'
                 });
                 const result = await response.json();
 
@@ -1394,8 +1403,10 @@
             try {
                 const response = await fetch('/api/pharmacist/inventory/create', {
                     method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
                     body: formData.toString()
                 });
                 const result = await response.json();
@@ -1471,8 +1482,10 @@
             try {
                 const response = await fetch('/api/pharmacist/inventory/update', {
                     method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
                     body: formData.toString()
                 });
                 const result = await response.json();
@@ -1503,8 +1516,10 @@
             try {
                 const response = await fetch('/api/pharmacist/inventory/delete', {
                     method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
                     body: formData.toString()
                 });
                 const result = await response.json();
@@ -1528,7 +1543,9 @@
 
         async function loadPendingPrescriptions() {
             try {
-                const response = await fetch('/api/pharmacist/prescriptions/pending');
+                const response = await fetch('/api/pharmacist/prescriptions/pending', {
+                    credentials: 'include'
+                });
                 const result = await response.json();
 
                 if (!result.success) {
@@ -1603,7 +1620,8 @@
         async function confirmDispensePrescription(rxId) {
             try {
                 const response = await fetch(`/api/pharmacist/prescriptions/${rxId}/dispense`, {
-                    method: 'POST'
+                    method: 'POST',
+                    credentials: 'include'
                 });
                 const result = await response.json();
 
@@ -1646,7 +1664,9 @@
                     url += '?' + params.toString();
                 }
 
-                const response = await fetch(url);
+                const response = await fetch(url, {
+                    credentials: 'include'
+                });
                 const result = await response.json();
 
                 if (!result.success) {
@@ -1879,7 +1899,40 @@
             document.body.removeChild(element);
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
+        // Session Management (cookie-based HttpSession)
+        
+        /**
+         * Helper function to create fetch options.
+         * Automatically includes credentials for cookie-based sessions and per-tab sessionId.
+         */
+        function getFetchOptions(method = 'GET', body = null) {
+            const options = {
+                method: method,
+                credentials: 'include',  // Send JSESSIONID cookie automatically
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            return options;
+        }
+        
+        /**
+         * Handle logout: invalidate session and clear storage.
+         */
+        async function handleLogout() {
+            try {
+                await fetch('/api/logout', getFetchOptions('POST'));
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Error during logout:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
             loadPharmacistData();
             loadInventory();
             loadSystemAlerts();

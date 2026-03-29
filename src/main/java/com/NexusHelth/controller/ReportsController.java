@@ -41,7 +41,7 @@ public class ReportsController {
         System.out.println("[📊] Fetching Reports & Analytics");
 
         // Verify authentication
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             return errorResponse(false, "Authentication required", 401);
         }
@@ -95,7 +95,7 @@ public class ReportsController {
 
         System.out.println("[💰] Fetching Daily Revenue");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             return errorResponse(false, "Authentication required", 401);
         }
@@ -136,7 +136,7 @@ public class ReportsController {
 
         System.out.println("[💊] Fetching Pharmacy Sales");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             return errorResponse(false, "Authentication required", 401);
         }
@@ -177,7 +177,7 @@ public class ReportsController {
 
         System.out.println("[👥] Fetching Total Patients Visited");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             return errorResponse(false, "Authentication required", 401);
         }
@@ -219,3 +219,4 @@ public class ReportsController {
         return response;
     }
 }
+

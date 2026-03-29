@@ -15,6 +15,7 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <script th:src="@{/theme.js}"></script>
+    <script src="/tab-auth.js"></script>
 
     <!-- External CSS -->
     <link rel="stylesheet" th:href="@{/style.css}">
@@ -1085,6 +1086,24 @@
             }, 3000);
         }
 
+        // Safe Fetch Wrapper - handles HTTP errors and 401 redirects
+        async function safeFetch(url, options = {}) {
+            try {
+                const response = await fetch(url, options);
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return null;
+                }
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+
         // Modal Logic
         function openModal(modalId, patientName = null, invoiceId = null, amount = null) {
             document.getElementById(modalId).style.display = 'flex';
@@ -1126,29 +1145,70 @@
             // Upload file to backend
             fetch('/api/receptionist/profile/picture', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                credentials: 'include'
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (response.status === 401) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.success && data.data) {
+                    if (data && data.success && data.data) {
                         // Use base64 data directly from response
                         const base64Image = data.data.profilePicture;
                         document.getElementById('optionsProfilePic').src = base64Image;
                         document.getElementById('sidebarProfilePic').src = base64Image;
                         showToast('Profile picture uploaded successfully!');
                     } else {
-                        showToast(data.message || 'Failed to upload profile picture', true);
+                        showToast(data?.message || 'Failed to upload profile picture', true);
                     }
                 })
                 .catch(error => {
                     console.error('Error uploading file:', error);
-                    showToast('Error uploading file', true);
+                    showToast('Error uploading file: ' + error.message, true);
                 });
+        }
+
+        // Session Management (cookie-based HttpSession)
+        
+        /**
+         * Helper function to create fetch options.
+         * Automatically includes credentials for cookie-based sessions and per-tab sessionId.
+         */
+        function getFetchOptions(method = 'GET', body = null) {
+            const options = {
+                method: method,
+                credentials: 'include',  // Send JSESSIONID cookie automatically
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            return options;
+        }
+        
+        /**
+         * Handle logout: invalidate session and clear storage.
+         */
+        async function handleLogout() {
+            try {
+                await fetch('/api/logout', getFetchOptions('POST'));
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Error during logout:', error);
+                window.location.href = '/login';
+            }
         }
 
         // ==================== INITIALIZATION ====================
         // Load receptionist profile on page load
-        (function initializeDashboard() {
+        (async function initializeDashboard() {
             console.log("🚀 Initializing receptionist dashboard...");
             loadReceptionistProfile();
             loadPatients();
@@ -1164,7 +1224,9 @@
                 url += "?search=" + encodeURIComponent(searchTerm);
             }
 
-            fetch(url)
+            fetch(url, {
+                credentials: 'include'
+            })
                 .then(response => {
                     if (response.status === 401) {
                         window.location.href = "/login";
@@ -1253,7 +1315,11 @@
 
             fetch('/api/receptionist/register-patient', {
                 method: 'POST',
-                body: params
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: params.toString(),
+                credentials: 'include'
             })
                 .then(response => response.json())
                 .then(data => {
@@ -1293,7 +1359,9 @@
             const appointmentDate = date || document.getElementById('appointmentDate').value || new Date().toISOString().split('T')[0];
             console.log("📅 Loading appointments for:", appointmentDate);
 
-            fetch('/api/receptionist/appointments?date=' + appointmentDate)
+            fetch('/api/receptionist/appointments?date=' + appointmentDate, {
+                credentials: 'include'
+            })
                 .then(response => {
                     if (response.status === 401) {
                         window.location.href = "/login";
@@ -1408,7 +1476,9 @@
             if (!appt) return;
 
             // Fetch available time slots for the selected doctor and date
-            fetch('/api/appointments/booked?doctorId=' + appt.doctorId + '&date=' + date)
+            fetch('/api/appointments/booked?doctorId=' + appt.doctorId + '&date=' + date, {
+                credentials: 'include'
+            })
                 .then(response => response.json())
                 .then(data => {
                     const timeSelect = document.getElementById('rescheduleTime');
@@ -1462,7 +1532,8 @@
                 body: JSON.stringify({
                     appointmentDate: date,
                     appointmentTime: time
-                })
+                }),
+                credentials: 'include'
             })
                 .then(response => response.json())
                 .then(data => {
@@ -1488,7 +1559,8 @@
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    credentials: 'include'
                 })
                     .then(response => response.json())
                     .then(data => {
@@ -1514,7 +1586,8 @@
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    credentials: 'include'
                 })
                     .then(response => response.json())
                     .then(data => {
@@ -1555,7 +1628,8 @@
                     doctorId: parseInt(doctorId),
                     appointmentDate: date,
                     appointmentTime: time
-                })
+                }),
+                credentials: 'include'
             })
                 .then(response => response.json())
                 .then(data => {
@@ -1579,7 +1653,9 @@
 
             if (!doctorId || !date) return;
 
-            fetch('/api/appointments/booked?doctorId=' + doctorId + '&date=' + date)
+            fetch('/api/appointments/booked?doctorId=' + doctorId + '&date=' + date, {
+                credentials: 'include'
+            })
                 .then(response => response.json())
                 .then(data => {
                     const timeSelect = document.getElementById('bookAppointmentTime');
@@ -1614,7 +1690,9 @@
         });
 
         function loadDoctorsForBooking() {
-            fetch('/api/appointments/doctors')
+            fetch('/api/appointments/doctors', {
+                credentials: 'include'
+            })
                 .then(response => response.json())
                 .then(data => {
                     const select = document.getElementById('bookDoctorSelect');
@@ -1632,7 +1710,9 @@
         }
 
         function loadPatientsForBooking() {
-            fetch('/api/receptionist/patients')
+            fetch('/api/receptionist/patients', {
+                credentials: 'include'
+            })
                 .then(response => response.json())
                 .then(data => {
                     const select = document.getElementById('bookPatientSelect');
@@ -1657,7 +1737,9 @@
                 url += '?status=' + statusFilter;
             }
 
-            fetch(url)
+            fetch(url, {
+                credentials: 'include'
+            })
                 .then(response => {
                     if (response.status === 401) {
                         window.location.href = "/login";
@@ -1732,7 +1814,8 @@
 
             fetch('/api/receptionist/bills/pay', {
                 method: 'POST',
-                body: params
+                body: params,
+                credentials: 'include'
             })
                 .then(response => response.json())
                 .then(data => {
@@ -1753,7 +1836,9 @@
         // ==================== RECEPTIONIST PROFILE FUNCTIONS ====================
         function loadReceptionistProfile() {
             console.log("👤 Loading receptionist profile...");
-            fetch('/api/receptionist/profile')
+            fetch('/api/receptionist/profile', {
+                credentials: 'include'
+            })
                 .then(response => {
                     if (response.status === 401) {
                         window.location.href = "/login";
@@ -1802,7 +1887,8 @@
 
             fetch('/api/receptionist/profile/update', {
                 method: 'POST',
-                body: params
+                body: params,
+                credentials: 'include'
             })
                 .then(response => response.json())
                 .then(data => {
@@ -1854,7 +1940,8 @@
 
             fetch('/api/receptionist/profile/password', {
                 method: 'POST',
-                body: params
+                body: params,
+                credentials: 'include'
             })
                 .then(response => response.json())
                 .then(data => {
@@ -1883,7 +1970,8 @@
             }
 
             fetch('/api/receptionist/profile/picture', {
-                method: 'DELETE'
+                method: 'DELETE',
+                credentials: 'include'
             })
                 .then(response => response.json())
                 .then(data => {

@@ -33,7 +33,7 @@ public class PatientPaymentController {
         System.out.println("[💳] Fetching invoices for patient");
         
         // Verify authentication
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             return new InvoicesResponse(false, null, "Authentication required");
         }
@@ -76,7 +76,7 @@ public class PatientPaymentController {
         System.out.println("[💳] Fetching invoice details for ID: " + invoiceId);
         
         // Verify authentication
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             return new InvoiceDetailResponse(false, null, null, "Authentication required");
         }
@@ -130,7 +130,7 @@ public class PatientPaymentController {
         System.out.println("[💳] Recording payment for invoice ID: " + invoiceId);
         
         // Verify authentication
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             return new PaymentResponseDTO(false, "Authentication required", null, null, null, null, null);
         }
@@ -209,7 +209,7 @@ public class PatientPaymentController {
         System.out.println("[💳] Generating receipt for invoice ID: " + invoiceId);
         
         // Verify authentication
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             return new ReceiptResponse(false, null, null, "Authentication required");
         }
@@ -261,7 +261,7 @@ public class PatientPaymentController {
         System.out.println("[💳] Admin fetching invoices");
         
         // Verify authentication
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             return new InvoicesResponse(false, null, "Authentication required");
         }
@@ -381,3 +381,4 @@ public class PatientPaymentController {
         }
     }
 }
+

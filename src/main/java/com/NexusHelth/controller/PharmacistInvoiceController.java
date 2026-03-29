@@ -90,7 +90,8 @@ public class PharmacistInvoiceController {
     }
 
     private boolean isAuthorized(HttpSession session) {
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         return user != null && "pharmacist".equals(user.getRole());
     }
 }
+

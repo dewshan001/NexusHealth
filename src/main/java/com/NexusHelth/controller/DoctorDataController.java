@@ -26,7 +26,7 @@ public class DoctorDataController {
 
     @GetMapping("/api/doctor/profile")
     public DoctorProfileResponse getDoctorProfile(HttpSession session) {
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("doctor")) {
             return new DoctorProfileResponse(false, null, "Not authenticated as doctor");
         }
@@ -81,7 +81,7 @@ public class DoctorDataController {
 
     @GetMapping("/api/doctor/medicines")
     public MedicineListResponse getMedicines(HttpSession session) {
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("doctor")) {
             return new MedicineListResponse(false, null, "Not authenticated as doctor");
         }
@@ -106,7 +106,7 @@ public class DoctorDataController {
 
     @PostMapping("/api/doctor/prescriptions")
     public ResponseEntity<?> createPrescription(@RequestBody PrescriptionRequest request, HttpSession session) {
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !"doctor".equals(user.getRole())) {
             return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
         }
@@ -140,3 +140,4 @@ public class DoctorDataController {
         public List<Map<String, String>> medications;
     }
 }
+

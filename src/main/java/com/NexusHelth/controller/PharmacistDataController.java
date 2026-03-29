@@ -14,7 +14,7 @@ public class PharmacistDataController {
 
     @GetMapping("/api/pharmacist/profile")
     public PharmacistProfileResponse getPharmacistProfile(HttpSession session) {
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("pharmacist")) {
             return new PharmacistProfileResponse(false, null, "Not authenticated as pharmacist");
         }
@@ -66,3 +66,4 @@ public class PharmacistDataController {
         }
     }
 }
+

@@ -18,36 +18,6 @@ public class DashboardController {
     
     @GetMapping("/patient-dashboard")
     public String showDashboard(HttpSession session, Model model) {
-        System.out.println("\n==================== DASHBOARD REQUEST ====================");
-        System.out.println("📊 Dashboard request - Session ID: " + session.getId());
-        System.out.println("🔍 Session Attributes: " + java.util.Collections.list(session.getAttributeNames()));
-        System.out.println("⏱️  Session Max Inactive Interval: " + session.getMaxInactiveInterval());
-        System.out.println("⏱️  Session Creation Time: " + session.getCreationTime());
-        System.out.println("⏱️  Session Last Accessed Time: " + session.getLastAccessedTime());
-        System.out.println("⏱️  Session Is New: " + session.isNew());
-        
-        Object userObj = session.getAttribute("user");
-        System.out.println("👤 User object from session: " + userObj);
-        System.out.println("👤 User object type: " + (userObj != null ? userObj.getClass().getName() : "null"));
-        
-        User user = (User) userObj;
-        
-        if (user == null) {
-            System.out.println("❌ NO USER IN SESSION - REDIRECTING TO LOGIN");
-            System.out.println("❌ All session attributes: " + java.util.Collections.list(session.getAttributeNames()));
-            System.out.println("==========================================================\n");
-            return "redirect:/login";
-        }
-        
-        System.out.println("✅ User found in session: " + user.getEmail());
-        System.out.println("✅ User ID: " + user.getId());
-        Patient patient = patientService.getPatientByUserId(user.getId());
-        
-        model.addAttribute("patient", patient);
-        model.addAttribute("user", user);
-        System.out.println("✅ Dashboard loading successfully for user: " + user.getEmail());
-        System.out.println("==========================================================\n");
-        
         return "patient-dashboard";
     }
     
@@ -60,7 +30,7 @@ public class DashboardController {
                                @RequestParam String address,
                                RedirectAttributes redirectAttributes) {
         
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null) {
             return "redirect:/login";
         }
@@ -78,3 +48,4 @@ public class DashboardController {
         return "redirect:/patient-dashboard";
     }
 }
+

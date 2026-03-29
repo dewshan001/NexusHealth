@@ -52,7 +52,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[📋] GET /api/receptionist/patients");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -81,7 +81,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[➕] POST /api/receptionist/register-patient");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -114,7 +114,7 @@ public class ReceptionistController {
     public StandardResponse getAppointmentsToday(HttpSession session) {
         System.out.println("\n[📅] GET /api/receptionist/appointments/today");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -135,7 +135,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[📅] GET /api/receptionist/appointments");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -160,7 +160,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[🔄] PUT /api/receptionist/appointments/" + appointmentId + "/reschedule");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return AppointmentResponse.unauthorized();
         }
@@ -218,7 +218,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[🔄] POST /api/receptionist/appointments/reschedule");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -241,7 +241,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[❌] PUT /api/receptionist/appointments/" + appointmentId + "/cancel");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return AppointmentResponse.unauthorized();
         }
@@ -276,7 +276,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[❌] POST /api/receptionist/appointments/cancel");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -299,7 +299,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[✅] PUT /api/receptionist/appointments/" + appointmentId + "/check-in");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return AppointmentResponse.unauthorized();
         }
@@ -335,7 +335,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[✅] POST /api/receptionist/appointments/check-in");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -356,7 +356,7 @@ public class ReceptionistController {
     public StandardResponse getAvailableDoctors(HttpSession session) {
         System.out.println("\n[👨‍⚕️] GET /api/receptionist/appointments/doctors");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -376,7 +376,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[💳] GET /api/receptionist/bills");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -400,7 +400,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[📄] POST /api/receptionist/bills/generate");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -426,7 +426,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[💰] POST /api/receptionist/bills/pay");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -449,7 +449,7 @@ public class ReceptionistController {
     public StandardResponse getReceptionistProfile(HttpSession session) {
         System.out.println("\n[👤] GET /api/receptionist/profile");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -468,7 +468,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[✏️] POST /api/receptionist/profile/update");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -496,7 +496,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[🔐] POST /api/receptionist/profile/password");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -529,7 +529,7 @@ public class ReceptionistController {
             HttpSession session) {
         System.out.println("\n[📷] POST /api/receptionist/profile/picture");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -591,7 +591,7 @@ public class ReceptionistController {
     public StandardResponse deleteProfilePicture(HttpSession session) {
         System.out.println("\n[🗑️] DELETE /api/receptionist/profile/picture");
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (!isReceptionist(user)) {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
@@ -658,3 +658,4 @@ public class ReceptionistController {
         }
     }
 }
+

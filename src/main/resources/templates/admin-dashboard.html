@@ -15,6 +15,7 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <script th:src="@{/theme.js}"></script>
+    <script src="/tab-auth.js"></script>
 
     <!-- External CSS -->
     <link rel="stylesheet" th:href="@{/style.css}">
@@ -1131,7 +1132,7 @@
             </div>
 
             <!-- Logout Button -->
-            <button class="btn-logout" onclick="window.location.href='/logout'">
+            <button class="btn-logout" onclick="handleLogout()">
                 <span class="material-symbols-outlined">logout</span>
                 Logout
             </button>
@@ -1724,8 +1725,8 @@
 
             fetch('/api/admin/users/create', {
                 method: 'POST',
-                body: formData,
-                credentials: 'include'
+                credentials: 'include',
+                body: formData
             })
                 .then(res => res.json())
                 .then(data => {
@@ -1766,8 +1767,8 @@
 
             fetch('/api/admin/staff/update', {
                 method: 'POST',
-                body: formData,
-                credentials: 'include'
+                credentials: 'include',
+                body: formData
             })
                 .then(res => res.json())
                 .then(data => {
@@ -1921,21 +1922,31 @@
 
         function loadPatients() {
             fetch('/api/admin/patients', {
+                method: 'GET',
                 credentials: 'include'
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            window.location.href = '/login';
+                            return;
+                        }
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.success && data.data) {
+                    if (data && data.success && data.data) {
                         allPatients = data.data;
                         renderPatientTable(allPatients);
                     } else {
-                        console.error('Failed to load patients:', data.error);
+                        console.error('Failed to load patients:', data?.error || 'Unknown error');
                         showToast('Failed to load patient data', true);
                     }
                 })
                 .catch(error => {
                     console.error('Error loading patients:', error);
-                    showToast('Error loading patient data', true);
+                    showToast('Error loading patient data: ' + error.message, true);
                 });
         }
 
@@ -2030,6 +2041,7 @@
 
         function loadStaff() {
             fetch('/api/admin/staff', {
+                method: 'GET',
                 credentials: 'include'
             })
                 .then(response => response.json())
@@ -2122,8 +2134,8 @@
 
             fetch('/api/admin/staff/status', {
                 method: 'POST',
-                body: formData,
-                credentials: 'include'
+                credentials: 'include',
+                body: formData
             })
                 .then(response => response.json())
                 .then(data => {
@@ -2150,8 +2162,8 @@
 
             fetch('/api/admin/staff/delete', {
                 method: 'POST',
-                body: formData,
-                credentials: 'include'
+                credentials: 'include',
+                body: formData
             })
                 .then(response => response.json())
                 .then(data => {
@@ -2254,7 +2266,7 @@
 
         async function loadAdminProfile() {
             try {
-                const res = await fetch('/api/settings/admin-profile');
+                const res = await fetch('/api/settings/admin-profile', { credentials: 'include' });
                 const data = await res.json();
                 if (data.success && data.user) {
                     const u = data.user;
@@ -2288,7 +2300,8 @@
                 const res = await fetch('/api/settings/profile', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    credentials: 'include'
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -2326,7 +2339,8 @@
                 const res = await fetch('/api/settings/password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ currentPassword: currentPass, newPassword: newPass })
+                    body: JSON.stringify({ currentPassword: currentPass, newPassword: newPass }),
+                    credentials: 'include'
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -2410,6 +2424,39 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        // Session Management (cookie-based HttpSession)
+        
+        /**
+         * Helper function to create fetch options.
+         * Automatically includes credentials for cookie-based sessions and per-tab sessionId.
+         */
+        function getFetchOptions(method = 'GET', body = null) {
+            const options = {
+                method: method,
+                credentials: 'include',  // Send JSESSIONID cookie automatically
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            return options;
+        }
+        
+        /**
+         * Handle logout: invalidate session and clear storage.
+         */
+        async function handleLogout() {
+            try {
+                await fetch('/api/logout', getFetchOptions('POST'));
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Error during logout:', error);
+                window.location.href = '/login';
+            }
         }
 
         // Load data on page load

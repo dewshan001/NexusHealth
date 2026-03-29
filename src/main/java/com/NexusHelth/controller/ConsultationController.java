@@ -19,7 +19,7 @@ public class ConsultationController {
 
     @GetMapping("/history")
     public ConsultationResponse getHistory(@RequestParam String patientCode, HttpSession session) {
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("doctor")) {
             return new ConsultationResponse(false, null, "Authentication required or invalid role");
         }
@@ -30,7 +30,7 @@ public class ConsultationController {
 
     @GetMapping("/doctor-history")
     public ConsultationResponse getDoctorHistory(HttpSession session) {
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("doctor")) {
             return new ConsultationResponse(false, null, "Authentication required or invalid role");
         }
@@ -52,7 +52,7 @@ public class ConsultationController {
             @RequestParam String notes,
             HttpSession session) {
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("doctor")) {
             return new StandardResponse(false, "Authentication required or invalid role");
         }
@@ -74,7 +74,7 @@ public class ConsultationController {
 
     @GetMapping("/patient-vitals")
     public VitalsResponse getVitals(@RequestParam String patientCode, HttpSession session) {
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("doctor")) {
             return new VitalsResponse(false, null, "Authentication required");
         }
@@ -91,7 +91,7 @@ public class ConsultationController {
             @RequestParam(required = false) String heartRate,
             HttpSession session) {
 
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("doctor")) {
             return new StandardResponse(false, "Authentication required");
         }
@@ -140,3 +140,4 @@ public class ConsultationController {
         }
     }
 }
+

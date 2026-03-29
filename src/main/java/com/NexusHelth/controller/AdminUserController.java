@@ -27,7 +27,7 @@ public class AdminUserController {
         System.out.println("\n==================== API CREATE-USER REQUEST ====================");
         
         // Verifying Admin Access
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("admin")) {
             System.out.println("❌ Unauthorized access attempt - not an admin");
             return new CreateUserResponse(false, "Unauthorized access");
@@ -90,7 +90,7 @@ public class AdminUserController {
         System.out.println("Specialization: " + specialization);
         
         // Verifying Admin Access
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("admin")) {
             System.out.println("❌ Unauthorized access attempt - not an admin");
             return new CreateUserResponse(false, "Unauthorized access");
@@ -118,7 +118,7 @@ public class AdminUserController {
         System.out.println("\n==================== API GET-ALL-STAFF REQUEST ====================");
         
         // Verifying Admin Access
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("admin")) {
             System.out.println("❌ Unauthorized access attempt - not an admin");
             return new StaffListResponse(false, null, "Unauthorized access");
@@ -152,7 +152,7 @@ public class AdminUserController {
         System.out.println("\n==================== API UPDATE-STAFF-STATUS REQUEST ====================");
         
         // Verifying Admin Access
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("admin")) {
             System.out.println("❌ Unauthorized access attempt - not an admin");
             return new StatusUpdateResponse(false, "Unauthorized access");
@@ -181,7 +181,7 @@ public class AdminUserController {
         System.out.println("\n==================== API UPDATE-STAFF REQUEST ====================");
         
         // Verifying Admin Access
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("admin")) {
             System.out.println("❌ Unauthorized access attempt - not an admin");
             return new StatusUpdateResponse(false, "Unauthorized access");
@@ -207,7 +207,7 @@ public class AdminUserController {
         System.out.println("\n==================== API DELETE-STAFF REQUEST ====================");
         
         // Verifying Admin Access
-        User user = (User) session.getAttribute("user");
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
         if (user == null || !user.getRole().equals("admin")) {
             System.out.println("❌ Unauthorized access attempt - not an admin");
             return new StatusUpdateResponse(false, "Unauthorized access");
@@ -239,3 +239,4 @@ public class AdminUserController {
         public String getMessage() { return message; }
     }
 }
+
