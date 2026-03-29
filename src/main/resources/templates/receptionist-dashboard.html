@@ -21,6 +21,7 @@
 
     <style>
         :root {
+            color-scheme: light;
             --rcp-bg-base: #eff4ff;
             --rcp-blob1: rgba(0, 102, 255, 0.12);
             --rcp-blob2: rgba(0, 201, 167, 0.1);
@@ -37,6 +38,7 @@
         }
 
         :root[data-theme="dark"] {
+            color-scheme: dark;
             --rcp-bg-base: #0a1628;
             --rcp-blob1: rgba(0, 102, 255, 0.35);
             --rcp-blob2: rgba(0, 201, 167, 0.28);
@@ -393,6 +395,16 @@
             font-size: 0.95rem;
             outline: none;
             transition: border-color 0.2s;
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .form-input[type="date"] {
+            color-scheme: light;
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
         }
 
         .form-input:focus,
@@ -400,39 +412,54 @@
             border-color: var(--primary-medical-blue);
         }
 
-        /* Badges */
-        .status-badge {
-            padding: 0.4rem 0.8rem;
-            border-radius: 999px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            display: inline-block;
+        :root[data-theme="dark"] .form-input[type="date"] {
+            color-scheme: dark;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-color: var(--border-color);
         }
 
-        .status-confirmed {
-            background: #DEF7EC;
-            color: #03543F;
+        :root[data-theme="dark"] .form-input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.92) brightness(1.1);
+            opacity: 0.95;
+            cursor: pointer;
         }
 
-        .status-pending {
-            background: #FEF3C7;
-            color: #92400E;
+
+        .toolbar-search-wrap {
+            position: relative;
         }
 
-        .status-cancelled {
-            background: #FEE2E2;
-            color: #991B1B;
+        .toolbar-search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
         }
 
-        .payment-unpaid {
-            background: #FEE2E2;
-            color: #991B1B;
+        .toolbar-search-input {
+            width: 100%;
+            padding: 0.6rem 1rem 0.6rem 2.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            outline: none;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .payment-paid {
-            background: #E0F2FE;
-            color: #0369A1;
+        .toolbar-search-input::placeholder {
+            color: var(--text-muted);
         }
+
+        .toolbar-search-input:focus {
+            border-color: var(--primary-medical-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        /* ...existing code... */
     </style>
 </head>
 
@@ -505,11 +532,10 @@
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                         <h3 style="font-size: 1.2rem;">Search Patient Records</h3>
-                        <div style="position: relative; width: 400px;">
-                            <span class="material-symbols-outlined"
-                                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">search</span>
-                            <input type="text" placeholder="Search by name, patient ID, phone, or DOB..."
-                                style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); outline: none;">
+                        <div class="toolbar-search-wrap" style="width: 400px;">
+                            <span class="material-symbols-outlined toolbar-search-icon">search</span>
+                            <input type="text" class="toolbar-search-input"
+                                placeholder="Search by name, patient ID, phone, or DOB...">
                         </div>
                     </div>
 
@@ -685,11 +711,10 @@
                                 <option>Unpaid</option>
                                 <option>Paid (Completed)</option>
                             </select>
-                            <div style="position: relative; width: 250px;">
-                                <span class="material-symbols-outlined"
-                                    style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">search</span>
-                                <input type="text" placeholder="Search Invoice ID..."
-                                    style="width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); outline: none;">
+                            <div class="toolbar-search-wrap" style="width: 250px;">
+                                <span class="material-symbols-outlined toolbar-search-icon">search</span>
+                                <input type="text" class="toolbar-search-input" placeholder="Search Invoice ID..."
+                                    style="padding: 0.5rem 1rem 0.5rem 2.5rem;">
                             </div>
                         </div>
                     </div>
@@ -1125,3 +1150,4 @@
 </body>
 
 </html>
+
