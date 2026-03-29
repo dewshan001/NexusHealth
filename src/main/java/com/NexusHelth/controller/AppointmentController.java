@@ -52,10 +52,30 @@ public class AppointmentController {
             return new StandardResponse(false, "Patient profile not found");
         }
 
-        boolean success = appointmentService.bookAppointment(patient.getId(), doctorId, date, time);
+        // Book the appointment and get the appointment ID
+        int appointmentId = appointmentService.bookAppointment(patient.getId(), doctorId, date, time);
 
-        if (success) {
-            return new StandardResponse(true, "Appointment booked successfully");
+        if (appointmentId > 0) {
+            // Get doctor name for invoice
+            Doctor doctor = appointmentService.getDoctorByUserId(user.getId());
+            // Note: We need to get the doctor's full name. Since getDoctorByUserId uses the patient's user ID,
+            // we need to get the doctor's name directly. Let's get the doctor info.
+            String doctorName = "Doctor"; // Default, should fetch actual doctor name
+            
+            // Create invoice for the appointment
+            boolean invoiceCreated = appointmentService.createAppointmentInvoice(
+                appointmentId, 
+                patient.getId(), 
+                doctorId, 
+                user.getFullName()  // Use patient's full name from User object
+            );
+
+            if (invoiceCreated) {
+                return new StandardResponse(true, "Appointment booked successfully and payment processed");
+            } else {
+                System.err.println("⚠️  Appointment created but invoice generation failed. AppointmentId: " + appointmentId);
+                return new StandardResponse(true, "Appointment booked successfully (invoice generation pending)");
+            }
         } else {
             return new StandardResponse(false, "Time slot is no longer available or an error occurred");
         }

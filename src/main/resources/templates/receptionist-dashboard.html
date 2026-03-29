@@ -644,7 +644,7 @@
                                 <th>Invoice ID</th>
                                 <th>Patient Name</th>
                                 <th>Services</th>
-                                <th>Total Due ($)</th>
+                                <th>Total Due (Rs.)</th>
                                 <th>Discount</th>
                                 <th>Status</th>
                                 <th>Action</th>
@@ -815,7 +815,7 @@
                 <p style="color: var(--text-secondary); font-size: 0.9rem;">Invoice <span id="payInvoiceId"
                         style="font-weight: 600;">INV-0000</span> for</p>
                 <h2 id="payPatientName" style="color: var(--primary-medical-blue); margin: 0.25rem 0;">Patient Name</h2>
-                <h1 id="payAmount" style="font-size: 2.5rem; font-weight: 800; margin-top: 0.5rem;">$0.00</h1>
+                <h1 id="payAmount" style="font-size: 2.5rem; font-weight: 800; margin-top: 0.5rem;">Rs.0.00</h1>
             </div>
 
             <div class="form-group">
@@ -874,9 +874,9 @@
                 <div class="form-group">
                     <label class="form-label">Consultation Type</label>
                     <select class="form-select">
-                        <option>General Checkup ($100)</option>
-                        <option>Specialist Cardiology ($150)</option>
-                        <option>Follow-up Visit ($50)</option>
+                        <option>General Checkup (Rs.100)</option>
+                        <option>Specialist Cardiology (Rs.150)</option>
+                        <option>Follow-up Visit (Rs.50)</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -1352,12 +1352,15 @@
             const tbody = document.getElementById('appointmentTableBody');
             tbody.innerHTML = '';
 
-            if (appointments.length === 0) {
+            // Filter out cancelled appointments
+            const activeAppointments = appointments.filter(appt => appt.status !== 'cancelled');
+
+            if (activeAppointments.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No appointments scheduled for this selection</td></tr>';
                 return;
             }
 
-            appointments.forEach(appt => {
+            activeAppointments.forEach(appt => {
                 const row = document.createElement('tr');
                 const statusClass = appt.status === 'confirmed' ? 'status-confirmed' :
                                   appt.status === 'scheduled' ? 'status-pending' :

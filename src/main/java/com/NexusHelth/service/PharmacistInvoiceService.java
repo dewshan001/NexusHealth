@@ -95,8 +95,7 @@ public class PharmacistInvoiceService {
 
                 // 2. Create invoice in database
                 int invoiceId = 0;
-                try (PreparedStatement pstmt = conn.prepareStatement(insertInvoiceSql, 
-                        Statement.RETURN_GENERATED_KEYS)) {
+                try (PreparedStatement pstmt = conn.prepareStatement(insertInvoiceSql)) {
                     pstmt.setInt(1, prescriptionId);
                     pstmt.setInt(2, patientId);
                     pstmt.setInt(3, appointmentId);
@@ -104,9 +103,11 @@ public class PharmacistInvoiceService {
                     
                     pstmt.executeUpdate();
                     
-                    try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                        if (generatedKeys.next()) {
-                            invoiceId = generatedKeys.getInt(1);
+                    // SQLite doesn't support getGeneratedKeys(), so query the last inserted rowid
+                    try (PreparedStatement idPstmt = conn.prepareStatement("SELECT last_insert_rowid() as id");
+                         ResultSet idSet = idPstmt.executeQuery()) {
+                        if (idSet.next()) {
+                            invoiceId = idSet.getInt("id");
                         }
                     }
                 }

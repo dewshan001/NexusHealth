@@ -837,7 +837,7 @@
                     <input type="text" class="form-input" id="addCategory" placeholder="e.g. Antibiotics">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Unit Price ($)</label>
+                    <label class="form-label">Unit Price (Rs.)</label>
                     <input type="number" class="form-input" id="addUnitPrice" min="0" step="0.01" placeholder="0.00">
                 </div>
             </div>
@@ -887,7 +887,7 @@
                     <input type="text" class="form-input" id="editCategory">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Unit Price ($)</label>
+                    <label class="form-label">Unit Price (Rs.)</label>
                     <input type="number" class="form-input" id="editUnitPrice" min="0" step="0.01">
                 </div>
             </div>
@@ -962,15 +962,15 @@
                 <div style="width: 350px;">
                     <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--ph-card-border);">
                         <span style="color: var(--text-secondary);">Subtotal:</span>
-                        <span id="invoiceSubtotal" style="font-weight: 500;">$0.00</span>
+                        <span id="invoiceSubtotal" style="font-weight: 500;">Rs.0.00</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; margin-bottom: 1rem;">
                         <span style="color: var(--text-secondary);">Discount:</span>
-                        <span id="invoiceDiscount" style="font-weight: 500;">$0.00</span>
+                        <span id="invoiceDiscount" style="font-weight: 500;">Rs.0.00</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; background: var(--primary-medical-blue); color: white; padding: 1rem; border-radius: var(--border-radius-sm); font-weight: 700; font-size: 1.1rem;">
                         <span>Total Amount:</span>
-                        <span id="invoiceTotal">$0.00</span>
+                        <span id="invoiceTotal">Rs.0.00</span>
                     </div>
                 </div>
             </div>
@@ -1331,7 +1331,7 @@
                     <td style="font-weight:600;">${escapeHtml(item.name)}</td>
                     <td>${escapeHtml(item.category || 'General')}</td>
                     <td>${Number(item.stockLevel || 0)} units</td>
-                    <td>$${Number(item.unitPrice || 0).toFixed(2)}</td>
+                    <td>Rs.${Number(item.unitPrice || 0).toFixed(2)}</td>
                     <td>${escapeHtml(formatExpiry(item.expiryDate))}</td>
                     <td><span class="status-badge ${statusBadgeClass(item.status)}">${statusLabel(item.status)}</span></td>
                     <td>
@@ -1747,16 +1747,16 @@
                     row.innerHTML = `
                         <td style="text-align: left; padding: 0.75rem;">${escapeHtml(item.medicineName || 'Unknown')}</td>
                         <td style="text-align: center; padding: 0.75rem;">${item.quantity || 0}</td>
-                        <td style="text-align: right; padding: 0.75rem;">$${(item.unitPrice || 0).toFixed(2)}</td>
-                        <td style="text-align: right; padding: 0.75rem; font-weight: 600;">$${lineTotal.toFixed(2)}</td>`;
+                        <td style="text-align: right; padding: 0.75rem;">Rs.${(item.unitPrice || 0).toFixed(2)}</td>
+                        <td style="text-align: right; padding: 0.75rem; font-weight: 600;">Rs.${lineTotal.toFixed(2)}</td>`;
                     itemsTable.appendChild(row);
                 });
             }
 
             // Set invoice totals
-            document.getElementById('invoiceSubtotal').textContent = '$' + subtotal.toFixed(2);
-            document.getElementById('invoiceDiscount').textContent = '$0.00';
-            document.getElementById('invoiceTotal').textContent = '$' + subtotal.toFixed(2);
+            document.getElementById('invoiceSubtotal').textContent = 'Rs.' + subtotal.toFixed(2);
+            document.getElementById('invoiceDiscount').textContent = 'Rs.0.00';
+            document.getElementById('invoiceTotal').textContent = 'Rs.' + subtotal.toFixed(2);
 
             // Set PDF download handler to use existing downloadInvoicePDF function
             const downloadBtn = document.getElementById('downloadInvoicePdfBtn');

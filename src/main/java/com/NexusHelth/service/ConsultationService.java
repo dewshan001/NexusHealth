@@ -129,4 +129,36 @@ public class ConsultationService {
         }
         return false;
     }
+
+    public List<Map<String, Object>> getDoctorConsultationHistory(int doctorId) {
+        List<Map<String, Object>> history = new ArrayList<>();
+        String query = "SELECT c.id, u.full_name AS patient_name, p.patient_code, c.diagnosis, c.notes, c.consulted_at " +
+                "FROM consultations c " +
+                "JOIN patients p ON c.patient_id = p.id " +
+                "JOIN users u ON p.user_id = u.id " +
+                "WHERE c.doctor_id = ? " +
+                "ORDER BY c.consulted_at DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, doctorId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> record = new HashMap<>();
+                    record.put("id", rs.getInt("id"));
+                    record.put("patientName", rs.getString("patient_name"));
+                    record.put("patientCode", rs.getString("patient_code"));
+                    record.put("diagnosis", rs.getString("diagnosis"));
+                    record.put("notes", rs.getString("notes"));
+                    record.put("date", rs.getString("consulted_at"));
+                    history.add(record);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching doctor consultation history: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return history;
+    }
 }

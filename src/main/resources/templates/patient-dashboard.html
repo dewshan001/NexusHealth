@@ -1111,6 +1111,53 @@
             margin-bottom: 1rem;
         }
 
+        /* ───── PAYMENT FORM STYLES ────────────────── */
+        .payment-input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--input-color);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.25s ease;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .payment-input::placeholder {
+            color: var(--input-ph);
+        }
+
+        .payment-input:focus {
+            outline: none;
+            border-color: rgba(125, 211, 252, 0.5);
+            background: rgba(125, 211, 252, 0.08);
+            box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.1);
+        }
+
+        .payment-input.success {
+            border-color: rgba(52, 211, 153, 0.5);
+            background: rgba(52, 211, 153, 0.08);
+        }
+
+        .payment-input.error {
+            border-color: rgba(239, 68, 68, 0.5);
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        .payment-error {
+            display: block;
+            color: #fca5a5;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            min-height: 1rem;
+        }
+
+        .text-primary {
+            color: #7dd3fc;
+            font-weight: 600;
+        }
+
         /* ───── RESPONSIVE ─────────────────────────── */
         @media (max-width: 900px) {
             .nav-links {
@@ -1431,7 +1478,7 @@
                     </div>
                     <div class="metric-info">
                         <div class="metric-label">Outstanding Bills</div>
-                        <div class="metric-num" id="metricBills">$0</div>
+                        <div class="metric-num" id="metricBills">Rs.0</div>
                     </div>
                 </div>
             </div>
@@ -1510,50 +1557,11 @@
                                 <th>Receipt</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>Feb 15, 2026</td>
-                                <td>General Consultation</td>
-                                <td>Dr. Michael Chen</td>
-                                <td><strong>$150.00</strong></td>
-                                <td><span class="status-badge status-paid">Paid</span></td>
-                                <td>
-                                    <button class="btn btn-outline-primary"
-                                        style="padding:0.3rem 0.65rem; font-size:0.8rem;"
-                                        onclick="viewReceipt('REC-10492')">
-                                        <span class="material-symbols-outlined"
-                                            style="font-size:15px; margin-right:3px;">download</span>Receipt
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Jan 04, 2026</td>
-                                <td>Dermatology Checkup</td>
-                                <td>Dr. Emily Rodriguez</td>
-                                <td><strong>$200.00</strong></td>
-                                <td><span class="status-badge status-paid">Paid</span></td>
-                                <td>
-                                    <button class="btn btn-outline-primary"
-                                        style="padding:0.3rem 0.65rem; font-size:0.8rem;"
-                                        onclick="viewReceipt('REC-09844')">
-                                        <span class="material-symbols-outlined"
-                                            style="font-size:15px; margin-right:3px;">download</span>Receipt
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Nov 22, 2025</td>
-                                <td>Pharmacy – Prescription refill</td>
-                                <td>—</td>
-                                <td><strong>$45.50</strong></td>
-                                <td><span class="status-badge status-paid">Paid</span></td>
-                                <td>
-                                    <button class="btn btn-outline-primary"
-                                        style="padding:0.3rem 0.65rem; font-size:0.8rem;"
-                                        onclick="viewReceipt('REC-08112')">
-                                        <span class="material-symbols-outlined"
-                                            style="font-size:15px; margin-right:3px;">download</span>Receipt
-                                    </button>
+                        <tbody id="paymentHistoryTableBody">
+                            <tr style="text-align:center;">
+                                <td colspan="6" style="padding:2rem; color:var(--text-muted);">
+                                    <span class="material-symbols-outlined" style="font-size:48px; display:block; margin-bottom:0.5rem;">payment</span>
+                                    Loading payment history...
                                 </td>
                             </tr>
                         </tbody>
@@ -1692,20 +1700,20 @@
                     <p style="font-size:0.82rem; color:#6B7280;" id="receiptIdText">Receipt #REC-10492</p>
                 </div>
             </div>
-            <p style="font-size:0.9rem; margin-bottom:0.4rem;"><strong>Patient:</strong> Sarah Connor</p>
-            <p style="font-size:0.9rem; margin-bottom:1.25rem;"><strong>Date:</strong> Feb 15, 2026</p>
+            <p style="font-size:0.9rem; margin-bottom:0.4rem;"><strong>Patient:</strong> <span id="receiptPatient">—</span></p>
+            <p style="font-size:0.9rem; margin-bottom:1.25rem;"><strong>Date:</strong> <span id="receiptDate">—</span></p>
             <table style="width:100%; border-collapse:collapse; margin-bottom:1.5rem;">
                 <tr style="border-bottom:1px solid #E5E7EB;">
                     <th style="text-align:left; padding:0.4rem 0;">Description</th>
                     <th style="text-align:right; padding:0.4rem 0;">Amount</th>
                 </tr>
                 <tr>
-                    <td style="padding:0.9rem 0;">General Consultation (Dr. Michael Chen)</td>
-                    <td style="text-align:right; padding:0.9rem 0;">$150.00</td>
+                    <td style="padding:0.9rem 0;" id="receiptDesc">—</td>
+                    <td style="text-align:right; padding:0.9rem 0;" id="receiptAmount">—</td>
                 </tr>
                 <tr style="border-top:2px solid #E5E7EB;">
                     <td style="padding:0.9rem 0; font-weight:700; text-align:right;">Total Paid</td>
-                    <td style="text-align:right; padding:0.9rem 0; font-weight:700; color:#059669;">$150.00</td>
+                    <td style="text-align:right; padding:0.9rem 0; font-weight:700; color:#059669;" id="receiptTotal">—</td>
                 </tr>
             </table>
             <div style="text-align:center; display:flex; gap:0.75rem; justify-content:center;">
@@ -1724,6 +1732,66 @@
                 confirmation has been sent to your email.</p>
             <button class="btn btn-primary btn-large" onclick="closeModal('bookingModal'); resetTab('overview')">Go to
                 Dashboard</button>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-content" style="max-width:420px;">
+            <h2 style="margin-bottom:0.5rem;">Complete Payment 💳</h2>
+            <p style="color:#6B7280; margin-bottom:1.5rem; font-size:0.9rem;">Enter your card details to book this appointment</p>
+            
+            <!-- Appointment Fee Display -->
+            <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:12px; margin-bottom:1.5rem;">
+                <div style="display:flex; justify-content:space-between; color:rgba(255,255,255,0.7); margin-bottom:8px;">
+                    <span>Appointment Fee:</span>
+                    <span id="appointmentFeeDisplay" class="text-primary">Rs. 500</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; color:rgba(255,255,255,0.9); font-weight:600; font-size:1.1rem;">
+                    <span>Total Amount:</span>
+                    <span id="totalAmountDisplay" class="text-primary">Rs. 500</span>
+                </div>
+            </div>
+
+            <!-- Payment Form -->
+            <form id="paymentForm" onsubmit="handlePaymentSubmit(event)">
+                <!-- Cardholder Name -->
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block; color:rgba(255,255,255,0.8); font-weight:500; margin-bottom:0.35rem; font-size:0.9rem;">Cardholder Name</label>
+                    <input type="text" id="cardholderName" placeholder="John Doe" class="payment-input" maxlength="100">
+                    <span id="cardholderNameError" class="payment-error"></span>
+                </div>
+
+                <!-- Card Number -->
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block; color:rgba(255,255,255,0.8); font-weight:500; margin-bottom:0.35rem; font-size:0.9rem;">Card Number</label>
+                    <input type="text" id="cardNumber" placeholder="4532 0151 1283 0366" class="payment-input" maxlength="19" inputmode="numeric" oninput="formatCardNumber(event)">
+                    <span id="cardNumberError" class="payment-error"></span>
+                </div>
+
+                <!-- Expiry Date & CVV (side by side) -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <label style="display:block; color:rgba(255,255,255,0.8); font-weight:500; margin-bottom:0.35rem; font-size:0.9rem;">Expiry Date</label>
+                        <input type="text" id="expiryDate" placeholder="MM/YY" class="payment-input" maxlength="5" inputmode="numeric" oninput="formatExpiryDate(event)">
+                        <span id="expiryDateError" class="payment-error"></span>
+                    </div>
+                    <div>
+                        <label style="display:block; color:rgba(255,255,255,0.8); font-weight:500; margin-bottom:0.35rem; font-size:0.9rem;">CVV</label>
+                        <input type="text" id="cvv" placeholder="123" class="payment-input" maxlength="4" inputmode="numeric">
+                        <span id="cvvError" class="payment-error"></span>
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <div id="paymentErrorMsg" style="display:none; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; padding:10px; border-radius:6px; margin-bottom:1rem; font-size:0.85rem;"></div>
+
+                <!-- Buttons -->
+                <div style="display:flex; gap:0.75rem;">
+                    <button type="button" class="btn btn-outline" style="flex:1;" onclick="closeModal('paymentModal')">Cancel</button>
+                    <button type="submit" id="payNowBtn" class="btn btn-primary" style="flex:1;">Pay Now</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1752,6 +1820,11 @@
             // Switch content
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
+
+            // Load data for specific tabs
+            if (tabId === 'billing') {
+                loadPaymentHistory();
+            }
 
             // Close mobile drawer
             document.getElementById('mobileDrawer').classList.remove('open');
@@ -1805,6 +1878,26 @@
             const dateInput = document.getElementById('appointment-date');
             dateInput.min = today;
             dateInput.value = today;
+
+            // Set up payment input listeners for real-time validation
+            document.getElementById('cardholderName').addEventListener('blur', validateCardholderName);
+            document.getElementById('cardNumber').addEventListener('blur', validateCardNumber);
+            document.getElementById('expiryDate').addEventListener('blur', validateExpiryDate);
+            document.getElementById('cvv').addEventListener('blur', validateCVV);
+
+            // Clear error message when user starts typing
+            document.getElementById('cardholderName').addEventListener('input', () => {
+                document.getElementById('cardholderNameError').textContent = '';
+            });
+            document.getElementById('cardNumber').addEventListener('input', () => {
+                document.getElementById('cardNumberError').textContent = '';
+            });
+            document.getElementById('expiryDate').addEventListener('input', () => {
+                document.getElementById('expiryDateError').textContent = '';
+            });
+            document.getElementById('cvv').addEventListener('input', () => {
+                document.getElementById('cvvError').textContent = '';
+            });
         });
 
         function selectDoctor(el, docId) {
@@ -1882,50 +1975,410 @@
         }
 
         function confirmBooking() {
-            const date = document.getElementById('appointment-date').value;
-            const btn = document.getElementById('confirmBtn');
-            btn.disabled = true;
-            btn.innerText = "Booking...";
+            // Reset payment form
+            document.getElementById('paymentForm').reset();
+            document.querySelectorAll('.payment-error').forEach(el => el.textContent = '');
+            document.getElementById('paymentErrorMsg').style.display = 'none';
+            document.querySelectorAll('.payment-input').forEach(el => {
+                el.classList.remove('success', 'error');
+            });
 
-            const formData = new URLSearchParams();
-            formData.append('doctorId', selectedDocId);
-            formData.append('date', date);
-            formData.append('time', selectedTime);
+            // Reset payment button state
+            document.getElementById('payNowBtn').disabled = false;
+            document.getElementById('payNowBtn').innerText = 'Pay Now';
 
-            fetch('/api/appointments/book', {
-                method: 'POST',
-                body: formData
-            })
+            // Open payment modal
+            document.getElementById('paymentModal').classList.add('active');
+        }
+
+        // ───────────────────────────────────────────
+        // PAYMENT VALIDATION FUNCTIONS
+        // ───────────────────────────────────────────
+
+        // Luhn Algorithm for card validation
+        function luhnCheck(cardNumber) {
+            const digits = cardNumber.replace(/\D/g, '');
+            let sum = 0;
+            let isEven = false;
+
+            for (let i = digits.length - 1; i >= 0; i--) {
+                let digit = parseInt(digits[i], 10);
+
+                if (isEven) {
+                    digit *= 2;
+                    if (digit > 9) {
+                        digit -= 9;
+                    }
+                }
+
+                sum += digit;
+                isEven = !isEven;
+            }
+
+            return sum % 10 === 0;
+        }
+
+        // Validate card number
+        function validateCardNumber() {
+            const input = document.getElementById('cardNumber');
+            const error = document.getElementById('cardNumberError');
+            const cardNumber = input.value.replace(/\s+/g, '');
+
+            if (!cardNumber) {
+                error.textContent = 'Card number is required';
+                input.classList.remove('success');
+                input.classList.add('error');
+                return false;
+            }
+
+            if (!/^\d{13,19}$/.test(cardNumber)) {
+                error.textContent = 'Card number must be between 13 and 19 digits';
+                input.classList.remove('success');
+                input.classList.add('error');
+                return false;
+            }
+
+            if (!luhnCheck(cardNumber)) {
+                error.textContent = 'Invalid card number (failed validation)';
+                input.classList.remove('success');
+                input.classList.add('error');
+                return false;
+            }
+
+            error.textContent = '';
+            input.classList.remove('error');
+            input.classList.add('success');
+            return true;
+        }
+
+        // Validate cardholder name
+        function validateCardholderName() {
+            const input = document.getElementById('cardholderName');
+            const error = document.getElementById('cardholderNameError');
+            const name = input.value.trim();
+
+            if (!name) {
+                error.textContent = 'Cardholder name is required';
+                input.classList.remove('success');
+                input.classList.add('error');
+                return false;
+            }
+
+            if (name.length < 3) {
+                error.textContent = 'Name must be at least 3 characters';
+                input.classList.remove('success');
+                input.classList.add('error');
+                return false;
+            }
+
+            error.textContent = '';
+            input.classList.remove('error');
+            input.classList.add('success');
+            return true;
+        }
+
+        // Validate expiry date
+        function validateExpiryDate() {
+            const input = document.getElementById('expiryDate');
+            const error = document.getElementById('expiryDateError');
+            const expiry = input.value.trim();
+
+            if (!expiry) {
+                error.textContent = 'Expiry date is required';
+                input.classList.remove('success');
+                input.classList.add('error');
+                return false;
+            }
+
+            if (!/^\d{2}\/\d{2}$/.test(expiry)) {
+                error.textContent = 'Format must be MM/YY';
+                input.classList.remove('success');
+                input.classList.add('error');
+                return false;
+            }
+
+            const [month, year] = expiry.split('/');
+            const monthNum = parseInt(month, 10);
+
+            if (monthNum < 1 || monthNum > 12) {
+                error.textContent = 'Month must be between 01 and 12';
+                input.classList.remove('success');
+                input.classList.add('error');
+                return false;
+            }
+
+            // Check if card is expired
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear() % 100;
+            const currentMonth = currentDate.getMonth() + 1;
+            const cardYear = parseInt(year, 10);
+
+            if (cardYear < currentYear || (cardYear === currentYear && monthNum < currentMonth)) {
+                error.textContent = 'Card has expired';
+                input.classList.remove('success');
+                input.classList.add('error');
+                return false;
+            }
+
+            error.textContent = '';
+            input.classList.remove('error');
+            input.classList.add('success');
+            return true;
+        }
+
+        // Validate CVV
+        function validateCVV() {
+            const input = document.getElementById('cvv');
+            const error = document.getElementById('cvvError');
+            const cvv = input.value.trim();
+
+            if (!cvv) {
+                error.textContent = 'CVV is required';
+                input.classList.remove('success');
+                input.classList.add('error');
+                return false;
+            }
+
+            if (!/^\d{3,4}$/.test(cvv)) {
+                error.textContent = 'CVV must be 3 or 4 digits';
+                input.classList.remove('success');
+                input.classList.add('error');
+                return false;
+            }
+
+            error.textContent = '';
+            input.classList.remove('error');
+            input.classList.add('success');
+            return true;
+        }
+
+        // Format card number with spaces
+        function formatCardNumber(event) {
+            let value = event.target.value.replace(/\s+/g, '');
+            let formatted = '';
+
+            for (let i = 0; i < value.length; i++) {
+                if (i > 0 && i % 4 === 0) {
+                    formatted += ' ';
+                }
+                formatted += value[i];
+            }
+
+            event.target.value = formatted.slice(0, 19); // Max 19 chars with spaces
+
+            // Real-time validation
+            setTimeout(validateCardNumber, 100);
+        }
+
+        // Format expiry date with slash
+        function formatExpiryDate(event) {
+            let value = event.target.value.replace(/\D/g, '');
+            
+            if (value.length >= 2) {
+                value = value.slice(0, 2) + '/' + value.slice(2, 4);
+            }
+
+            event.target.value = value;
+
+            // Real-time validation
+            if (value.length === 5) {
+                setTimeout(validateExpiryDate, 100);
+            }
+        }
+
+        // Handle payment form submission
+        function handlePaymentSubmit(event) {
+            event.preventDefault();
+
+            // Validate all fields
+            const isCardholderValid = validateCardholderName();
+            const isCardValid = validateCardNumber();
+            const isExpiryValid = validateExpiryDate();
+            const isCVVValid = validateCVV();
+
+            if (!isCardholderValid || !isCardValid || !isExpiryValid || !isCVVValid) {
+                document.getElementById('paymentErrorMsg').textContent = 'Please fix the errors above and try again';
+                document.getElementById('paymentErrorMsg').style.display = 'block';
+                return;
+            }
+
+            // All validations passed, proceed with appointment booking
+            proceedWithBooking();
+        }
+
+        // Verify time slot is still available before booking
+        function verifySlotAvailability(doctorId, date, time) {
+            return fetch(`/api/appointments/booked?doctorId=${doctorId}&date=${date}`)
                 .then(res => res.json())
                 .then(data => {
-                    btn.innerText = "Confirm Appointment";
-                    if (data.success) {
-                        document.getElementById('bookingModal').classList.add('active');
-                        selectedDocId = null; selectedTime = null;
-                        document.querySelectorAll('.doc-select-card').forEach(c => c.classList.remove('selected'));
-                        document.getElementById('booking-slots-section').classList.remove('visible');
-                        loadPatientData();
-                    } else {
-                        alert('Booking failed: ' + data.message);
-                        loadSlots();
-                    }
+                    const bookedSlots = data.success ? data.slots : [];
+                    return !bookedSlots.includes(time);
                 })
                 .catch(err => {
-                    console.error(err);
-                    btn.innerText = "Confirm Appointment";
-                    btn.disabled = false;
-                    alert('An error occurred during booking.');
+                    console.error('Error verifying slot:', err);
+                    return false;
                 });
         }
 
+        // Proceed with booking after payment validation
+        function proceedWithBooking() {
+            const date = document.getElementById('appointment-date').value;
+            const btn = document.getElementById('payNowBtn');
+            btn.disabled = true;
+            btn.innerText = "Processing...";
+
+            // Verify slot is still available before booking
+            verifySlotAvailability(selectedDocId, date, selectedTime).then(isAvailable => {
+                if (!isAvailable) {
+                    // Slot no longer available
+                    document.getElementById('paymentErrorMsg').innerHTML = 
+                        '<div style="margin-bottom: 1rem;"><strong>❌ Time slot is no longer available</strong></div>' +
+                        '<p style="font-size: 0.85rem; margin-bottom: 1rem;">Another patient booked this slot while you were completing payment.</p>' +
+                        '<button onclick="retryBooking()" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500;">← Go Back & Select Another Slot</button>';
+                    document.getElementById('paymentErrorMsg').style.display = 'block';
+                    btn.disabled = false;
+                    btn.innerText = 'Pay Now';
+                    return;
+                }
+
+                // Slot is still available, proceed with booking
+                const formData = new URLSearchParams();
+                formData.append('doctorId', selectedDocId);
+                formData.append('date', date);
+                formData.append('time', selectedTime);
+
+                fetch('/api/appointments/book', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Close payment modal and show success
+                            document.getElementById('paymentModal').classList.remove('active');
+                            document.getElementById('bookingModal').classList.add('active');
+                            
+                            // Reset booking form
+                            selectedDocId = null;
+                            selectedTime = null;
+                            document.querySelectorAll('.doc-select-card').forEach(c => c.classList.remove('selected'));
+                            document.getElementById('booking-slots-section').classList.remove('visible');
+                            loadPatientData();
+                        } else {
+                            document.getElementById('paymentErrorMsg').innerHTML = 
+                                '<div style="margin-bottom: 1rem;"><strong>❌ Booking Failed</strong></div>' +
+                                '<p style="font-size: 0.85rem; margin-bottom: 1rem;">' + (data.message || 'An error occurred during booking. Please try again.') + '</p>' +
+                                '<button onclick="retryBooking()" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500;">← Back to Slot Selection</button>';
+                            document.getElementById('paymentErrorMsg').style.display = 'block';
+                            btn.disabled = false;
+                            btn.innerText = 'Pay Now';
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        document.getElementById('paymentErrorMsg').innerHTML = 
+                            '<div style="margin-bottom: 1rem;"><strong>❌ Connection Error</strong></div>' +
+                            '<p style="font-size: 0.85rem; margin-bottom: 1rem;">Failed to connect to server. Please check your internet connection and try again.</p>' +
+                            '<button onclick="retryBooking()" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500;">← Back to Slot Selection</button>';
+                        document.getElementById('paymentErrorMsg').style.display = 'block';
+                        btn.disabled = false;
+                        btn.innerText = 'Pay Now';
+                    });
+            });
+        }
+
+        // Retry booking - go back to slot selection
+        function retryBooking() {
+            document.getElementById('paymentModal').classList.remove('active');
+            document.getElementById('paymentErrorMsg').style.display = 'none';
+            document.getElementById('paymentForm').reset();
+            selectedTime = null;
+            loadSlots();
+        }
+
+
         // ─── Receipt ────────────────────────────────
-        function viewReceipt(id) {
-            document.getElementById('receiptIdText').innerText = 'Receipt #' + id;
-            document.getElementById('receiptModal').classList.add('active');
+        function viewReceipt(invoiceId) {
+            // Fetch invoice details from API
+            fetch('/api/patient/invoices/' + invoiceId)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.invoice) {
+                        const inv = data.invoice;
+                        const doctorInfo = inv.doctorName ? ' (' + inv.doctorName + ')' : '';
+                        document.getElementById('receiptIdText').innerText = 'Receipt #' + (inv.invoiceNumber || invoiceId);
+                        document.getElementById('receiptPatient').innerText = inv.patientName || 'Unknown';
+                        document.getElementById('receiptDate').innerText = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A';
+                        document.getElementById('receiptDesc').innerText = (inv.consultationType || 'Consultation') + doctorInfo;
+                        document.getElementById('receiptAmount').innerText = 'Rs.' + (inv.totalAmount || 0).toFixed(2);
+                        document.getElementById('receiptTotal').innerText = 'Rs.' + (inv.totalAmount || 0).toFixed(2);
+                        document.getElementById('receiptModal').classList.add('active');
+                    } else {
+                        alert('Failed to load receipt details');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error loading receipt:', err);
+                    alert('Error loading receipt');
+                });
         }
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
+        }
+
+        // ─── Load Payment History ────────────────── 
+        function loadPaymentHistory() {
+            const tbody = document.getElementById('paymentHistoryTableBody');
+            
+            fetch('/api/patient/invoices')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.length > 0) {
+                        tbody.innerHTML = data.data.map(inv => {
+                            const dateStr = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A';
+                            const statusClass = inv.status && inv.status.toLowerCase() === 'paid' ? 'status-paid' : 'status-unpaid';
+                            const statusText = inv.status && inv.status.toLowerCase() === 'paid' ? 'Paid' : 'Unpaid';
+                            const doctorName = inv.doctorName ? inv.doctorName : '—';
+                            return `
+                                <tr>
+                                    <td>${dateStr}</td>
+                                    <td>${inv.consultationType || 'Consultation'}</td>
+                                    <td>${doctorName}</td>
+                                    <td><strong>Rs.${(inv.totalAmount || 0).toFixed(2)}</strong></td>
+                                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                                    <td>
+                                        <button class="btn btn-outline-primary"
+                                            style="padding:0.3rem 0.65rem; font-size:0.8rem;"
+                                            onclick="viewReceipt(${inv.invoiceId})">
+                                            <span class="material-symbols-outlined"
+                                                style="font-size:15px; margin-right:3px;">download</span>Receipt
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    } else {
+                        tbody.innerHTML = `
+                            <tr style="text-align:center;">
+                                <td colspan="6" style="padding:2rem; color:var(--text-muted);">
+                                    <span class="material-symbols-outlined" style="font-size:48px; display:block; margin-bottom:0.5rem;">inbox</span>
+                                    No invoices found
+                                </td>
+                            </tr>
+                        `;
+                    }
+                })
+                .catch(err => {
+                    console.error('Error loading payment history:', err);
+                    tbody.innerHTML = `
+                        <tr style="text-align:center;">
+                            <td colspan="6" style="padding:2rem; color:var(--text-danger);">
+                                Error loading payment history. Please try again later.
+                            </td>
+                        </tr>
+                    `;
+                });
         }
 
         // ─── Profile pic ─────────────────────────────
@@ -2115,7 +2568,7 @@
                         // Update Metrics
                         document.getElementById('metricUpcomingVisits').textContent = metrics.upcomingVisits || 0;
                         document.getElementById('metricPrescriptions').textContent = metrics.activePrescriptions || 0;
-                        document.getElementById('metricBills').textContent = '$' + (metrics.outstandingBillsCounter || 0).toFixed(2);
+                        document.getElementById('metricBills').textContent = 'Rs.' + (metrics.outstandingBillsCounter || 0).toFixed(2);
 
                         // Update Upcoming Visits List
                         const visitsList = document.getElementById('upcomingVisitsList');

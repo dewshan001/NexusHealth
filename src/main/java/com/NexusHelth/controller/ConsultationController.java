@@ -28,6 +28,22 @@ public class ConsultationController {
         return new ConsultationResponse(true, history, null);
     }
 
+    @GetMapping("/doctor-history")
+    public ConsultationResponse getDoctorHistory(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null || !user.getRole().equals("doctor")) {
+            return new ConsultationResponse(false, null, "Authentication required or invalid role");
+        }
+
+        Doctor doctor = appointmentService.getDoctorByUserId(user.getId());
+        if (doctor == null) {
+            return new ConsultationResponse(false, null, "Doctor profile not found");
+        }
+
+        List<Map<String, Object>> history = consultationService.getDoctorConsultationHistory(doctor.getId());
+        return new ConsultationResponse(true, history, null);
+    }
+
     @PostMapping("/save")
     public StandardResponse saveConsultation(
             @RequestParam int appointmentId,

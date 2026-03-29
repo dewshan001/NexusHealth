@@ -1235,7 +1235,7 @@
                 <div class="content-header">
                     <h2 class="content-title">Reports & Analytics</h2>
                     <div class="admin-table-actions">
-                        <input type="date" class="form-input" style="width:auto;" value="2026-03-18">
+                        <input type="date" id="reportsDateInput" class="form-input" style="width:auto;" onchange="loadReports(this.value)">
                         <button class="btn btn-outline">
                             <span class="material-symbols-outlined"
                                 style="font-size: 18px; margin-right: 4px;">download</span>
@@ -1251,7 +1251,7 @@
                         </div>
                         <div class="stat-info">
                             <h4>Daily Revenue</h4>
-                            <h2>$4,250.00</h2>
+                            <h2 id="dailyRevenueValue">Rs.0.00</h2>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -1260,7 +1260,7 @@
                         </div>
                         <div class="stat-info">
                             <h4>Pharmacy Sales</h4>
-                            <h2>$1,845.50</h2>
+                            <h2 id="pharmacySalesValue">Rs.0.00</h2>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -1269,47 +1269,31 @@
                         </div>
                         <div class="stat-info">
                             <h4>Total Patients Visited</h4>
-                            <h2>124</h2>
+                            <h2 id="patientsVisitedValue">0</h2>
                         </div>
                     </div>
                 </div>
 
                 <div class="admin-card">
                     <h3 class="admin-card-title">Recent Financial Transactions</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Transaction ID</th>
-                                <th>Type</th>
-                                <th>Department</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>TXN-88492</td>
-                                <td>Consultation Fee</td>
-                                <td>Cardiology</td>
-                                <td>$150.00</td>
-                                <td><span class="status-badge status-active">Settled</span></td>
-                            </tr>
-                            <tr>
-                                <td>TXN-88493</td>
-                                <td>Pharmacy Purchase</td>
-                                <td>Dispensary</td>
-                                <td>$45.50</td>
-                                <td><span class="status-badge status-active">Settled</span></td>
-                            </tr>
-                            <tr>
-                                <td>TXN-88494</td>
-                                <td>Lab Test (Blood Work)</td>
-                                <td>Pathology</td>
-                                <td>$210.00</td>
-                                <td><span class="status-badge status-active">Settled</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="admin-table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Type</th>
+                                    <th>Department</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionsTableBody">
+                                <tr style="text-align: center;">
+                                    <td colspan="5" style="padding: 2rem; color: var(--admin-text-muted);">Loading transaction data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -2359,10 +2343,87 @@
             }
         }
 
+        // ═══════════════════════════════════════════════════════
+        // Reports & Analytics Dynamic Loading
+        // ═══════════════════════════════════════════════════════
+        function loadReports(date = null) {
+            console.log('[📊] Loading Reports & Analytics...');
+
+            let url = '/api/reports/analytics';
+            if (date) {
+                url += '?date=' + date;
+            }
+
+            fetch(url, {
+                credentials: 'include'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('[✅] Reports data loaded:', data);
+                        
+                        // Update Daily Revenue
+                        const dailyRevenue = data.dailyRevenue || 0;
+                        document.getElementById('dailyRevenueValue').textContent = 'Rs.' + dailyRevenue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+                        // Update Pharmacy Sales
+                        const pharmacySales = data.pharmacySales || 0;
+                        document.getElementById('pharmacySalesValue').textContent = 'Rs.' + pharmacySales.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+                        // Update Total Patients Visited
+                        const patientsVisited = data.totalPatientsVisited || 0;
+                        document.getElementById('patientsVisitedValue').textContent = patientsVisited;
+
+                        // Update Transactions Table
+                        renderTransactionsTable(data.recentTransactions || []);
+                    } else {
+                        console.error('[❌] Failed to load reports:', data.message);
+                        showToast('Failed to load reports data: ' + data.message, true);
+                    }
+                })
+                .catch(error => {
+                    console.error('[❌] Error loading reports:', error);
+                    showToast('Error loading reports data', true);
+                });
+        }
+
+        function renderTransactionsTable(transactions) {
+            const tbody = document.getElementById('transactionsTableBody');
+
+            if (!transactions || transactions.length === 0) {
+                tbody.innerHTML = '<tr style="text-align: center;"><td colspan="5" style="padding: 2rem; color: var(--admin-text-muted);">No transactions found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = transactions.map((txn, index) => {
+                const statusClass = txn.status === 'settled' ? 'status-active' : 'status-inactive';
+                const statusLabel = txn.status.charAt(0).toUpperCase() + txn.status.slice(1);
+                const amount = (txn.amount || 0).toFixed(2);
+
+                return `
+                    <tr>
+                        <td style="font-family: monospace; color: var(--admin-text-secondary);">${txn.transactionId || 'N/A'}</td>
+                        <td>${txn.type || 'N/A'}</td>
+                        <td>${txn.department || 'N/A'}</td>
+                        <td>Rs.${amount}</td>
+                        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         // Load data on page load
         document.addEventListener('DOMContentLoaded', function () {
+            // Set today's date in the reports date input
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('reportsDateInput');
+            if (dateInput) {
+                dateInput.value = today;
+            }
+
             loadStaff();
             loadPatients();
+            loadReports();
             loadAdminProfile();
         });
     </script>

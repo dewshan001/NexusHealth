@@ -38,7 +38,7 @@ public class PatientDashboardService {
             }
 
             // 3. Outstanding Bills Sum
-            String billsQuery = "SELECT SUM(total_amount - amount_paid) FROM invoices WHERE patient_id = ? AND payment_status IN ('unpaid', 'partial')";
+            String billsQuery = "SELECT SUM(total_amount) FROM invoices WHERE patient_id = ? AND status = 'unpaid'";
             try (PreparedStatement pstmt = conn.prepareStatement(billsQuery)) {
                 pstmt.setInt(1, patientId);
                 try (ResultSet rs = pstmt.executeQuery()) {

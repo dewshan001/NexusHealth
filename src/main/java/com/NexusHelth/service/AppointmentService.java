@@ -11,8 +11,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.sql.Statement;
 
 public class AppointmentService {
+
+    // Static appointment fee - can be set from config
+    private static double appointmentFee = 500.0;
+
+    // Getter and Setter for appointment fee
+    public static double getAppointmentFee() {
+        return appointmentFee;
+    }
+
+    public static void setAppointmentFee(double fee) {
+        appointmentFee = fee;
+    }
 
     public List<Doctor> getAvailableDoctors() {
         List<Doctor> doctors = new ArrayList<>();
@@ -86,29 +99,41 @@ public class AppointmentService {
         return false;
     }
 
-    public boolean bookAppointment(int patientId, int doctorId, String date, String time) {
+    public int bookAppointment(int patientId, int doctorId, String date, String time) {
         // Double check availability to prevent concurrent booking issues
         if (!isTimeSlotAvailable(doctorId, date, time)) {
-            return false;
+            return -1;
         }
 
-        String query = "INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, status) " +
+        String insertQuery = "INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, status) " +
                 "VALUES (?, ?, ?, ?, 'scheduled')";
 
         try (Connection conn = DatabaseConnection.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement insertPstmt = conn.prepareStatement(insertQuery)) {
 
-            pstmt.setInt(1, patientId);
-            pstmt.setInt(2, doctorId);
-            pstmt.setString(3, date);
-            pstmt.setString(4, time);
+            insertPstmt.setInt(1, patientId);
+            insertPstmt.setInt(2, doctorId);
+            insertPstmt.setString(3, date);
+            insertPstmt.setString(4, time);
 
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
+            int affectedRows = insertPstmt.executeUpdate();
+            if (affectedRows > 0) {
+                // SQLite doesn't support getGeneratedKeys(), so query the last inserted rowid
+                String idQuery = "SELECT last_insert_rowid() as id";
+                try (PreparedStatement idPstmt = conn.prepareStatement(idQuery);
+                     ResultSet rs = idPstmt.executeQuery()) {
+                    if (rs.next()) {
+                        int appointmentId = rs.getInt("id");
+                        System.out.println("✅ Appointment booked successfully with ID: " + appointmentId);
+                        return appointmentId;
+                    }
+                }
+            }
+            return -1;
         } catch (SQLException e) {
             System.err.println("Error booking appointment: " + e.getMessage());
             e.printStackTrace();
-            return false;
+            return -1;
         }
     }
 
@@ -428,5 +453,41 @@ public class AppointmentService {
             System.err.println("Error fetching appointment details: " + e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * Create an invoice for an appointment after payment
+     */
+    public boolean createAppointmentInvoice(int appointmentId, int patientId, int doctorId, String patientName) {
+        System.out.println("\n💳 APPOINTMENT SERVICE: Creating invoice for appointment ID: " + appointmentId);
+
+        // Generate unique invoice number
+        String invoiceNumber = "INV-APT-" + System.currentTimeMillis();
+        
+        String query = "INSERT INTO invoices (invoice_number, patient_id, doctor_id, patient_name, consultation_type, " +
+                "consultation_amount, subtotal, total_amount, status, payment_method, paid_at) " +
+                "VALUES (?, ?, ?, ?, 'Appointment', ?, ?, ?, 'paid', 'card', CURRENT_TIMESTAMP)";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, invoiceNumber);
+            pstmt.setInt(2, patientId);
+            pstmt.setInt(3, doctorId);
+            pstmt.setString(4, patientName);
+            pstmt.setDouble(5, appointmentFee);  // consultation_amount
+            pstmt.setDouble(6, appointmentFee);  // subtotal
+            pstmt.setDouble(7, appointmentFee);  // total_amount
+
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("✅ Invoice created successfully with number: " + invoiceNumber);
+                return true;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error creating appointment invoice: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
     }
 }
