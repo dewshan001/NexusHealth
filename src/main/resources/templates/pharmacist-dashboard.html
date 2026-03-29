@@ -496,7 +496,7 @@
         <div class="nav-right">
             <div class="nav-profile">
                 <div class="nav-profile-info">
-                    <div class="nav-profile-name">Michael Chang</div>
+                    <div class="nav-profile-name" id="sidebarName">Michael Chang</div>
                     <div class="nav-profile-role">Lead Pharmacist</div>
                 </div>
                 <img src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=150&q=80"
@@ -550,28 +550,8 @@
                         </thead>
                         <tbody id="prescriptionTableBody">
                             <tr>
-                                <td style="font-family: monospace; color: var(--text-secondary);">RX-10024</td>
-                                <td style="font-weight:600;">Emily Chen</td>
-                                <td>Dr. Sarah Jenkins</td>
-                                <td>10:45 AM (15m ago)</td>
-                                <td><span class="pending-badge">Awaiting Dispense</span></td>
-                                <td>
-                                    <button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;"
-                                        onclick="openModal('viewRxModal', 'Emily Chen', 'Dr. Sarah Jenkins', 'Amoxicillin 500mg, Paracetamol 500mg')">View
-                                        & Dispense</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="font-family: monospace; color: var(--text-secondary);">RX-10025</td>
-                                <td style="font-weight:600;">James Morrison</td>
-                                <td>Dr. Michael Chen</td>
-                                <td>11:10 AM (Just now)</td>
-                                <td><span class="pending-badge">Awaiting Dispense</span></td>
-                                <td>
-                                    <button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;"
-                                        onclick="openModal('viewRxModal', 'James Morrison', 'Dr. Michael Chen', 'Lisinopril 10mg')">View
-                                        & Dispense</button>
-                                </td>
+                                <td colspan="6" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">
+                                    Loading pending prescriptions...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -661,8 +641,8 @@
                         </div>
                         <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Allowed
                             formats: JPG, PNG. Max size: 5MB.</p>
-                        <button class="btn btn-outline-primary" style="width: 100%; font-size: 0.9rem;">Remove
-                            Picture</button>
+                        <button class="btn btn-outline-primary" style="width: 100%; font-size: 0.9rem;"
+                            onclick="removeProfilePic()">Remove Picture</button>
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 2rem;">
@@ -675,16 +655,15 @@
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                                 <div>
                                     <label class="form-label">Full Name</label>
-                                    <input type="text" class="form-input" value="Michael Chang">
+                                    <input type="text" class="form-input" id="settingsName" value="Michael Chang">
                                 </div>
                                 <div>
                                     <label class="form-label">Contact Number</label>
-                                    <input type="tel" class="form-input" value="+1 (555) 789-0123">
+                                    <input type="tel" class="form-input" id="settingsPhone" value="+1 (555) 789-0123">
                                 </div>
                             </div>
                             <div style="margin-top: 1.5rem; text-align: right;">
-                                <button class="btn btn-primary"
-                                    onclick="showToast('Pharmacist info saved successfully!')">Save Info</button>
+                                <button class="btn btn-primary" onclick="saveProfile()">Save Info</button>
                             </div>
                         </div>
 
@@ -697,22 +676,23 @@
                             <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
                                 <div>
                                     <label class="form-label">Current Password</label>
-                                    <input type="password" class="form-input" placeholder="••••••••">
+                                    <input type="password" class="form-input" id="settingsCurrentPass"
+                                        placeholder="••••••••">
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                                     <div>
                                         <label class="form-label">New Password</label>
-                                        <input type="password" class="form-input" placeholder="Min 8 characters">
+                                        <input type="password" class="form-input" id="settingsNewPass"
+                                            placeholder="Min 8 characters">
                                     </div>
                                     <div>
                                         <label class="form-label">Confirm New Password</label>
-                                        <input type="password" class="form-input">
+                                        <input type="password" class="form-input" id="settingsConfirmPass">
                                     </div>
                                 </div>
                             </div>
                             <div style="margin-top: 1.5rem; text-align: right;">
-                                <button class="btn btn-primary"
-                                    onclick="showToast('Password updated successfully!')">Update Password</button>
+                                <button class="btn btn-primary" onclick="savePassword()">Update Password</button>
                             </div>
                         </div>
                     </div>
@@ -769,9 +749,7 @@
                         style="font-size: 16px; vertical-align: bottom;">check_circle</span> Stock Available</p>
                 <div style="display: flex; gap: 1rem;">
                     <button class="btn btn-outline" onclick="closeModal('viewRxModal')">Cancel</button>
-                    <button class="btn btn-primary"
-                        onclick="closeModal('viewRxModal'); showToast('Prescription processed and marked as Dispensed!')">Mark
-                        as Dispensed</button>
+                    <button id="rxModalDispenseBtn" class="btn btn-primary">Mark as Dispensed</button>
                 </div>
             </div>
         </div>
@@ -820,8 +798,7 @@
 
             <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
                 <button class="btn btn-outline" onclick="closeModal('addStockModal')">Cancel</button>
-                <button class="btn btn-primary"
-                    onclick="createInventoryItem()">Add
+                <button class="btn btn-primary" onclick="createInventoryItem()">Add
                     to DB</button>
             </div>
         </div>
@@ -993,16 +970,111 @@
         }
 
         // Options Image Upload
+        let currentProfilePicBase64 = null;
+
         function updateProfilePic(event) {
             const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    document.getElementById('optionsProfilePic').src = e.target.result;
-                    document.getElementById('sidebarProfilePic').src = e.target.result;
-                    showToast('Profile picture updated successfully!');
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const base64 = e.target.result;
+                document.getElementById('optionsProfilePic').src = base64;
+                document.getElementById('sidebarProfilePic').src = base64;
+                currentProfilePicBase64 = base64;
+                showToast("Preview updated! Click Save Info to commit.");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeProfilePic() {
+            const defaultPic = "https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=150&q=80";
+            document.getElementById('optionsProfilePic').src = defaultPic;
+            document.getElementById('sidebarProfilePic').src = defaultPic;
+            currentProfilePicBase64 = ""; // Empty string tells backend to clear it
+            showToast("Picture removed. Click Save Info to commit.");
+        }
+
+        async function loadPharmacistData() {
+            try {
+                const response = await fetch('/api/pharmacist/profile');
+                const result = await response.json();
+                if (result.success && result.pharmacist) {
+                    const pharmacist = result.pharmacist;
+                    document.getElementById('sidebarName').textContent = pharmacist.fullName;
+
+                    document.getElementById('settingsName').value = pharmacist.fullName || '';
+                    document.getElementById('settingsPhone').value = pharmacist.phone || '';
+
+                    if (pharmacist.profilePicture) {
+                        document.getElementById('sidebarProfilePic').src = pharmacist.profilePicture;
+                        document.getElementById('optionsProfilePic').src = pharmacist.profilePicture;
+                    }
                 }
-                reader.readAsDataURL(file);
+            } catch (err) {
+                console.error("Failed to load pharmacist profile", err);
+            }
+        }
+
+        async function saveProfile() {
+            const name = document.getElementById('settingsName').value;
+            const phone = document.getElementById('settingsPhone').value;
+            const payload = { fullName: name, phone: phone };
+            if (currentProfilePicBase64 !== null) {
+                payload.profilePicture = currentProfilePicBase64;
+            }
+            try {
+                const res = await fetch('/api/settings/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast("Profile updated successfully!");
+                    loadPharmacistData();
+                } else {
+                    showToast(data.message || "Failed to update profile", true);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Error updating profile", true);
+            }
+        }
+
+        async function savePassword() {
+            const currentPass = document.getElementById('settingsCurrentPass').value;
+            const newPass = document.getElementById('settingsNewPass').value;
+            const confirmPass = document.getElementById('settingsConfirmPass').value;
+
+            if (newPass !== confirmPass) {
+                showToast("New passwords do not match.", true);
+                return;
+            }
+            if (!currentPass || !newPass) {
+                showToast("Please fill in all password fields.", true);
+                return;
+            }
+
+            const payload = { currentPassword: currentPass, newPassword: newPass };
+
+            try {
+                const res = await fetch('/api/settings/password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast("Password updated successfully!");
+                    document.getElementById('settingsCurrentPass').value = '';
+                    document.getElementById('settingsNewPass').value = '';
+                    document.getElementById('settingsConfirmPass').value = '';
+                } else {
+                    showToast(data.message || "Failed to update password", true);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Error updating password", true);
             }
         }
 
@@ -1315,9 +1387,111 @@
             }
         }
 
+        // Prescriptions Logic
+        let prescriptionsCache = [];
+
+        async function loadPendingPrescriptions() {
+            try {
+                const response = await fetch('/api/pharmacist/prescriptions/pending');
+                const result = await response.json();
+
+                if (!result.success) {
+                    showToast(result.error || 'Failed to load pending prescriptions', true);
+                    return;
+                }
+
+                prescriptionsCache = result.data || [];
+                renderPendingPrescriptions(prescriptionsCache);
+            } catch (error) {
+                showToast('Failed to connect to prescriptions service', true);
+                console.error(error);
+            }
+        }
+
+        function renderPendingPrescriptions(prescriptions) {
+            const tbody = document.getElementById('prescriptionTableBody');
+            if (!tbody) return;
+
+            if (!prescriptions || prescriptions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">No pending prescriptions found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = prescriptions.map(rx => {
+                // Determine time elapsed text
+                let timeStr = escapeHtml(rx.issuedAt);
+                try {
+                    const date = new Date(rx.issuedAt.replace(' ', 'T'));
+                    if (!Number.isNaN(date.getTime())) {
+                        timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    }
+                } catch (e) { }
+
+                return `<tr>
+                    <td style="font-family: monospace; color: var(--text-secondary);">${escapeHtml(rx.orderId)}</td>
+                    <td style="font-weight:600;">${escapeHtml(rx.patientName)}</td>
+                    <td>${escapeHtml(rx.doctorName)}</td>
+                    <td>${timeStr}</td>
+                    <td><span class="pending-badge">Awaiting Dispense</span></td>
+                    <td>
+                        <button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;"
+                            onclick="openViewRxModal(${rx.id})">View & Dispense</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function openViewRxModal(rxId) {
+            const rx = prescriptionsCache.find(p => p.id === rxId);
+            if (!rx) return;
+
+            document.getElementById('rxModalPatient').innerText = rx.patientName;
+            document.getElementById('rxModalDoctor').innerText = rx.doctorName;
+
+            let listHtml = '';
+            if (rx.items && rx.items.length > 0) {
+                rx.items.forEach(item => {
+                    listHtml += `<li>${escapeHtml(item.medicineName)} ${escapeHtml(item.dosage || '')} - ${escapeHtml(item.frequency || '')} (Qty: ${item.quantity})<br><small style="color:var(--text-secondary); margin-left:1rem;">${escapeHtml(item.instructions || '')}</small></li>`;
+                });
+            } else {
+                listHtml = '<li>No specific items listed</li>';
+            }
+            document.getElementById('rxModalMeds').innerHTML = listHtml;
+
+            const dispenseBtn = document.getElementById('rxModalDispenseBtn');
+            dispenseBtn.onclick = () => confirmDispensePrescription(rxId);
+
+            document.getElementById('viewRxModal').style.display = 'flex';
+        }
+
+        async function confirmDispensePrescription(rxId) {
+            try {
+                const response = await fetch(`/api/pharmacist/prescriptions/${rxId}/dispense`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+
+                if (!result.success) {
+                    showToast(result.error || 'Failed to dispense prescription', true);
+                    return;
+                }
+
+                closeModal('viewRxModal');
+                showToast('Prescription processed and marked as Dispensed!');
+                loadPendingPrescriptions();
+                loadInventory(); // Refresh inventory as stock is deducted
+                loadSystemAlerts(); // Refresh alerts just in case stock dropped below threshold
+            } catch (error) {
+                showToast('Failed to connect to API', true);
+                console.error(error);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
+            loadPharmacistData();
             loadInventory();
             loadSystemAlerts();
+            loadPendingPrescriptions();
         });
     </script>
 </body>

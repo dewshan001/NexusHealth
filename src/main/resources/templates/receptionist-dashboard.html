@@ -492,7 +492,7 @@
         <div class="nav-right">
             <div class="nav-profile">
                 <div class="nav-profile-info">
-                    <div class="nav-profile-name">David Miller</div>
+                    <div class="nav-profile-name" id="navProfileName">Receptionist</div>
                     <div class="nav-profile-role">Front Desk Reception</div>
                 </div>
                 <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80"
@@ -551,33 +551,8 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td style="font-family: monospace; color: var(--text-secondary);">P-1092</td>
-                                    <td style="font-weight:600;">Emily Chen</td>
-                                    <td>+1 (555) 123-4567</td>
-                                    <td>Oct 12, 1990</td>
-                                    <td>Today</td>
-                                    <td>
-                                        <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
-                                            onclick="showToast('Opened patient profile editor')">Update Details</button>
-                                        <button class="btn btn-primary" style="padding:0.3rem 0.6rem;"
-                                            onclick="switchTab('appointments', null); showToast('Quick-Booking activated for Emily Chen')">Book</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="font-family: monospace; color: var(--text-secondary);">P-8472</td>
-                                    <td style="font-weight:600;">Marcus Johnson</td>
-                                    <td>+1 (555) 987-6543</td>
-                                    <td>Jan 05, 1985</td>
-                                    <td>Oct 12, 2025</td>
-                                    <td>
-                                        <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
-                                            onclick="showToast('Opened patient profile editor')">Update Details</button>
-                                        <button class="btn btn-primary" style="padding:0.3rem 0.6rem;"
-                                            onclick="switchTab('appointments', null); showToast('Quick-Booking activated for Marcus Johnson')">Book</button>
-                                    </td>
-                                </tr>
+                            <tbody id="patientTableBody">
+                                <!-- Dynamically populated from backend -->
                             </tbody>
                         </table>
                     </div>
@@ -589,7 +564,8 @@
                 <div class="content-header">
                     <h2 class="content-title">Master Schedule Control</h2>
                     <div style="display: flex; gap: 1rem;">
-                        <input type="date" class="form-input" value="2026-03-18">
+                        <input id="appointmentDate" type="date" class="form-input" 
+                            value="2026-03-18" onchange="loadAppointments(this.value)">
                         <button class="btn btn-primary" onclick="openModal('bookAppointmentModal')">+ Book Slot</button>
                     </div>
                 </div>
@@ -604,23 +580,12 @@
                         <div class="form-group" style="margin-bottom: 0.5rem;">
                             <label
                                 style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;">
-                                <input type="radio" name="docFilter" checked>
+                                <input type="radio" name="doctorFilter" value="0" checked onchange="filterAppointmentsByDoctor()">
                                 <span style="font-weight: 600;">All Doctors</span>
                             </label>
                         </div>
-                        <div class="form-group" style="margin-bottom: 0.5rem;">
-                            <label
-                                style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;">
-                                <input type="radio" name="docFilter">
-                                <span style="font-weight: 500;">Dr. Sarah Jenkins (Cardiology)</span>
-                            </label>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0.5rem;">
-                            <label
-                                style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;">
-                                <input type="radio" name="docFilter">
-                                <span style="font-weight: 500;">Dr. Michael Chen (Gen. Practice)</span>
-                            </label>
+                        <div id="doctorFilterContainer">
+                            <!-- Dynamically populated from backend -->
                         </div>
                     </div>
 
@@ -638,54 +603,8 @@
                                     <th>Controls</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td style="font-weight: 600;">09:00 AM</td>
-                                    <td>Emily Chen</td>
-                                    <td>Dr. Jenkins</td>
-                                    <td><span class="status-badge status-confirmed">Confirmed</span></td>
-                                    <td>
-                                        <button class="btn btn-outline"
-                                            style="padding:0.2rem 0.5rem; font-size: 0.8rem;"
-                                            onclick="showToast('Open Quick-Edit')">Reschedule</button>
-                                        <button class="btn btn-outline"
-                                            style="padding:0.2rem 0.5rem; color:#EF4444; border-color:#FEE2E2; font-size: 0.8rem;"
-                                            onclick="showToast('Appointment successfully unbooked.', true)">Cancel</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="font-weight: 600;">09:30 AM</td>
-                                    <td>James Morrison</td>
-                                    <td>Dr. Chen</td>
-                                    <td><span class="status-badge status-pending">Pending Check-in</span></td>
-                                    <td>
-                                        <button class="btn btn-primary"
-                                            style="padding:0.2rem 0.5rem; font-size: 0.8rem;"
-                                            onclick="showToast('Patient checked in and doctor notified!')">Check
-                                            In</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="font-weight: 600;">10:00 AM</td>
-                                    <td><span style="color: var(--text-muted); font-style: italic;">Available
-                                            Slot</span></td>
-                                    <td>Dr. Jenkins</td>
-                                    <td>-</td>
-                                    <td>
-                                        <button class="btn btn-outline-primary"
-                                            style="padding:0.2rem 0.5rem; font-size: 0.8rem;"
-                                            onclick="openModal('bookAppointmentModal')">Book Here</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td
-                                        style="font-weight: 600; text-decoration: line-through; color: var(--text-muted);">
-                                        10:30 AM</td>
-                                    <td>Sarah Connor</td>
-                                    <td>Dr. Chen</td>
-                                    <td><span class="status-badge status-cancelled">Cancelled</span></td>
-                                    <td>-</td>
-                                </tr>
+                            <tbody id="appointmentTableBody">
+                                <!-- Dynamically populated from backend -->
                             </tbody>
                         </table>
                     </div>
@@ -731,34 +650,8 @@
                                 <th>Action</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td style="font-family: monospace;">INV-9021</td>
-                                <td style="font-weight: 600;">Emily Chen</td>
-                                <td>Consultation + Meds</td>
-                                <td style="font-weight: 700; font-size: 1.1rem;">$165.50</td>
-                                <td><span style="color:#059669; font-size: 0.85rem;">10% (Ins.)</span></td>
-                                <td><span class="status-badge payment-unpaid">Unpaid</span></td>
-                                <td>
-                                    <button class="btn btn-primary" style="padding:0.4rem 0.8rem;"
-                                        onclick="openModal('recordPaymentModal', 'Emily Chen', 'INV-9021', '165.50')">Pay
-                                        Now</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="font-family: monospace;">INV-9020</td>
-                                <td style="font-weight: 600;">Jason Bourne</td>
-                                <td>General Cons.</td>
-                                <td style="font-weight: 700; font-size: 1.1rem;">$100.00</td>
-                                <td>-</td>
-                                <td><span class="status-badge payment-paid">Paid (Card)</span></td>
-                                <td>
-                                    <button class="btn btn-outline" style="padding:0.4rem 0.8rem;"><span
-                                            class="material-symbols-outlined"
-                                            style="font-size: 16px; margin-right:4px;">print</span> Print
-                                        Receipt</button>
-                                </td>
-                            </tr>
+                        <tbody id="billingTableBody">
+                            <!-- Dynamically populated from backend -->
                         </tbody>
                     </table>
                 </div>
@@ -806,15 +699,15 @@
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                                 <div>
                                     <label class="form-label">Full Name</label>
-                                    <input type="text" class="form-input" value="David Miller">
+                                    <input type="text" class="form-input" id="profileFullName" value="">
                                 </div>
                                 <div>
                                     <label class="form-label">Contact Number</label>
-                                    <input type="tel" class="form-input" value="+1 (555) 111-2222">
+                                    <input type="tel" class="form-input" id="profilePhone" value="">
                                 </div>
                             </div>
                             <div style="margin-top: 1.5rem; text-align: right;">
-                                <button class="btn btn-primary" onclick="showToast('Profile info saved!')">Save
+                                <button class="btn btn-primary" onclick="updateReceptionistProfile()">Save
                                     Info</button>
                             </div>
                         </div>
@@ -828,21 +721,21 @@
                             <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
                                 <div>
                                     <label class="form-label">Current Password</label>
-                                    <input type="password" class="form-input" placeholder="••••••••">
+                                    <input type="password" class="form-input" id="currentPassword" placeholder="••••••••">
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                                     <div>
                                         <label class="form-label">New Password</label>
-                                        <input type="password" class="form-input" placeholder="Min 8 characters">
+                                        <input type="password" class="form-input" id="newPassword" placeholder="Min 8 characters">
                                     </div>
                                     <div>
                                         <label class="form-label">Confirm New Password</label>
-                                        <input type="password" class="form-input">
+                                        <input type="password" class="form-input" id="confirmPassword">
                                     </div>
                                 </div>
                             </div>
                             <div style="margin-top: 1.5rem; text-align: right;">
-                                <button class="btn btn-primary" onclick="showToast('Password updated securely!')">Update
+                                <button class="btn btn-primary" onclick="changePassword()">Update
                                     Password</button>
                             </div>
                         </div>
@@ -869,19 +762,19 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
                     <label class="form-label">First Name</label>
-                    <input type="text" class="form-input">
+                    <input type="text" class="form-input" id="registerFirstName">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Last Name</label>
-                    <input type="text" class="form-input">
+                    <input type="text" class="form-input" id="registerLastName">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Date of Birth</label>
-                    <input type="date" class="form-input">
+                    <input type="date" class="form-input" id="registerDOB">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Gender</label>
-                    <select class="form-select">
+                    <select class="form-select" id="registerGender">
                         <option>Male</option>
                         <option>Female</option>
                         <option>Other</option>
@@ -889,18 +782,18 @@
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
                     <label class="form-label">Contact Number</label>
-                    <input type="tel" class="form-input" placeholder="+1 (xxx) xxx-xxxx">
+                    <input type="tel" class="form-input" id="registerPhone" placeholder="+1 (xxx) xxx-xxxx">
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
                     <label class="form-label">Email Address</label>
-                    <input type="email" class="form-input">
+                    <input type="email" class="form-input" id="registerEmail">
                 </div>
             </div>
 
             <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
                 <button class="btn btn-outline" onclick="closeModal('registerPatientModal')">Cancel</button>
                 <button class="btn btn-primary"
-                    onclick="closeModal('registerPatientModal'); showToast('New patient profile registered successfully!')">Complete
+                    onclick="registerNewPatient()">Complete
                     Registration</button>
             </div>
         </div>
@@ -1001,11 +894,11 @@
         </div>
     </div>
 
-    <!-- Blank Book Appointment modal (for quick clicking) -->
+    <!-- Book Appointment Modal -->
     <div class="modal-overlay" id="bookAppointmentModal"
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
         <div class="modal-content"
-            style="background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 500px; width: 90%;">
+            style="background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 550px; width: 90%;">
             <div
                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
                 <h3 style="font-size: 1.3rem;">Manually Schedule Appointment</h3>
@@ -1013,14 +906,89 @@
                     onclick="closeModal('bookAppointmentModal')">close</span>
             </div>
 
-            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Select doctor, date, and time slot to lock
-                in a new booking manually (double-booking protection is globally active).</p>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Select doctor, date, and time slot to lock in a new booking manually (double-booking protection is globally active).</p>
+
+            <form style="display: grid; gap: 1.2rem;">
+                <!-- Doctor Selection -->
+                <div>
+                    <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;">Select Doctor</label>
+                    <select id="bookDoctorSelect" class="form-select" style="width: 100%; padding: 0.6rem;">
+                        <option value="">-- Choose a doctor --</option>
+                    </select>
+                </div>
+
+                <!-- Patient Selection -->
+                <div>
+                    <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;">Select Patient</label>
+                    <select id="bookPatientSelect" class="form-select" style="width: 100%; padding: 0.6rem;">
+                        <option value="">-- Choose a patient --</option>
+                    </select>
+                </div>
+
+                <!-- Date -->
+                <div>
+                    <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;">Appointment Date</label>
+                    <input id="bookAppointmentDate" type="date" class="form-input" onchange="loadAvailableSlots()">
+                </div>
+
+                <!-- Time -->
+                <div>
+                    <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;">Appointment Time</label>
+                    <select id="bookAppointmentTime" class="form-select" style="width: 100%; padding: 0.6rem;">
+                        <option value="">-- Available times will appear --</option>
+                    </select>
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;">Notes (Optional)</label>
+                    <textarea id="bookAppointmentNotes" class="form-input" style="resize: vertical; min-height: 80px;" placeholder="Add any special notes..."></textarea>
+                </div>
+            </form>
 
             <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
                 <button class="btn btn-outline" onclick="closeModal('bookAppointmentModal')">Cancel</button>
-                <button class="btn btn-primary"
-                    onclick="closeModal('bookAppointmentModal'); showToast('Booking confirmed & locked.')">Confirm
-                    Booking</button>
+                <button class="btn btn-primary" onclick="submitBookAppointment()">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reschedule Appointment Modal -->
+    <div class="modal-overlay" id="rescheduleAppointmentModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
+        <div class="modal-content"
+            style="background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 550px; width: 90%;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                <h3 style="font-size: 1.3rem;">Reschedule Appointment</h3>
+                <span class="material-symbols-outlined" style="cursor: pointer; color: var(--text-secondary);"
+                    onclick="closeModal('rescheduleAppointmentModal')">close</span>
+            </div>
+
+            <!-- Current Appointment Info -->
+            <div id="currentAppointmentInfo" style="background: var(--bg-secondary); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary-medical-blue);">
+                <p style="font-weight: 500; margin-bottom: 0.5rem;">Current Appointment</p>
+                <p id="currentAppointmentDetails" style="font-size: 0.9rem; color: var(--text-secondary);">Loading...</p>
+            </div>
+
+            <!-- New Date/Time -->
+            <form style="display: grid; gap: 1.2rem;">
+                <div>
+                    <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;">New Appointment Date</label>
+                    <input id="rescheduleDate" type="date" class="form-input" onchange="loadRescheduleTimeSlots()">
+                </div>
+
+                <div>
+                    <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;">New Appointment Time</label>
+                    <select id="rescheduleTime" class="form-select" style="width: 100%; padding: 0.6rem;">
+                        <option value="">-- Available times will appear --</option>
+                    </select>
+                </div>
+            </form>
+
+            <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                <button class="btn btn-outline" onclick="closeModal('rescheduleAppointmentModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitRescheduleAppointment()">Confirm Reschedule</button>
             </div>
         </div>
     </div>
@@ -1146,6 +1114,729 @@
                 reader.readAsDataURL(file);
             }
         }
+
+        // ==================== INITIALIZATION ====================
+        // Load receptionist profile on page load
+        (function initializeDashboard() {
+            console.log("🚀 Initializing receptionist dashboard...");
+            loadReceptionistProfile();
+            loadPatients();
+            loadAppointmentsForToday();
+            loadBills();
+        })();
+
+        // ==================== PATIENT FUNCTIONS ====================
+        function loadPatients(searchTerm = null) {
+            console.log("📋 Loading patients...");
+            let url = "/api/receptionist/patients";
+            if (searchTerm) {
+                url += "?search=" + encodeURIComponent(searchTerm);
+            }
+
+            fetch(url)
+                .then(response => {
+                    if (response.status === 401) {
+                        window.location.href = "/login";
+                        return;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.data) {
+                        populatePatientTable(data.data);
+                    } else {
+                        showToast("Failed to load patients: " + data.message, true);
+                    }
+                })
+                .catch(error => {
+                    console.error("❌ Error loading patients:", error);
+                    showToast("Error loading patients", true);
+                });
+        }
+
+        function populatePatientTable(patients) {
+            const tbody = document.getElementById('patientTableBody');
+            tbody.innerHTML = '';
+
+            if (patients.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No patients found</td></tr>';
+                return;
+            }
+
+            patients.forEach(patient => {
+                const row = document.createElement('tr');
+                const lastVisit = patient.lastVisit || 'Never';
+                row.innerHTML = `
+                    <td style="font-family: monospace; color: var(--text-secondary);">${patient.patientCode}</td>
+                    <td style="font-weight:600;">${patient.fullName}</td>
+                    <td>${patient.phone || 'N/A'}</td>
+                    <td>${patient.dateOfBirth || 'N/A'}</td>
+                    <td>${lastVisit}</td>
+                    <td>
+                        <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
+                            onclick="showToast('Update feature coming soon')">Update Details</button>
+                        <button class="btn btn-primary" style="padding:0.3rem 0.6rem;"
+                            onclick="switchTab('appointments', null); showToast('Quick-Booking activated for ${patient.fullName}')">Book</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Search patients with debounce
+        let searchTimeout;
+        function onPatientSearch(event) {
+            clearTimeout(searchTimeout);
+            const searchTerm = event.target.value;
+            if (searchTerm.length > 2) {
+                searchTimeout = setTimeout(() => {
+                    loadPatients(searchTerm);
+                }, 300);
+            } else if (searchTerm.length === 0) {
+                loadPatients();
+            }
+        }
+
+        function registerNewPatient() {
+            const firstName = document.getElementById('registerFirstName').value.trim();
+            const lastName = document.getElementById('registerLastName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const phone = document.getElementById('registerPhone').value.trim();
+            const dateOfBirth = document.getElementById('registerDOB').value;
+            const gender = document.getElementById('registerGender').value;
+
+            // Validation
+            if (!firstName || !lastName || !email || !phone || !dateOfBirth || !gender) {
+                showToast('Please fill in all required fields', true);
+                return;
+            }
+
+            const params = new URLSearchParams({
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                phone: phone,
+                dateOfBirth: dateOfBirth,
+                gender: gender
+            });
+
+            fetch('/api/receptionist/register-patient', {
+                method: 'POST',
+                body: params
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        closeModal('registerPatientModal');
+                        // Clear form
+                        document.getElementById('registerFirstName').value = '';
+                        document.getElementById('registerLastName').value = '';
+                        document.getElementById('registerEmail').value = '';
+                        document.getElementById('registerPhone').value = '';
+                        document.getElementById('registerDOB').value = '';
+                        // Reload patients list
+                        loadPatients();
+                        showToast('Patient registered successfully!');
+                    } else {
+                        showToast('Registration failed: ' + data.message, true);
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error registering patient:', error);
+                    showToast('Error registering patient', true);
+                });
+        }
+
+        // ==================== APPOINTMENT FUNCTIONS ====================
+        let allAppointments = []; // Store all appointments for client-side filtering
+        let currentRescheduleId = null; // Store appointment ID being rescheduled
+
+        function loadAppointmentsForToday() {
+            console.log("📅 Loading today's appointments...");
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('appointmentDate').value = today;
+            loadAppointments(today);
+        }
+
+        function loadAppointments(date = null) {
+            const appointmentDate = date || document.getElementById('appointmentDate').value || new Date().toISOString().split('T')[0];
+            console.log("📅 Loading appointments for:", appointmentDate);
+
+            fetch('/api/receptionist/appointments?date=' + appointmentDate)
+                .then(response => {
+                    if (response.status === 401) {
+                        window.location.href = "/login";
+                        return;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.data) {
+                        allAppointments = data.data;
+                        populateDoctorFilters(data.data);
+                        populateAppointmentTable(data.data);
+                    } else {
+                        console.warn("No appointments found or error: " + data.message);
+                        allAppointments = [];
+                        populateAppointmentTable([]);
+                    }
+                })
+                .catch(error => {
+                    console.error("❌ Error loading appointments:", error);
+                    showToast('Error loading appointments', true);
+                });
+        }
+
+        function populateDoctorFilters(appointments) {
+            const container = document.getElementById('doctorFilterContainer');
+            const uniqueDoctors = [...new Set(appointments.map(a => JSON.stringify({id: a.doctorId, name: a.doctorName, spec: a.specialization})))];
+            
+            container.innerHTML = '';
+            uniqueDoctors.forEach(doctorJson => {
+                const doctor = JSON.parse(doctorJson);
+                const div = document.createElement('div');
+                div.className = 'form-group';
+                div.style.marginBottom = '0.5rem';
+                div.innerHTML = `
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;">
+                        <input type="radio" name="doctorFilter" value="${doctor.id}" onchange="filterAppointmentsByDoctor()">
+                        <span style="font-weight: 500;">${doctor.name} (${doctor.spec})</span>
+                    </label>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function filterAppointmentsByDoctor() {
+            const selectedValue = document.querySelector('input[name="doctorFilter"]:checked').value;
+            let filtered = allAppointments;
+            
+            if (selectedValue !== '0' && selectedValue !== '') {
+                filtered = allAppointments.filter(appt => appt.doctorId === parseInt(selectedValue));
+            }
+            populateAppointmentTable(filtered);
+        }
+
+        function populateAppointmentTable(appointments) {
+            const tbody = document.getElementById('appointmentTableBody');
+            tbody.innerHTML = '';
+
+            if (appointments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No appointments scheduled for this selection</td></tr>';
+                return;
+            }
+
+            appointments.forEach(appt => {
+                const row = document.createElement('tr');
+                const statusClass = appt.status === 'confirmed' ? 'status-confirmed' :
+                                  appt.status === 'scheduled' ? 'status-pending' :
+                                  appt.status === 'cancelled' ? 'status-cancelled' : 'status-pending';
+
+                const isDisabled = appt.status === 'completed' || appt.status === 'cancelled';
+
+                row.innerHTML = `
+                    <td style="font-weight: 600;">${appt.time}</td>
+                    <td>${appt.patientName}</td>
+                    <td>${appt.doctorName || 'N/A'}</td>
+                    <td><span class="status-badge ${statusClass}">${appt.status.charAt(0).toUpperCase() + appt.status.slice(1)}</span></td>
+                    <td style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-outline" style="padding:0.3rem 0.7rem; font-size: 0.8rem; ${isDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}"
+                            onclick="rescheduleAppointmentModal(${appt.id})" ${isDisabled ? 'disabled' : ''}>Reschedule</button>
+                        <button class="btn btn-outline" style="padding:0.3rem 0.7rem; color:#EF4444; border-color:#FEE2E2; font-size: 0.8rem; ${isDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}"
+                            onclick="cancelAppointmentConfirm(${appt.id})" ${isDisabled ? 'disabled' : ''}>Cancel</button>
+                        <button class="btn btn-outline" style="padding:0.3rem 0.7rem; color:#10B981; border-color:#D1FAE5; font-size: 0.8rem; ${appt.status === 'confirmed' ? 'opacity: 0.5; cursor: not-allowed;' : ''}"
+                            onclick="checkInAppointment(${appt.id})" ${appt.status === 'confirmed' ? 'disabled' : ''}>Check-In</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function rescheduleAppointmentModal(appointmentId) {
+            currentRescheduleId = appointmentId;
+            
+            // Fetch appointment details
+            const appt = allAppointments.find(a => a.id === appointmentId);
+            if (appt) {
+                document.getElementById('currentAppointmentDetails').innerHTML = 
+                    `<strong>${appt.patientName}</strong> with <strong>${appt.doctorName}</strong> on <strong>${appt.time}</strong>`;
+                document.getElementById('rescheduleDate').value = '';
+                document.getElementById('rescheduleTime').innerHTML = '<option value="">-- Available times will appear --</option>';
+                openModal('rescheduleAppointmentModal');
+            }
+        }
+
+        function loadRescheduleTimeSlots() {
+            const date = document.getElementById('rescheduleDate').value;
+            if (!date) return;
+
+            const appt = allAppointments.find(a => a.id === currentRescheduleId);
+            if (!appt) return;
+
+            // Fetch available time slots for the selected doctor and date
+            fetch('/api/appointments/booked?doctorId=' + appt.doctorId + '&date=' + date)
+                .then(response => response.json())
+                .then(data => {
+                    const timeSelect = document.getElementById('rescheduleTime');
+                    timeSelect.innerHTML = '<option value="">-- Select a time --</option>';
+                    
+                    const bookedTimes = data.bookedSlots || [];
+                    const availableTimes = generateTimeSlots(bookedTimes);
+                    
+                    availableTimes.forEach(time => {
+                        const option = document.createElement('option');
+                        option.value = time;
+                        option.textContent = time + ' ✓ Available';
+                        timeSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading time slots:', error);
+                    showToast('Error loading available times', true);
+                });
+        }
+
+        function generateTimeSlots(bookedSlots) {
+            const slots = [];
+            for (let hour = 8; hour < 18; hour++) {
+                for (let min = 0; min < 60; min += 30) {
+                    const time = String(hour).padStart(2, '0') + ':' + String(min).padStart(2, '0');
+                    if (!bookedSlots.includes(time)) {
+                        slots.push(time);
+                    }
+                }
+            }
+            return slots;
+        }
+
+        function submitRescheduleAppointment() {
+            const date = document.getElementById('rescheduleDate').value;
+            const time = document.getElementById('rescheduleTime').value;
+
+            if (!date || !time) {
+                showToast('Please select both date and time', true);
+                return;
+            }
+
+            console.log('📅 Rescheduling appointment', currentRescheduleId, 'to', date, 'at', time);
+
+            fetch('/api/receptionist/appointments/' + currentRescheduleId + '/reschedule', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    appointmentDate: date,
+                    appointmentTime: time
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('✅ Appointment rescheduled successfully');
+                        closeModal('rescheduleAppointmentModal');
+                        loadAppointments();
+                    } else {
+                        showToast('❌ ' + (data.error || data.message), true);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error rescheduling appointment:', error);
+                    showToast('Error rescheduling appointment', true);
+                });
+        }
+
+        function cancelAppointmentConfirm(appointmentId) {
+            if (confirm("Are you sure you want to cancel this appointment?")) {
+                console.log('❌ Cancelling appointment', appointmentId);
+
+                fetch('/api/receptionist/appointments/' + appointmentId + '/cancel', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('✅ Appointment cancelled successfully');
+                            loadAppointments();
+                        } else {
+                            showToast('❌ ' + (data.error || data.message), true);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error cancelling appointment:', error);
+                        showToast('Error cancelling appointment', true);
+                    });
+            }
+        }
+
+        function checkInAppointment(appointmentId) {
+            if (confirm("Mark patient as checked in?")) {
+                console.log('✅ Checking in appointment', appointmentId);
+
+                fetch('/api/receptionist/appointments/' + appointmentId + '/check-in', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('✅ Patient checked in successfully');
+                            loadAppointments();
+                        } else {
+                            showToast('❌ ' + (data.error || data.message), true);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking in patient:', error);
+                        showToast('Error checking in patient', true);
+                    });
+            }
+        }
+
+        function submitBookAppointment() {
+            const doctorId = document.getElementById('bookDoctorSelect').value;
+            const patientId = document.getElementById('bookPatientSelect').value;
+            const date = document.getElementById('bookAppointmentDate').value;
+            const time = document.getElementById('bookAppointmentTime').value;
+
+            if (!doctorId || !patientId || !date || !time) {
+                showToast('Please fill in all required fields', true);
+                return;
+            }
+
+            console.log('📅 Booking appointment for patient', patientId, 'with doctor', doctorId);
+
+            fetch('/api/appointments/book', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    patientId: parseInt(patientId),
+                    doctorId: parseInt(doctorId),
+                    appointmentDate: date,
+                    appointmentTime: time
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('✅ Appointment booked successfully');
+                        closeModal('bookAppointmentModal');
+                        loadAppointments();
+                    } else {
+                        showToast('❌ ' + (data.message || 'Failed to book appointment'), true);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error booking appointment:', error);
+                    showToast('Error booking appointment', true);
+                });
+        }
+
+        function loadAvailableSlots() {
+            const doctorId = document.getElementById('bookDoctorSelect').value;
+            const date = document.getElementById('bookAppointmentDate').value;
+
+            if (!doctorId || !date) return;
+
+            fetch('/api/appointments/booked?doctorId=' + doctorId + '&date=' + date)
+                .then(response => response.json())
+                .then(data => {
+                    const timeSelect = document.getElementById('bookAppointmentTime');
+                    timeSelect.innerHTML = '<option value="">-- Select time --</option>';
+                    
+                    const bookedTimes = data.bookedSlots || [];
+                    const availableTimes = generateTimeSlots(bookedTimes);
+                    
+                    availableTimes.forEach(time => {
+                        const option = document.createElement('option');
+                        option.value = time;
+                        option.textContent = time;
+                        timeSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading available slots:', error);
+                    showToast('Error loading available slots', true);
+                });
+        }
+
+        // Load doctors and patients for the book appointment modal when it opens
+        document.addEventListener('DOMContentLoaded', function() {
+            const originalOpenModal = window.openModal;
+            window.openModal = function(modalId, ...args) {
+                if (modalId === 'bookAppointmentModal') {
+                    loadDoctorsForBooking();
+                    loadPatientsForBooking();
+                }
+                return originalOpenModal(modalId, ...args);
+            };
+        });
+
+        function loadDoctorsForBooking() {
+            fetch('/api/appointments/doctors')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('bookDoctorSelect');
+                    select.innerHTML = '<option value="">-- Choose a doctor --</option>';
+                    if (data.success && data.data) {
+                        data.data.forEach(doctor => {
+                            const option = document.createElement('option');
+                            option.value = doctor.id;
+                            option.textContent = doctor.fullName + ' (' + doctor.specialization + ')';
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error loading doctors:', error));
+        }
+
+        function loadPatientsForBooking() {
+            fetch('/api/receptionist/patients')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('bookPatientSelect');
+                    select.innerHTML = '<option value="">-- Choose a patient --</option>';
+                    if (data.success && data.data) {
+                        data.data.forEach(patient => {
+                            const option = document.createElement('option');
+                            option.value = patient.id;
+                            option.textContent = patient.fullName + ' (' + patient.patientCode + ')';
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error loading patients:', error));
+        }
+
+        // ==================== BILLING FUNCTIONS ====================
+        function loadBills(statusFilter = null) {
+            console.log("💳 Loading bills...");
+            let url = '/api/receptionist/bills';
+            if (statusFilter) {
+                url += '?status=' + statusFilter;
+            }
+
+            fetch(url)
+                .then(response => {
+                    if (response.status === 401) {
+                        window.location.href = "/login";
+                        return;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.data) {
+                        populateBillingTable(data.data);
+                    } else {
+                        console.warn("No bills found");
+                        populateBillingTable([]);
+                    }
+                })
+                .catch(error => {
+                    console.error("❌ Error loading bills:", error);
+                });
+        }
+
+        function populateBillingTable(bills) {
+            const tbody = document.getElementById('billingTableBody');
+            tbody.innerHTML = '';
+
+            if (bills.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No bills found</td></tr>';
+                return;
+            }
+
+            bills.forEach(bill => {
+                const row = document.createElement('tr');
+                const statusClass = bill.status === 'paid' ? 'payment-paid' : 'payment-unpaid';
+                const discountDisplay = bill.discountAmount > 0 ? `${bill.discountType} (${(bill.discountAmount / bill.subtotal * 100).toFixed(0)}%)` : '-';
+                const statusBadge = bill.status === 'paid' ? `Paid (${bill.paymentMethod || 'Unknown'})` : 'Unpaid';
+                const actionButton = bill.status === 'paid' 
+                    ? `<button class="btn btn-outline" style="padding:0.4rem 0.8rem;"><span class="material-symbols-outlined" style="font-size: 16px; margin-right:4px;">print</span> Print Receipt</button>`
+                    : `<button class="btn btn-primary" style="padding:0.4rem 0.8rem;" onclick="openPaymentModal(${bill.id}, '${bill.patientName}', '${bill.invoiceNumber}', ${bill.totalAmount})">Pay Now</button>`;
+
+                row.innerHTML = `
+                    <td style="font-family: monospace;">${bill.invoiceNumber}</td>
+                    <td style="font-weight: 600;">${bill.patientName}</td>
+                    <td>${bill.consultationType}</td>
+                    <td style="font-weight: 700; font-size: 1.1rem;">$${bill.totalAmount.toFixed(2)}</td>
+                    <td><span style="color:#059669; font-size: 0.85rem;">${discountDisplay}</span></td>
+                    <td><span class="status-badge ${statusClass}">${statusBadge}</span></td>
+                    <td>${actionButton}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function openPaymentModal(invoiceId, patientName, invoiceNumber, amount) {
+            document.getElementById('payPatientName').id = patientName;
+            document.getElementById('payInvoiceId').innerText = invoiceNumber;
+            document.getElementById('payAmount').innerText = '$' + amount.toFixed(2);
+            document.getElementById('recordPaymentModal').dataset.invoiceId = invoiceId;
+            openModal('recordPaymentModal');
+        }
+
+        function processPayment() {
+            const invoiceId = document.getElementById('recordPaymentModal').dataset.invoiceId;
+            const paymentMethod = document.querySelector('input[name="payMethod"]:checked').value;
+            const discountType = document.querySelector('select').value;
+            const amountText = document.getElementById('payAmount').innerText;
+            const amount = parseFloat(amountText.replace('$', ''));
+
+            const params = new URLSearchParams({
+                invoiceId: invoiceId,
+                paymentMethod: paymentMethod,
+                paidAmount: amount
+            });
+
+            fetch('/api/receptionist/bills/pay', {
+                method: 'POST',
+                body: params
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        closeModal('recordPaymentModal');
+                        loadBills();
+                        showToast('Payment recorded successfully!');
+                    } else {
+                        showToast(data.message, true);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error processing payment:', error);
+                    showToast('Error processing payment', true);
+                });
+        }
+
+        // ==================== RECEPTIONIST PROFILE FUNCTIONS ====================
+        function loadReceptionistProfile() {
+            console.log("👤 Loading receptionist profile...");
+            fetch('/api/receptionist/profile')
+                .then(response => {
+                    if (response.status === 401) {
+                        window.location.href = "/login";
+                        return;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.data) {
+                        document.getElementById('navProfileName').innerText = data.data.fullName || 'Receptionist';
+                        document.getElementById('profileFullName').value = data.data.fullName || '';
+                        // Note: Phone field not stored in users table, only in patients/doctors tables
+                        document.getElementById('profilePhone').value = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error loading profile:', error);
+                });
+        }
+
+        function updateReceptionistProfile() {
+            const fullName = document.getElementById('profileFullName').value.trim();
+            const phone = document.getElementById('profilePhone').value.trim();
+
+            if (!fullName) {
+                showToast('Full name is required', true);
+                return;
+            }
+
+            const params = new URLSearchParams({
+                fullName: fullName,
+                phone: phone || ''
+            });
+
+            fetch('/api/receptionist/profile/update', {
+                method: 'POST',
+                body: params
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('navProfileName').innerText = fullName;
+                        showToast('Profile updated successfully!');
+                    } else {
+                        showToast(data.message, true);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating profile:', error);
+                    showToast('Error updating profile', true);
+                });
+        }
+
+        function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validation
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showToast('All password fields are required', true);
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showToast('New passwords do not match', true);
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                showToast('Password must be at least 8 characters', true);
+                return;
+            }
+
+            const params = new URLSearchParams({
+                currentPassword: currentPassword,
+                newPassword: newPassword,
+                confirmPassword: confirmPassword
+            });
+
+            fetch('/api/receptionist/profile/password', {
+                method: 'POST',
+                body: params
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Clear password fields
+                        document.getElementById('currentPassword').value = '';
+                        document.getElementById('newPassword').value = '';
+                        document.getElementById('confirmPassword').value = '';
+                        showToast('Password changed successfully!');
+                    } else {
+                        showToast(data.message, true);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error changing password:', error);
+                    showToast('Error changing password', true);
+                });
+        }
+
+        // ==================== DATE FILTER FOR APPOINTMENTS ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.querySelector('input[type="date"]');
+            if (dateInput) {
+                dateInput.addEventListener('change', function() {
+                    loadAppointments(this.value);
+                });
+            }
+
+            // Wire up search input
+            const searchInput = document.querySelector('.toolbar-search-input');
+            if (searchInput) {
+                searchInput.addEventListener('input', onPatientSearch);
+            }
+        });
     </script>
 </body>
 

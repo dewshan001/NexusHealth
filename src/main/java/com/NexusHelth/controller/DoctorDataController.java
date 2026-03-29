@@ -1,16 +1,28 @@
 package com.NexusHelth.controller;
 
 import com.NexusHelth.model.User;
+import com.NexusHelth.model.Medicine;
+import com.NexusHelth.service.PharmacistInventoryService;
+import com.NexusHelth.service.DoctorPrescriptionService;
+import com.NexusHelth.service.AppointmentService;
+import com.NexusHelth.model.Doctor;
 import com.NexusHelth.util.DatabaseConnection;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 import jakarta.servlet.http.HttpSession;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 public class DoctorDataController {
+
+    private final PharmacistInventoryService inventoryService = new PharmacistInventoryService();
+    private final DoctorPrescriptionService prescriptionService = new DoctorPrescriptionService();
+    private final AppointmentService appointmentService = new AppointmentService();
 
     @GetMapping("/api/doctor/profile")
     public DoctorProfileResponse getDoctorProfile(HttpSession session) {
@@ -65,5 +77,66 @@ public class DoctorDataController {
             this.doctor = doctor;
             this.error = error;
         }
+    }
+
+    @GetMapping("/api/doctor/medicines")
+    public MedicineListResponse getMedicines(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null || !user.getRole().equals("doctor")) {
+            return new MedicineListResponse(false, null, "Not authenticated as doctor");
+        }
+
+        List<Medicine> data = inventoryService.getAllMedicines();
+        return new MedicineListResponse(true, data, null);
+    }
+
+    public static class MedicineListResponse {
+        public boolean success;
+        public List<Medicine> data;
+        public String error;
+
+        public MedicineListResponse(boolean success, List<Medicine> data, String error) {
+            this.success = success;
+            this.data = data;
+            this.error = error;
+        }
+    }
+
+    // --- Prescription Creation Endpoint ---
+
+    @PostMapping("/api/doctor/prescriptions")
+    public ResponseEntity<?> createPrescription(@RequestBody PrescriptionRequest request, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null || !"doctor".equals(user.getRole())) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
+        }
+
+        Doctor doctor = appointmentService.getDoctorByUserId(user.getId());
+        if (doctor == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Doctor profile not found"));
+        }
+
+        if (request.patientCode == null || request.patientCode.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Patient code is required"));
+        }
+
+        if (request.medications == null || request.medications.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", "At least one medication is required"));
+        }
+
+        boolean success = prescriptionService.createPrescription(doctor.getId(), request.patientCode,
+                request.medications);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", success);
+        response.put("message", success ? "Prescription saved successfully" : "Failed to save prescription");
+        return ResponseEntity.ok(response);
+    }
+
+    public static class PrescriptionRequest {
+        public String patientName;
+        public String patientCode;
+        public List<Map<String, String>> medications;
     }
 }

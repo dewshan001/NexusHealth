@@ -167,4 +167,266 @@ public class AppointmentService {
         }
         return appointments;
     }
+
+    /**
+     * Get all appointments for a given date (for receptionist view)
+     */
+    public List<Map<String, Object>> getAppointmentsByDate(String date) {
+        List<Map<String, Object>> appointments = new ArrayList<>();
+        String query = "SELECT a.id, a.appointment_time, a.status, a.doctor_id, u.full_name AS patient_name, " +
+                "p.patient_code, d.full_name AS doctor_name, d.specialization " +
+                "FROM appointments a " +
+                "JOIN patients p ON a.patient_id = p.id " +
+                "JOIN users u ON p.user_id = u.id " +
+                "JOIN doctors doc ON a.doctor_id = doc.id " +
+                "JOIN users d ON doc.user_id = d.id " +
+                "WHERE a.appointment_date = ? " +
+                "ORDER BY a.appointment_time";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, date);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> appt = new HashMap<>();
+                    appt.put("id", rs.getInt("id"));
+                    appt.put("doctorId", rs.getInt("doctor_id"));
+                    appt.put("time", rs.getString("appointment_time"));
+                    appt.put("status", rs.getString("status"));
+                    appt.put("patientName", rs.getString("patient_name"));
+                    appt.put("patientCode", rs.getString("patient_code"));
+                    appt.put("doctorName", rs.getString("doctor_name"));
+                    appt.put("specialization", rs.getString("specialization"));
+                    appointments.add(appt);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching appointments by date: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return appointments;
+    }
+
+    /**
+     * Reschedule an appointment to a new date and time
+     */
+    public boolean rescheduleAppointment(int appointmentId, String newDate, String newTime) {
+        System.out.println("\n📅 APPOINTMENT SERVICE: Rescheduling appointment ID: " + appointmentId);
+
+        // First, get the doctor ID from the appointment
+        String getAppointmentQuery = "SELECT doctor_id FROM appointments WHERE id = ?";
+        int doctorId = -1;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement getPstmt = conn.prepareStatement(getAppointmentQuery)) {
+            getPstmt.setInt(1, appointmentId);
+
+            try (ResultSet rs = getPstmt.executeQuery()) {
+                if (rs.next()) {
+                    doctorId = rs.getInt("doctor_id");
+                }
+            }
+
+            if (doctorId == -1) {
+                System.out.println("❌ Appointment not found");
+                return false;
+            }
+
+            // Check if new time slot is available
+            if (!isTimeSlotAvailable(doctorId, newDate, newTime)) {
+                System.out.println("❌ Time slot is not available");
+                return false;
+            }
+
+            // Update the appointment
+            String updateQuery = "UPDATE appointments SET appointment_date = ?, appointment_time = ?, status = 'confirmed' WHERE id = ?";
+            try (PreparedStatement updatePstmt = conn.prepareStatement(updateQuery)) {
+                updatePstmt.setString(1, newDate);
+                updatePstmt.setString(2, newTime);
+                updatePstmt.setInt(3, appointmentId);
+
+                int affectedRows = updatePstmt.executeUpdate();
+                if (affectedRows > 0) {
+                    System.out.println("✅ Appointment rescheduled to " + newDate + " at " + newTime);
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error rescheduling appointment: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Cancel an appointment
+     */
+    public boolean cancelAppointment(int appointmentId) {
+        System.out.println("\n❌ APPOINTMENT SERVICE: Cancelling appointment ID: " + appointmentId);
+
+        String query = "UPDATE appointments SET status = 'cancelled' WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, appointmentId);
+
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("✅ Appointment cancelled successfully");
+                return true;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error cancelling appointment: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Check in a patient for their appointment
+     */
+    public boolean checkInPatient(int appointmentId) {
+        System.out.println("\n✅ APPOINTMENT SERVICE: Checking in patient for appointment ID: " + appointmentId);
+
+        String query = "UPDATE appointments SET status = 'confirmed' WHERE id = ? AND status IN ('scheduled', 'pending')";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, appointmentId);
+
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("✅ Patient checked in successfully");
+                return true;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error checking in patient: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // ===================== VALIDATION METHODS =====================
+
+    /**
+     * Validate appointment exists and return its current status
+     */
+    public String getAppointmentStatus(int appointmentId) {
+        String query = "SELECT status FROM appointments WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, appointmentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("status");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching appointment status: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Check if appointment can be rescheduled (not completed or cancelled)
+     */
+    public boolean canReschedule(int appointmentId) {
+        String status = getAppointmentStatus(appointmentId);
+        if (status == null) {
+            return false;
+        }
+        return !status.equals("completed") && !status.equals("cancelled");
+    }
+
+    /**
+     * Check if appointment can be cancelled (not already completed or cancelled)
+     */
+    public boolean canCancel(int appointmentId) {
+        String status = getAppointmentStatus(appointmentId);
+        if (status == null) {
+            return false;
+        }
+        return !status.equals("completed") && !status.equals("cancelled");
+    }
+
+    /**
+     * Check if doctor exists and is active
+     */
+    public boolean isDoctorValid(int doctorId) {
+        String query = "SELECT COUNT(*) FROM doctors d JOIN users u ON d.user_id = u.id WHERE d.id = ? AND u.status = 'active'";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, doctorId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error validating doctor: " + e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * Check if patient exists and is active
+     */
+    public boolean isPatientValid(int patientId) {
+        String query = "SELECT COUNT(*) FROM patients p JOIN users u ON p.user_id = u.id WHERE p.id = ? AND u.status = 'active'";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, patientId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error validating patient: " + e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * Get appointment details by ID
+     */
+    public Map<String, Object> getAppointmentById(int appointmentId) {
+        String query = "SELECT a.id, a.patient_id, a.doctor_id, a.appointment_date, a.appointment_time, " +
+                "a.status, a.notes, u.full_name AS patient_name, p.patient_code, " +
+                "d.full_name AS doctor_name, d.specialization " +
+                "FROM appointments a " +
+                "JOIN patients p ON a.patient_id = p.id " +
+                "JOIN users u ON p.user_id = u.id " +
+                "JOIN doctors doc ON a.doctor_id = doc.id " +
+                "JOIN users d ON doc.user_id = d.id " +
+                "WHERE a.id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, appointmentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    Map<String, Object> appt = new HashMap<>();
+                    appt.put("id", rs.getInt("id"));
+                    appt.put("patientId", rs.getInt("patient_id"));
+                    appt.put("doctorId", rs.getInt("doctor_id"));
+                    appt.put("appointmentDate", rs.getString("appointment_date"));
+                    appt.put("appointmentTime", rs.getString("appointment_time"));
+                    appt.put("status", rs.getString("status"));
+                    appt.put("notes", rs.getString("notes"));
+                    appt.put("patientName", rs.getString("patient_name"));
+                    appt.put("patientCode", rs.getString("patient_code"));
+                    appt.put("doctorName", rs.getString("doctor_name"));
+                    appt.put("specialization", rs.getString("specialization"));
+                    return appt;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching appointment details: " + e.getMessage());
+        }
+        return null;
+    }
 }

@@ -3,13 +3,17 @@ package com.NexusHelth.controller;
 import com.NexusHelth.model.User;
 import com.NexusHelth.model.Patient;
 import com.NexusHelth.service.PatientService;
+import com.NexusHelth.util.DatabaseConnection;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.servlet.http.HttpSession;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -233,6 +237,83 @@ public class PatientDataController {
             System.out.println("====================================================================\n");
             return new StatusUpdateResponse(false, "Failed to create patient. Email might already exist.");
         }
+    }
+
+    // Get prescriptions for the logged-in patient
+    @GetMapping("/patient/prescriptions")
+    public Map<String, Object> getPatientPrescriptions(HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            response.put("success", false);
+            response.put("message", "Not authenticated");
+            return response;
+        }
+
+        Patient patient = patientService.getPatientByUserId(user.getId());
+        if (patient == null) {
+            response.put("success", false);
+            response.put("message", "Patient not found");
+            return response;
+        }
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            String sql = "SELECT p.id, p.status, p.issued_at, "
+                    + "u.full_name AS doctor_name "
+                    + "FROM prescriptions p "
+                    + "JOIN doctors d ON p.doctor_id = d.id "
+                    + "JOIN users u ON d.user_id = u.id "
+                    + "WHERE p.patient_id = ? "
+                    + "ORDER BY p.issued_at DESC";
+
+            List<Map<String, Object>> prescriptions = new ArrayList<>();
+
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, patient.getId());
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        Map<String, Object> rx = new HashMap<>();
+                        int rxId = rs.getInt("id");
+                        rx.put("id", rxId);
+                        rx.put("status", rs.getString("status"));
+                        rx.put("issuedAt", rs.getString("issued_at"));
+                        rx.put("doctorName", rs.getString("doctor_name"));
+
+                        // Fetch items for this prescription
+                        String itemSql = "SELECT pi.dosage, pi.frequency, pi.instructions, pi.quantity, "
+                                + "m.name AS medicine_name "
+                                + "FROM prescription_items pi "
+                                + "JOIN medicines m ON pi.medicine_id = m.id "
+                                + "WHERE pi.prescription_id = ?";
+                        List<Map<String, Object>> items = new ArrayList<>();
+                        try (PreparedStatement itemStmt = conn.prepareStatement(itemSql)) {
+                            itemStmt.setInt(1, rxId);
+                            try (ResultSet itemRs = itemStmt.executeQuery()) {
+                                while (itemRs.next()) {
+                                    Map<String, Object> item = new HashMap<>();
+                                    item.put("medicineName", itemRs.getString("medicine_name"));
+                                    item.put("dosage", itemRs.getString("dosage"));
+                                    item.put("frequency", itemRs.getString("frequency"));
+                                    item.put("instructions", itemRs.getString("instructions"));
+                                    item.put("quantity", itemRs.getInt("quantity"));
+                                    items.add(item);
+                                }
+                            }
+                        }
+                        rx.put("items", items);
+                        prescriptions.add(rx);
+                    }
+                }
+            }
+
+            response.put("success", true);
+            response.put("prescriptions", prescriptions);
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("success", false);
+            response.put("message", "Database error");
+        }
+        return response;
     }
 
     // Inner class for patients list response

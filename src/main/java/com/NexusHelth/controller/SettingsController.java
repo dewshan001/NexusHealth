@@ -2,14 +2,57 @@ package com.NexusHelth.controller;
 
 import com.NexusHelth.model.User;
 import com.NexusHelth.service.SettingsService;
+import com.NexusHelth.util.DatabaseConnection;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/settings")
 public class SettingsController {
 
     private final SettingsService settingsService = new SettingsService();
+
+    @GetMapping("/admin-profile")
+    public Map<String, Object> getAdminProfile(HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            response.put("success", false);
+            response.put("message", "Not authenticated");
+            return response;
+        }
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            String sql = "SELECT full_name, email, profile_picture FROM users WHERE id = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, user.getId());
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        Map<String, String> userData = new HashMap<>();
+                        userData.put("fullName", rs.getString("full_name"));
+                        userData.put("email", rs.getString("email"));
+                        userData.put("profilePicture", rs.getString("profile_picture"));
+                        response.put("success", true);
+                        response.put("user", userData);
+                    } else {
+                        response.put("success", false);
+                        response.put("message", "User not found");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("success", false);
+            response.put("message", "Database error");
+        }
+        return response;
+    }
 
     public static class ProfileUpdateRequest {
         public String fullName;

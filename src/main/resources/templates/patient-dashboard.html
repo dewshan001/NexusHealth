@@ -849,6 +849,121 @@
             opacity: 0.45;
         }
 
+        /* ───── PRESCRIPTION CARDS ───────────────────── */
+        .rx-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .rx-card:hover {
+            border-color: rgba(99, 179, 255, 0.4);
+            box-shadow: 0 4px 16px rgba(0, 102, 255, 0.08);
+        }
+
+        .rx-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .rx-doctor {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .rx-date {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-top: 0.2rem;
+        }
+
+        .rx-status {
+            padding: 0.3rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .rx-status-pending {
+            background: var(--badge-pend-bg);
+            color: var(--badge-pend-clr);
+        }
+
+        .rx-status-dispensed {
+            background: var(--badge-paid-bg);
+            color: var(--badge-paid-clr);
+        }
+
+        .rx-status-cancelled {
+            background: var(--icon-red-bg);
+            color: var(--icon-red-clr);
+        }
+
+        .rx-items {
+            border-top: 1px solid var(--glass-border);
+            padding-top: 0.75rem;
+        }
+
+        .rx-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+        }
+
+        .rx-item+.rx-item {
+            border-top: 1px dashed var(--glass-border);
+        }
+
+        .rx-item-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--icon-green-bg);
+            color: var(--icon-green-clr);
+            flex-shrink: 0;
+        }
+
+        .rx-item-icon .material-symbols-outlined {
+            font-size: 18px;
+        }
+
+        .rx-item-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.92rem;
+        }
+
+        .rx-item-detail {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .rx-empty {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .rx-empty .material-symbols-outlined {
+            font-size: 56px;
+            display: block;
+            margin-bottom: 0.75rem;
+            opacity: 0.5;
+        }
+
         /* ───── PAYMENT TABLE ────────────────────────── */
         .payment-table-wrapper {
             overflow-x: auto;
@@ -1221,6 +1336,9 @@
             <button class="nav-tab" onclick="switchTab('billing', event)">
                 <span class="material-symbols-outlined">receipt_long</span> Payments
             </button>
+            <button class="nav-tab" onclick="switchTab('prescriptions', event)">
+                <span class="material-symbols-outlined">medication</span> My Prescriptions
+            </button>
             <button class="nav-tab" onclick="switchTab('options', event)">
                 <span class="material-symbols-outlined">settings</span> Settings
             </button>
@@ -1260,6 +1378,9 @@
         </button>
         <button class="nav-tab" onclick="switchTab('billing', event)">
             <span class="material-symbols-outlined">receipt_long</span> Payments
+        </button>
+        <button class="nav-tab" onclick="switchTab('prescriptions', event)">
+            <span class="material-symbols-outlined">medication</span> My Prescriptions
         </button>
         <button class="nav-tab" onclick="switchTab('options', event)">
             <span class="material-symbols-outlined">settings</span> Settings
@@ -1441,6 +1562,29 @@
             </div>
 
         </div><!-- /tab-billing -->
+
+        <!-- ── TAB: PRESCRIPTIONS ─────────────────────── -->
+        <div id="tab-prescriptions" class="tab-content">
+
+            <div class="page-hero">
+                <div class="page-hero-text">
+                    <h1>My Prescriptions 💊</h1>
+                    <p>View all prescriptions issued by your doctors.</p>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-card-title">Prescription History</div>
+                <div id="prescriptionsList">
+                    <div style="text-align:center; padding:2rem; color:var(--text-muted);">
+                        <span class="material-symbols-outlined"
+                            style="font-size:48px; display:block; margin-bottom:0.5rem;">medication</span>
+                        Loading prescriptions...
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /tab-prescriptions -->
 
         <!-- ── TAB: OPTIONS ──────────────────────────── -->
         <div id="tab-options" class="tab-content">
@@ -2035,10 +2179,79 @@
                 });
         }
 
+        // ─── Load Prescriptions ─────────────────────
+        async function loadPrescriptions() {
+            try {
+                const res = await fetch('/api/patient/prescriptions');
+                const data = await res.json();
+                const container = document.getElementById('prescriptionsList');
+
+                if (data.success && data.prescriptions && data.prescriptions.length > 0) {
+                    container.innerHTML = '';
+                    data.prescriptions.forEach(rx => {
+                        const statusClass = rx.status === 'dispensed' ? 'rx-status-dispensed'
+                            : rx.status === 'cancelled' ? 'rx-status-cancelled' : 'rx-status-pending';
+                        const statusLabel = rx.status.charAt(0).toUpperCase() + rx.status.slice(1);
+
+                        const dateStr = rx.issuedAt ? new Date(rx.issuedAt).toLocaleDateString('en-US', {
+                            year: 'numeric', month: 'short', day: 'numeric'
+                        }) : 'N/A';
+
+                        let itemsHtml = '';
+                        if (rx.items && rx.items.length > 0) {
+                            rx.items.forEach(item => {
+                                const details = [
+                                    item.dosage ? `Dosage: ${item.dosage}` : '',
+                                    item.frequency ? `Freq: ${item.frequency}` : '',
+                                    item.quantity ? `Qty: ${item.quantity}` : '',
+                                    item.instructions ? item.instructions : ''
+                                ].filter(Boolean).join(' · ');
+
+                                itemsHtml += `
+                                    <div class="rx-item">
+                                        <div class="rx-item-icon">
+                                            <span class="material-symbols-outlined">pill</span>
+                                        </div>
+                                        <div>
+                                            <div class="rx-item-name">${item.medicineName || 'Unknown'}</div>
+                                            <div class="rx-item-detail">${details || 'No details'}</div>
+                                        </div>
+                                    </div>`;
+                            });
+                        }
+
+                        container.innerHTML += `
+                            <div class="rx-card">
+                                <div class="rx-header">
+                                    <div>
+                                        <div class="rx-doctor">Dr. ${rx.doctorName || 'Unknown'}</div>
+                                        <div class="rx-date">Issued: ${dateStr}</div>
+                                    </div>
+                                    <span class="rx-status ${statusClass}">${statusLabel}</span>
+                                </div>
+                                <div class="rx-items">${itemsHtml || '<p style="color:var(--text-muted); font-size:0.85rem;">No items</p>'}</div>
+                            </div>`;
+                    });
+                } else {
+                    container.innerHTML = `
+                        <div class="rx-empty">
+                            <span class="material-symbols-outlined">medication</span>
+                            <p>No prescriptions found.</p>
+                            <p style="font-size:0.85rem; margin-top:0.5rem;">Prescriptions issued by your doctors will appear here.</p>
+                        </div>`;
+                }
+            } catch (e) {
+                console.error('Error loading prescriptions:', e);
+                document.getElementById('prescriptionsList').innerHTML =
+                    '<p style="color:var(--text-muted); padding:1rem;">Could not load prescriptions.</p>';
+            }
+        }
+
         // Call loadPatientData explicitly from our own load setup
         window.addEventListener('load', () => {
             loadPatientData();
             loadDoctors();
+            loadPrescriptions();
         });
     </script>
 

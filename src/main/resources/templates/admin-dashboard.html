@@ -1336,7 +1336,8 @@
                         </div>
                         <p class="text-muted-sm" style="margin-bottom: 1.5rem;">Allowed
                             formats: JPG, PNG. Max size: 5MB.</p>
-                        <button class="btn btn-outline" style="width: 100%; font-size: 0.9rem;">Remove
+                        <button class="btn btn-outline" style="width: 100%; font-size: 0.9rem;"
+                            onclick="removeAdminProfilePic()">Remove
                             Picture</button>
                     </div>
 
@@ -1347,16 +1348,16 @@
                             <div class="options-form-row">
                                 <div>
                                     <label class="admin-form-label">Full Name</label>
-                                    <input type="text" class="form-input" value="Eleanor Vance">
+                                    <input type="text" id="adminSettingsName" class="form-input" value="">
                                 </div>
                                 <div>
                                     <label class="admin-form-label">Contact Email</label>
-                                    <input type="email" class="form-input" value="admin@nexushealth.com">
+                                    <input type="email" id="adminSettingsEmail" class="form-input" value="" disabled
+                                        style="cursor:not-allowed; opacity:0.7;">
                                 </div>
                             </div>
                             <div class="mt-1-5 text-right">
-                                <button class="btn btn-primary"
-                                    onclick="showToast('Admin info saved successfully!')">Save Admin Info</button>
+                                <button class="btn btn-primary" onclick="saveAdminProfile()">Save Admin Info</button>
                             </div>
                         </div>
 
@@ -1365,22 +1366,21 @@
                             <h3 class="admin-card-title">Change Admin Password</h3>
                             <div class="admin-form-group">
                                 <label class="admin-form-label">Current Password</label>
-                                <input type="password" class="form-input" placeholder="••••••••">
+                                <input type="password" id="adminCurrentPass" class="form-input" placeholder="••••••••">
                             </div>
                             <div class="options-password-row">
                                 <div>
                                     <label class="admin-form-label">New Password</label>
-                                    <input type="password" class="form-input"
+                                    <input type="password" id="adminNewPass" class="form-input"
                                         placeholder="Min 12 characters (Admin req)">
                                 </div>
                                 <div>
                                     <label class="admin-form-label">Confirm New Password</label>
-                                    <input type="password" class="form-input">
+                                    <input type="password" id="adminConfirmPass" class="form-input">
                                 </div>
                             </div>
                             <div class="mt-1-5 text-right">
-                                <button class="btn btn-primary"
-                                    onclick="showToast('Admin password updated securely!')">Update Password</button>
+                                <button class="btn btn-primary" onclick="saveAdminPassword()">Update Password</button>
                             </div>
                         </div>
                     </div>
@@ -1501,7 +1501,8 @@
             <div class="modal-form-grid">
                 <div class="admin-form-group">
                     <label class="admin-form-label">Medical Specialization *</label>
-                    <input type="text" id="newDoctorSpecialization" class="form-input" placeholder="e.g. Cardiology, Pediatrics">
+                    <input type="text" id="newDoctorSpecialization" class="form-input"
+                        placeholder="e.g. Cardiology, Pediatrics">
                 </div>
                 <div class="admin-form-group">
                     <label class="admin-form-label">Assigned Room</label>
@@ -2241,10 +2242,128 @@
                 });
         }
 
+        // ─── Admin Settings Functions ───
+
+        let adminProfilePicBase64 = null;
+
+        function updateProfilePic(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const base64 = e.target.result;
+                document.getElementById('optionsProfilePic').src = base64;
+                document.getElementById('sidebarProfilePic').src = base64;
+                adminProfilePicBase64 = base64;
+                showToast("Preview updated! Click Save Admin Info to commit.");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeAdminProfilePic() {
+            const defaultPic = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80';
+            document.getElementById('optionsProfilePic').src = defaultPic;
+            document.getElementById('sidebarProfilePic').src = defaultPic;
+            adminProfilePicBase64 = defaultPic;
+            showToast("Picture removed. Click Save Admin Info to commit.");
+        }
+
+        async function loadAdminProfile() {
+            try {
+                const res = await fetch('/api/settings/admin-profile');
+                const data = await res.json();
+                if (data.success && data.user) {
+                    const u = data.user;
+                    document.getElementById('adminSettingsName').value = u.fullName || '';
+                    document.getElementById('adminSettingsEmail').value = u.email || '';
+                    document.querySelector('.nav-profile-name').textContent = u.fullName || 'Admin';
+
+                    if (u.profilePicture && u.profilePicture.trim() !== '') {
+                        document.getElementById('optionsProfilePic').src = u.profilePicture;
+                        document.getElementById('sidebarProfilePic').src = u.profilePicture;
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading admin profile:', e);
+            }
+        }
+
+        async function saveAdminProfile() {
+            const name = document.getElementById('adminSettingsName').value.trim();
+            if (!name) {
+                showToast("Full name cannot be empty.", true);
+                return;
+            }
+
+            const payload = { fullName: name, phone: '' };
+            if (adminProfilePicBase64 !== null) {
+                payload.profilePicture = adminProfilePicBase64;
+            }
+
+            try {
+                const res = await fetch('/api/settings/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Admin info saved successfully!');
+                    document.querySelector('.nav-profile-name').textContent = name;
+                    adminProfilePicBase64 = null;
+                } else {
+                    showToast(data.message || 'Failed to save info', true);
+                }
+            } catch (e) {
+                console.error('Error saving admin profile:', e);
+                showToast('Network error saving profile.', true);
+            }
+        }
+
+        async function saveAdminPassword() {
+            const currentPass = document.getElementById('adminCurrentPass').value;
+            const newPass = document.getElementById('adminNewPass').value;
+            const confirmPass = document.getElementById('adminConfirmPass').value;
+
+            if (!currentPass || !newPass) {
+                showToast("Please fill in all password fields.", true);
+                return;
+            }
+            if (newPass !== confirmPass) {
+                showToast("New passwords do not match.", true);
+                return;
+            }
+            if (newPass.length < 8) {
+                showToast("New password must be at least 8 characters.", true);
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/settings/password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword: currentPass, newPassword: newPass })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Admin password updated successfully!');
+                    document.getElementById('adminCurrentPass').value = '';
+                    document.getElementById('adminNewPass').value = '';
+                    document.getElementById('adminConfirmPass').value = '';
+                } else {
+                    showToast(data.message || 'Failed to update password', true);
+                }
+            } catch (e) {
+                console.error('Error saving password:', e);
+                showToast('Network error updating password.', true);
+            }
+        }
+
         // Load data on page load
         document.addEventListener('DOMContentLoaded', function () {
             loadStaff();
             loadPatients();
+            loadAdminProfile();
         });
     </script>
 </body>

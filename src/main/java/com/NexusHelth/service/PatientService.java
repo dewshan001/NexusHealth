@@ -347,4 +347,120 @@ public class PatientService {
         }
         return false;
     }
+
+    /**
+     * Search patients by name, patient code, phone, or date of birth
+     */
+    public java.util.List<Patient> searchPatients(String keyword) {
+        System.out.println("\n🔍 PATIENT SERVICE: Searching patients with keyword: " + keyword);
+        java.util.List<Patient> patients = new java.util.ArrayList<>();
+
+        String query = "SELECT p.id, p.user_id, p.patient_code, p.phone, p.date_of_birth, p.gender, " +
+                "p.blood_type, p.address, p.account_status, p.last_visit, u.full_name, u.email " +
+                "FROM patients p " +
+                "JOIN users u ON p.user_id = u.id " +
+                "WHERE u.full_name LIKE ? OR p.patient_code LIKE ? OR p.phone LIKE ? OR p.date_of_birth LIKE ? " +
+                "ORDER BY u.full_name ASC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            String searchPattern = "%" + keyword + "%";
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+            pstmt.setString(3, searchPattern);
+            pstmt.setString(4, searchPattern);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Patient patient = new Patient();
+                    patient.setId(rs.getInt("id"));
+                    patient.setUserId(rs.getInt("user_id"));
+                    patient.setPatientCode(rs.getString("patient_code"));
+                    patient.setPhone(rs.getString("phone"));
+                    patient.setDateOfBirth(rs.getString("date_of_birth"));
+                    patient.setGender(rs.getString("gender"));
+                    patient.setBloodType(rs.getString("blood_type"));
+                    patient.setAddress(rs.getString("address"));
+                    patient.setAccountStatus(rs.getString("account_status"));
+                    patient.setFullName(rs.getString("full_name"));
+                    patient.setEmail(rs.getString("email"));
+                    String lastVisit = rs.getString("last_visit");
+                    if (lastVisit != null) {
+                        patient.setLastVisit(lastVisit);
+                    }
+                    patients.add(patient);
+                }
+            }
+            System.out.println("✅ Found " + patients.size() + " matching patients");
+        } catch (SQLException e) {
+            System.out.println("❌ Database error during patient search: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return patients;
+    }
+
+    /**
+     * Register patient from receptionist dashboard
+     */
+    public Patient registerPatientFromReceptionist(String fullName, String email, String password,
+                                                    String phone, String dateOfBirth, String gender) {
+        String userQuery = "INSERT INTO users (full_name, email, password_hash, role, status) VALUES (?, ?, ?, 'patient', 'active')";
+        String patientQuery = "INSERT INTO patients (user_id, patient_code, phone, date_of_birth, gender, account_status) VALUES (?, ?, ?, ?, ?, 'active')";
+        String lastIdQuery = "SELECT last_insert_rowid() as id";
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            System.out.println("\n📝 RECEPTIONIST: Registering new patient: " + email);
+
+            // Hash password using BCrypt
+            String hashedPassword = passwordEncoder.encode(password);
+            System.out.println("✅ Password hashed successfully");
+
+            // Generate unique patient code
+            String patientCode = com.NexusHelth.util.IdGeneratorUtil.generatePatientCode();
+            System.out.println("✅ Patient code generated: " + patientCode);
+
+            // Insert user
+            try (PreparedStatement pstmt = conn.prepareStatement(userQuery)) {
+                pstmt.setString(1, fullName);
+                pstmt.setString(2, email);
+                pstmt.setString(3, hashedPassword);
+                pstmt.executeUpdate();
+                System.out.println("✅ User inserted into database");
+
+                // Get the last inserted user ID
+                try (PreparedStatement idStmt = conn.prepareStatement(lastIdQuery);
+                     ResultSet rs = idStmt.executeQuery()) {
+                    if (rs.next()) {
+                        int userId = rs.getInt("id");
+                        System.out.println("✅ User ID: " + userId);
+
+                        // Insert patient record
+                        try (PreparedStatement pstmt2 = conn.prepareStatement(patientQuery)) {
+                            pstmt2.setInt(1, userId);
+                            pstmt2.setString(2, patientCode);
+                            pstmt2.setString(3, phone);
+                            pstmt2.setString(4, dateOfBirth);
+                            pstmt2.setString(5, gender);
+                            pstmt2.executeUpdate();
+                            System.out.println("✅ Patient record inserted successfully");
+
+                            // Return the created patient
+                            Patient patient = getPatientByUserId(userId);
+                            System.out.println("✅ Patient registration complete for: " + email + "\n");
+                            return patient;
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Database error during registration: " + e.getMessage());
+            if (e.getMessage().contains("UNIQUE")) {
+                System.out.println("❌ Email already exists in the system");
+            }
+            e.printStackTrace();
+        }
+        System.out.println("❌ Patient registration failed for: " + email + "\n");
+        return null;
+    }
 }

@@ -12,7 +12,7 @@ public class SettingsService {
     private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public boolean updateProfile(int userId, String fullName, String phone, String profilePicture) {
-        String updateUser = "UPDATE users SET full_name = ?"
+        String updateUser = "UPDATE users SET full_name = ?, phone = ?"
                 + (profilePicture != null && !profilePicture.isEmpty() ? ", profile_picture = ?" : "")
                 + " WHERE id = ?";
         String updatePatient = "UPDATE patients SET phone = ? WHERE user_id = ?";
@@ -27,6 +27,14 @@ public class SettingsService {
                 // Ignored, column likely already exists
             }
 
+            // Ensure the phone column exists in users table without crashing if it
+            // already does
+            try (java.sql.Statement stmt = conn.createStatement()) {
+                stmt.execute("ALTER TABLE users ADD COLUMN phone TEXT");
+            } catch (Exception ignored) {
+                // Ignored, column likely already exists
+            }
+
             conn.setAutoCommit(false); // Transaction block
 
             try (PreparedStatement uStmt = conn.prepareStatement(updateUser);
@@ -34,7 +42,8 @@ public class SettingsService {
                     PreparedStatement dStmt = conn.prepareStatement(updateDoctor)) {
 
                 uStmt.setString(1, fullName);
-                int paramIndex = 2;
+                uStmt.setString(2, phone);
+                int paramIndex = 3;
                 if (profilePicture != null && !profilePicture.isEmpty()) {
                     uStmt.setString(paramIndex++, profilePicture);
                 }

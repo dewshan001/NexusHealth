@@ -295,4 +295,127 @@ public class UserService {
             return false;
         }
     }
+
+    /**
+     * Get user by ID (with all details)
+     */
+    public User getUserById(int userId) {
+        String query = "SELECT id, full_name, email, role, status, profile_picture FROM users WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    User user = new User();
+                    user.setId(rs.getInt("id"));
+                    user.setFullName(rs.getString("full_name"));
+                    user.setEmail(rs.getString("email"));
+                    user.setRole(rs.getString("role"));
+                    user.setStatus(rs.getString("status"));
+                    return user;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error fetching user: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Update user profile (name and other basic info)
+     */
+    public boolean updateUserProfile(int userId, String fullName, String phone) {
+        System.out.println("\n👤 USER SERVICE: Updating profile for user ID: " + userId);
+
+        String query = "UPDATE users SET full_name = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, fullName);
+            pstmt.setInt(2, userId);
+
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("✅ Profile updated successfully");
+                return true;
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error updating profile: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Change user password (verify old password first)
+     */
+    public boolean changePassword(int userId, String currentPassword, String newPassword) {
+        System.out.println("\n🔐 USER SERVICE: Changing password for user ID: " + userId);
+
+        // First, fetch the current password hash
+        String fetchQuery = "SELECT password_hash FROM users WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement fetchPstmt = conn.prepareStatement(fetchQuery)) {
+
+            fetchPstmt.setInt(1, userId);
+            try (ResultSet rs = fetchPstmt.executeQuery()) {
+                if (rs.next()) {
+                    String storedHash = rs.getString("password_hash");
+
+                    // Verify the current password
+                    if (!passwordEncoder.matches(currentPassword, storedHash)) {
+                        System.out.println("❌ Current password is incorrect");
+                        return false;
+                    }
+
+                    // Hash the new password
+                    String hashedNewPassword = passwordEncoder.encode(newPassword);
+
+                    // Update password
+                    String updateQuery = "UPDATE users SET password_hash = ? WHERE id = ?";
+                    try (PreparedStatement updatePstmt = conn.prepareStatement(updateQuery)) {
+                        updatePstmt.setString(1, hashedNewPassword);
+                        updatePstmt.setInt(2, userId);
+
+                        int affectedRows = updatePstmt.executeUpdate();
+                        if (affectedRows > 0) {
+                            System.out.println("✅ Password changed successfully");
+                            return true;
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error changing password: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Update profile picture path
+     */
+    public boolean updateProfilePicture(int userId, String profilePicturePath) {
+        System.out.println("\n📸 USER SERVICE: Updating profile picture for user ID: " + userId);
+
+        String query = "UPDATE users SET profile_picture = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, profilePicturePath);
+            pstmt.setInt(2, userId);
+
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("✅ Profile picture updated successfully");
+                return true;
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error updating profile picture: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

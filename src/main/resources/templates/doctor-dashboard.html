@@ -996,12 +996,13 @@
                         <div>
                             <label class="rx-label" style="font-size:0.85rem;">Medication Name</label>
                             <input type="text" id="med-name" class="rx-input" placeholder="e.g. Amoxicillin"
-                                onfocus="this.style.borderColor='var(--primary-medical-blue)'"
-                                onblur="this.style.borderColor='var(--border-color)'">
+                                list="medicine-list" onfocus="this.style.borderColor='var(--primary-medical-blue)'"
+                                onblur="this.style.borderColor='var(--border-color)'" onchange="autoFillDosage()">
+                            <datalist id="medicine-list"></datalist>
                         </div>
                         <div>
-                            <label class="rx-label" style="font-size:0.85rem;">Dosage</label>
-                            <input type="text" id="med-dose" class="rx-input" placeholder="e.g. 500mg"
+                            <label class="rx-label" style="font-size:0.85rem;">Quantity</label>
+                            <input type="text" id="med-dose" class="rx-input" placeholder="e.g. 2"
                                 onfocus="this.style.borderColor='var(--primary-medical-blue)'"
                                 onblur="this.style.borderColor='var(--border-color)'">
                         </div>
@@ -1028,7 +1029,7 @@
                         <thead>
                             <tr>
                                 <th>Medication</th>
-                                <th>Dosage</th>
+                                <th>Quantity</th>
                                 <th>Instructions</th>
                                 <th>Action</th>
                             </tr>
@@ -1467,6 +1468,32 @@
 
         // 3. Pharmacy Integration Logic
         let medications = [];
+        let fetchedMedicinesList = [];
+
+        async function fetchMedicines() {
+            try {
+                const response = await fetch('/api/doctor/medicines');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    fetchedMedicinesList = result.data;
+                    const dataList = document.getElementById('medicine-list');
+                    dataList.innerHTML = '';
+                    result.data.forEach(med => {
+                        const option = document.createElement('option');
+                        option.value = med.name;
+                        dataList.appendChild(option);
+                    });
+                }
+            } catch (err) {
+                console.error("Error fetching medicines:", err);
+            }
+        }
+
+        // Optional UX: if user selects a known medicine, we can try to guess dosage if we had a standard one.
+        // For now, we'll just allow free text or dropdown selection as requested.
+        function autoFillDosage() {
+            // Future enhancement: could autofill dosage/freq based on standard med config if available
+        }
 
         function addMedication() {
             const name = document.getElementById('med-name').value;
@@ -1525,16 +1552,52 @@
                 showToast("Cannot transmit empty prescription. Add a medicine.", true);
                 return;
             }
+            if (!currentConsPatientCode) {
+                showToast("No patient code found. Please start a consultation first.", true);
+                return;
+            }
 
-            showToast("Digital Prescription successfully transmitted to Pharmacy!");
+            const payload = {
+                patientName: patient,
+                patientCode: currentConsPatientCode,
+                medications: medications.map(m => ({
+                    name: m.name,
+                    dose: m.dose || '',
+                    freq: m.freq || ''
+                }))
+            };
 
-            // reset form after slight delay
-            setTimeout(() => {
-                medications = [];
-                renderRxTable();
-                document.getElementById('rx-patient-name').value = '';
-                switchTab('schedule'); // return to schedule
-            }, 2500);
+            // Disable button during request
+            const btn = event ? event.target : null;
+            if (btn) { btn.disabled = true; btn.innerText = 'Sending...'; }
+
+            fetch('/api/doctor/prescriptions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast("Digital Prescription successfully transmitted to Pharmacy!");
+                        // reset form after slight delay
+                        setTimeout(() => {
+                            medications = [];
+                            renderRxTable();
+                            document.getElementById('rx-patient-name').value = '';
+                            switchTab('schedule');
+                        }, 1500);
+                    } else {
+                        showToast(data.message || "Failed to save prescription.", true);
+                    }
+                })
+                .catch(err => {
+                    console.error("Prescription save error:", err);
+                    showToast("Network error. Could not save prescription.", true);
+                })
+                .finally(() => {
+                    if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="margin-right: 8px;">send</span> Transmit to Pharmacy'; }
+                });
         }
 
         // Options Image Upload
@@ -1555,6 +1618,7 @@
         // Initialize Real-time Schedule Fetch
         document.addEventListener('DOMContentLoaded', () => {
             fetchTodaySchedule();
+            fetchMedicines();
         });
 
         async function fetchTodaySchedule() {

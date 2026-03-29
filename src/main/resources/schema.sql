@@ -135,15 +135,23 @@ CREATE TABLE IF NOT EXISTS prescription_items (
 -- 9. INVOICES
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS invoices (
-    id             INTEGER PRIMARY KEY AUTOINCREMENT,
-    patient_id     INTEGER NOT NULL REFERENCES patients(id),
-    appointment_id INTEGER REFERENCES appointments(id),
-    total_amount   REAL    NOT NULL DEFAULT 0.0,
-    discount       REAL             DEFAULT 0.0,
-    amount_paid    REAL             DEFAULT 0.0,
-    payment_status TEXT    NOT NULL DEFAULT 'unpaid'
-                   CHECK(payment_status IN ('unpaid','partial','paid','waived')),
-    created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+    id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+    invoice_number         TEXT    UNIQUE NOT NULL,
+    patient_id             INTEGER NOT NULL REFERENCES patients(id),
+    doctor_id              INTEGER REFERENCES doctors(id),
+    patient_name           TEXT    NOT NULL,
+    consultation_type      TEXT    NOT NULL,
+    consultation_amount    REAL    NOT NULL DEFAULT 0.0,
+    pharmacy_addons        REAL    NOT NULL DEFAULT 0.0,
+    subtotal               REAL    NOT NULL DEFAULT 0.0,
+    discount_type          TEXT    DEFAULT 'none',
+    discount_amount        REAL    NOT NULL DEFAULT 0.0,
+    total_amount           REAL    NOT NULL DEFAULT 0.0,
+    status                 TEXT    NOT NULL DEFAULT 'unpaid'
+                           CHECK(status IN ('unpaid','paid')),
+    payment_method         TEXT,
+    created_at             DATETIME DEFAULT CURRENT_TIMESTAMP,
+    paid_at                DATETIME
 );
 
 -- ─────────────────────────────────────────────
