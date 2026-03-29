@@ -22,7 +22,6 @@ public class PharmacistAlertService {
     private static final int EXPIRY_WARNING_DAYS = 30;
 
     public PharmacistAlertService() {
-        ensureAlertsTableExists();
     }
 
     public List<PharmacistAlert> getActiveAlerts() {
@@ -100,7 +99,8 @@ public class PharmacistAlertService {
     }
 
     private void upsertDesiredAlerts(Connection conn, Map<String, AlertPayload> desiredAlerts) throws SQLException {
-        String upsert = "INSERT INTO pharmacist_alerts (medicine_id, medicine_name, alert_type, severity, message, is_active, resolved_at, updated_at) " +
+        String upsert = "INSERT INTO pharmacist_alerts (medicine_id, medicine_name, alert_type, severity, message, is_active, resolved_at, updated_at) "
+                +
                 "VALUES (?, ?, ?, ?, ?, 1, NULL, CURRENT_TIMESTAMP) " +
                 "ON CONFLICT(medicine_id, alert_type) DO UPDATE SET " +
                 "medicine_name = excluded.medicine_name, " +
@@ -257,4 +257,3 @@ public class PharmacistAlertService {
         }
     }
 }
-

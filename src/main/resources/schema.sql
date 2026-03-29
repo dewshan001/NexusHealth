@@ -222,6 +222,15 @@ CREATE INDEX IF NOT EXISTS idx_ph_alert_active     ON pharmacist_alerts(is_activ
 -- Note: SQLite trigger created via application layer to avoid parsing issues
 
 -- ─────────────────────────────────────────────
+-- 14. SPECIALIZATIONS
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS specializations (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    title       TEXT    NOT NULL UNIQUE,
+    description TEXT
+);
+
+-- ─────────────────────────────────────────────
 -- SEED DATA
 -- ─────────────────────────────────────────────
 INSERT OR IGNORE INTO clinic_settings (id, clinic_name, address, phone, email)

@@ -16,7 +16,6 @@ import java.util.List;
 public class PharmacistInventoryService {
 
     public PharmacistInventoryService() {
-        ensureBatchNumberColumnExists();
     }
 
     public List<Medicine> getAllMedicines() {
@@ -77,7 +76,8 @@ public class PharmacistInventoryService {
         }
     }
 
-    public boolean updateMedicine(int id, String name, String batchNumber, String category, double unitPrice, int stockLevel,
+    public boolean updateMedicine(int id, String name, String batchNumber, String category, double unitPrice,
+            int stockLevel,
             String expiryDate) {
         String normalizedExpiry = normalizeExpiry(expiryDate);
         String status = determineStatus(stockLevel, normalizedExpiry);
@@ -226,4 +226,3 @@ public class PharmacistInventoryService {
         }
     }
 }
-
