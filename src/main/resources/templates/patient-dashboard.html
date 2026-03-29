@@ -1636,8 +1636,7 @@
                     if (data.success && data.data && data.data.length > 0) {
                         grid.innerHTML = '';
                         data.data.forEach(doc => {
-                            // Using unsplash images
-                            const imgUrl = `https://images.unsplash.com/photo-155983${9734 + doc.id}-2b71ea197ec2?auto=format&fit=crop&w=150&q=80`;
+                            const imgUrl = doc.profilePicture ? doc.profilePicture : `https://images.unsplash.com/photo-155983${9734 + doc.id}-2b71ea197ec2?auto=format&fit=crop&w=150&q=80`;
                             grid.innerHTML += `
                                 <div class="doc-select-card" onclick="selectDoctor(this, ${doc.id})">
                                     <img src="${imgUrl}" alt="Dr">

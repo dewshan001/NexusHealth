@@ -9,6 +9,7 @@ public class Doctor implements Serializable {
     private int userId;
     private String fullName;
     private String specialization;
+    private String profilePicture;
 
     public Doctor() {
     }
@@ -18,6 +19,14 @@ public class Doctor implements Serializable {
         this.userId = userId;
         this.fullName = fullName;
         this.specialization = specialization;
+    }
+
+    public Doctor(int id, int userId, String fullName, String specialization, String profilePicture) {
+        this.id = id;
+        this.userId = userId;
+        this.fullName = fullName;
+        this.specialization = specialization;
+        this.profilePicture = profilePicture;
     }
 
     public int getId() {
@@ -50,5 +59,13 @@ public class Doctor implements Serializable {
 
     public void setSpecialization(String specialization) {
         this.specialization = specialization;
+    }
+
+    public String getProfilePicture() {
+        return profilePicture;
+    }
+
+    public void setProfilePicture(String profilePicture) {
+        this.profilePicture = profilePicture;
     }
 }

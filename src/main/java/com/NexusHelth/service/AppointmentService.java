@@ -16,7 +16,7 @@ public class AppointmentService {
 
     public List<Doctor> getAvailableDoctors() {
         List<Doctor> doctors = new ArrayList<>();
-        String query = "SELECT d.id, d.user_id, u.full_name, d.specialization " +
+        String query = "SELECT d.id, d.user_id, u.full_name, d.specialization, u.profile_picture " +
                 "FROM doctors d " +
                 "JOIN users u ON d.user_id = u.id " +
                 "WHERE u.status = 'active'";
@@ -30,7 +30,8 @@ public class AppointmentService {
                         rs.getInt("id"),
                         rs.getInt("user_id"),
                         rs.getString("full_name"),
-                        rs.getString("specialization")));
+                        rs.getString("specialization"),
+                        rs.getString("profile_picture")));
             }
         } catch (SQLException e) {
             System.err.println("Error fetching available doctors: " + e.getMessage());
@@ -112,7 +113,7 @@ public class AppointmentService {
     }
 
     public Doctor getDoctorByUserId(int userId) {
-        String query = "SELECT d.id, d.user_id, u.full_name, d.specialization " +
+        String query = "SELECT d.id, d.user_id, u.full_name, d.specialization, u.profile_picture " +
                 "FROM doctors d JOIN users u ON d.user_id = u.id " +
                 "WHERE d.user_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -124,7 +125,8 @@ public class AppointmentService {
                             rs.getInt("id"),
                             rs.getInt("user_id"),
                             rs.getString("full_name"),
-                            rs.getString("specialization"));
+                            rs.getString("specialization"),
+                            rs.getString("profile_picture"));
                 }
             }
         } catch (SQLException e) {
