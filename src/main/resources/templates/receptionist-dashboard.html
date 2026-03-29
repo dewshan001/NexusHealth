@@ -525,8 +525,16 @@
             <div id="tab-patients" class="tab-content active">
                 <div class="content-header">
                     <h2 class="content-title">Patient Management Core</h2>
-                    <button class="btn btn-primary" onclick="openModal('registerPatientModal')">+ Register New
-                        Patient</button>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end;">
+                        <div
+                            style="display:flex; align-items:center; gap:0.5rem; padding: 0.45rem 0.75rem; background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); border-radius: var(--border-radius-md);">
+                            <span style="font-size: 0.85rem; color: var(--text-secondary);">Channeling Fee (Rs.)</span>
+                            <span id="appointmentFeeDisplay" style="font-weight: 700; font-family: monospace;">—</span>
+                        </div>
+                        <button class="btn btn-outline" onclick="openEditAppointmentFee()">Edit Fee</button>
+                        <button class="btn btn-primary" onclick="openModal('registerPatientModal')">+ Register New
+                            Patient</button>
+                    </div>
                 </div>
 
                 <div class="recep-card">
@@ -796,6 +804,35 @@
                 <button class="btn btn-primary"
                     onclick="registerNewPatient()">Complete
                     Registration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Appointment/Channeling Fee Modal -->
+    <div class="modal-overlay" id="editAppointmentFeeModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
+        <div class="modal-content"
+            style="background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 520px; width: 92%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <h3 style="font-size: 1.3rem;">Edit Channeling Fee</h3>
+                <span class="material-symbols-outlined" style="cursor: pointer; color: var(--text-secondary);"
+                    onclick="closeModal('editAppointmentFeeModal')">close</span>
+            </div>
+
+            <p style="color: var(--text-secondary); margin-bottom: 1.25rem; font-size: 0.95rem;">
+                This updates the global appointment/channeling fee used for new appointment invoices.
+            </p>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label">Channeling Fee (Rs.)</label>
+                <input type="number" class="form-input" id="appointmentFeeEditInput" min="1" step="0.01"
+                    placeholder="e.g., 500.00">
+                <div style="margin-top: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Allowed range: 1.00 – 1,000,000.00</div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button class="btn btn-outline" onclick="closeModal('editAppointmentFeeModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveAppointmentFee()">Save Fee</button>
             </div>
         </div>
     </div>
@@ -1211,10 +1248,85 @@
         (async function initializeDashboard() {
             console.log("🚀 Initializing receptionist dashboard...");
             loadReceptionistProfile();
+            loadAppointmentFee();
             loadPatients();
             loadAppointmentsForToday();
             loadBills();
         })();
+
+        // ==================== CLINIC SETTINGS (FEE) ====================
+        async function loadAppointmentFee() {
+            try {
+                const data = await safeFetch('/api/receptionist/settings/appointment-fee', {
+                    credentials: 'include'
+                });
+                if (!data) return;
+
+                if (data.success && data.data && typeof data.data.fee !== 'undefined') {
+                    const feeNum = Number(data.data.fee);
+                    const display = document.getElementById('appointmentFeeDisplay');
+                    if (display) display.textContent = isFinite(feeNum) ? feeNum.toFixed(2) : '—';
+
+                    const input = document.getElementById('appointmentFeeEditInput');
+                    if (input && isFinite(feeNum)) input.value = feeNum.toFixed(2);
+                } else {
+                    showToast('Failed to load channeling fee: ' + (data.message || 'Unknown error'), true);
+                }
+            } catch (error) {
+                console.error('❌ Error loading appointment fee:', error);
+                showToast('Error loading channeling fee', true);
+            }
+        }
+
+        function openEditAppointmentFee() {
+            openModal('editAppointmentFeeModal');
+            loadAppointmentFee();
+            setTimeout(() => {
+                const input = document.getElementById('appointmentFeeEditInput');
+                if (input) input.focus();
+            }, 50);
+        }
+
+        async function saveAppointmentFee() {
+            const input = document.getElementById('appointmentFeeEditInput');
+            if (!input) return;
+
+            const fee = parseFloat(input.value);
+            if (!isFinite(fee) || fee < 1 || fee > 1000000) {
+                showToast('Please enter a valid fee between 1 and 1,000,000', true);
+                return;
+            }
+
+            const params = new URLSearchParams({ fee: fee.toString() });
+
+            try {
+                const response = await fetch('/api/receptionist/settings/appointment-fee', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: params.toString(),
+                    credentials: 'include'
+                });
+
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    closeModal('editAppointmentFeeModal');
+                    await loadAppointmentFee();
+                    showToast('Channeling fee updated successfully');
+                } else {
+                    showToast(data.message || 'Failed to update channeling fee', true);
+                }
+            } catch (error) {
+                console.error('❌ Error updating appointment fee:', error);
+                showToast('Error updating channeling fee', true);
+            }
+        }
 
         // ==================== PATIENT FUNCTIONS ====================
         function loadPatients(searchTerm = null) {
@@ -1792,7 +1904,7 @@
         }
 
         function openPaymentModal(invoiceId, patientName, invoiceNumber, amount) {
-            document.getElementById('payPatientName').id = patientName;
+            document.getElementById('payPatientName').innerText = patientName;
             document.getElementById('payInvoiceId').innerText = invoiceNumber;
             document.getElementById('payAmount').innerText = '$' + amount.toFixed(2);
             document.getElementById('recordPaymentModal').dataset.invoiceId = invoiceId;

@@ -4,8 +4,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import java.sql.Connection;
 import java.sql.Statement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+
+import com.NexusHelth.service.AppointmentService;
 
 @Component
 public class DatabaseInitializer implements CommandLineRunner {
@@ -42,12 +46,88 @@ public class DatabaseInitializer implements CommandLineRunner {
             }
             
             System.out.println("✅ Database schema initialized successfully");
+
+            // Ensure new settings columns exist for existing databases
+            ensureClinicSettingsFeeColumn(conn);
+            ensureDefaultAppointmentFee(conn);
+
+            // Hydrate runtime fee cache from DB
+            double persistedFee = loadAppointmentFee(conn);
+            if (persistedFee > 0) {
+                AppointmentService.setAppointmentFee(persistedFee);
+                System.out.println("✅ Appointment fee loaded from DB: " + persistedFee);
+            }
             
             // Initialize default admin account
             AdminInitializer.initializeAdminAccount();
+
+            // Backfill missing transactions for already-paid invoices
+            backfillMissingTransactions(conn);
         } catch (Exception e) {
             System.err.println("❌ Error initializing database: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private void ensureClinicSettingsFeeColumn(Connection conn) {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("ALTER TABLE clinic_settings ADD COLUMN appointment_fee REAL NOT NULL DEFAULT 500.0");
+            System.out.println("✅ Migrated clinic_settings: added appointment_fee column");
+        } catch (Exception e) {
+            String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
+            if (msg.contains("duplicate column") || msg.contains("already exists")) {
+                // Column is already present; ignore
+                return;
+            }
+            System.err.println("⚠️  clinic_settings migration warning: " + e.getMessage());
+        }
+    }
+
+    private void ensureDefaultAppointmentFee(Connection conn) {
+        try (Statement stmt = conn.createStatement()) {
+            // Ensure row exists
+            stmt.executeUpdate("INSERT OR IGNORE INTO clinic_settings (id, appointment_fee) VALUES (1, 500.0)");
+            // Ensure value is valid
+            stmt.executeUpdate("UPDATE clinic_settings SET appointment_fee = 500.0 WHERE id = 1 AND (appointment_fee IS NULL OR appointment_fee <= 0)");
+        } catch (Exception e) {
+            System.err.println("⚠️  Could not ensure default appointment fee: " + e.getMessage());
+        }
+    }
+
+    private double loadAppointmentFee(Connection conn) {
+        String sql = "SELECT appointment_fee FROM clinic_settings WHERE id = 1";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getDouble(1);
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️  Could not load appointment fee: " + e.getMessage());
+        }
+        return AppointmentService.getAppointmentFee();
+    }
+
+    private void backfillMissingTransactions(Connection conn) {
+        System.out.println("🔄 Backfilling missing transactions for paid invoices...");
+
+        String backfillSql = "INSERT INTO transactions (invoice_id, transaction_code, type, department, amount, status, transacted_at) " +
+                "SELECT i.id, " +
+                "       'TXN-' || i.invoice_number, " +
+                "       COALESCE(i.consultation_type, 'Payment'), " +
+                "       COALESCE(d.specialization, 'N/A'), " +
+                "       COALESCE(i.total_amount, 0.0), " +
+                "       'settled', " +
+                "       COALESCE(i.paid_at, i.created_at, CURRENT_TIMESTAMP) " +
+                "FROM invoices i " +
+                "LEFT JOIN doctors d ON i.doctor_id = d.id " +
+                "WHERE i.status = 'paid' " +
+                "  AND NOT EXISTS (SELECT 1 FROM transactions t WHERE t.invoice_id = i.id)";
+
+        try (Statement stmt = conn.createStatement()) {
+            int inserted = stmt.executeUpdate(backfillSql);
+            System.out.println("✅ Backfill complete. Inserted transactions: " + inserted);
+        } catch (Exception e) {
+            System.err.println("⚠️ Backfill failed: " + e.getMessage());
         }
     }
 }

@@ -179,6 +179,7 @@ CREATE TABLE IF NOT EXISTS clinic_settings (
     address               TEXT,
     phone                 TEXT,
     email                 TEXT,
+    appointment_fee       REAL NOT NULL DEFAULT 500.0,
     operating_hours_start TEXT DEFAULT '09:00',
     operating_hours_end   TEXT DEFAULT '17:00'
 );

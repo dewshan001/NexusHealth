@@ -463,30 +463,87 @@ public class AppointmentService {
 
         // Generate unique invoice number
         String invoiceNumber = "INV-APT-" + System.currentTimeMillis();
-        
-        String query = "INSERT INTO invoices (invoice_number, patient_id, doctor_id, patient_name, consultation_type, " +
+
+        String invoiceInsertSql = "INSERT INTO invoices (invoice_number, patient_id, doctor_id, patient_name, consultation_type, " +
                 "consultation_amount, subtotal, total_amount, status, payment_method, paid_at) " +
                 "VALUES (?, ?, ?, ?, 'Appointment', ?, ?, ?, 'paid', 'card', CURRENT_TIMESTAMP)";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
 
-            pstmt.setString(1, invoiceNumber);
-            pstmt.setInt(2, patientId);
-            pstmt.setInt(3, doctorId);
-            pstmt.setString(4, patientName);
-            pstmt.setDouble(5, appointmentFee);  // consultation_amount
-            pstmt.setDouble(6, appointmentFee);  // subtotal
-            pstmt.setDouble(7, appointmentFee);  // total_amount
+            int invoiceId;
+            try (PreparedStatement pstmt = conn.prepareStatement(invoiceInsertSql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                pstmt.setString(1, invoiceNumber);
+                pstmt.setInt(2, patientId);
+                pstmt.setInt(3, doctorId);
+                pstmt.setString(4, patientName);
+                pstmt.setDouble(5, appointmentFee);  // consultation_amount
+                pstmt.setDouble(6, appointmentFee);  // subtotal
+                pstmt.setDouble(7, appointmentFee);  // total_amount
 
-            int affectedRows = pstmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("✅ Invoice created successfully with number: " + invoiceNumber);
-                return true;
+                int affectedRows = pstmt.executeUpdate();
+                if (affectedRows <= 0) {
+                    conn.rollback();
+                    return false;
+                }
+
+                try (ResultSet keys = pstmt.getGeneratedKeys()) {
+                    if (!keys.next()) {
+                        conn.rollback();
+                        return false;
+                    }
+                    invoiceId = keys.getInt(1);
+                }
             }
+
+            String specialization = null;
+            try (PreparedStatement pstmt = conn.prepareStatement("SELECT specialization FROM doctors WHERE id = ?")) {
+                pstmt.setInt(1, doctorId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        specialization = rs.getString("specialization");
+                    }
+                }
+            }
+
+            String department = (specialization == null || specialization.trim().isEmpty()) ? "Appointments" : specialization;
+            String transactionCode = "TXN-" + invoiceNumber;
+
+            String txnInsertSql = "INSERT INTO transactions (invoice_id, transaction_code, type, department, amount, status, transacted_at) " +
+                    "VALUES (?, ?, 'Appointment', ?, ?, 'settled', CURRENT_TIMESTAMP)";
+            try (PreparedStatement pstmt = conn.prepareStatement(txnInsertSql)) {
+                pstmt.setInt(1, invoiceId);
+                pstmt.setString(2, transactionCode);
+                pstmt.setString(3, department);
+                pstmt.setDouble(4, appointmentFee);
+                pstmt.executeUpdate();
+            }
+
+            conn.commit();
+            System.out.println("✅ Invoice created successfully with number: " + invoiceNumber);
+            System.out.println("✅ Transaction created successfully: " + transactionCode);
+            return true;
         } catch (SQLException e) {
             System.err.println("Error creating appointment invoice: " + e.getMessage());
             e.printStackTrace();
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackEx) {
+                    System.err.println("Error rolling back appointment invoice transaction: " + rollbackEx.getMessage());
+                }
+            }
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException closeEx) {
+                    System.err.println("Error closing connection: " + closeEx.getMessage());
+                }
+            }
         }
         return false;
     }

@@ -6,10 +6,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.UUID;
 
 public class BillingService {
 
@@ -93,30 +97,206 @@ public class BillingService {
     }
 
     /**
+     * Get all bills for receptionist billing table.
+     * Returns objects shaped for the frontend in receptionist-dashboard.html.
+     */
+    public List<Map<String, Object>> getReceptionistBills(String statusFilter) {
+        List<Map<String, Object>> bills = new ArrayList<>();
+
+        String query = "SELECT id, invoice_number, patient_name, consultation_type, " +
+                "consultation_amount, pharmacy_addons, subtotal, discount_type, discount_amount, total_amount, " +
+                "status, payment_method, created_at, paid_at " +
+                "FROM invoices";
+
+        boolean hasStatusFilter = statusFilter != null && !statusFilter.isBlank();
+        if (hasStatusFilter) {
+            query += " WHERE status = ?";
+        }
+        query += " ORDER BY created_at DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            if (hasStatusFilter) {
+                pstmt.setString(1, statusFilter.trim().toLowerCase());
+            }
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> bill = new HashMap<>();
+                    bill.put("id", rs.getInt("id"));
+                    String invoiceNumber = rs.getString("invoice_number");
+                    bill.put("invoiceNumber", invoiceNumber != null ? invoiceNumber : "—");
+
+                    String patientName = rs.getString("patient_name");
+                    bill.put("patientName", patientName != null ? patientName : "—");
+
+                    String consultationType = rs.getString("consultation_type");
+                    bill.put("consultationType", consultationType != null ? consultationType : "Payment");
+                    bill.put("consultationAmount", rs.getDouble("consultation_amount"));
+                    bill.put("pharmacyAddons", rs.getDouble("pharmacy_addons"));
+                    bill.put("subtotal", rs.getDouble("subtotal"));
+                    String discountType = rs.getString("discount_type");
+                    bill.put("discountType", discountType != null ? discountType : "none");
+                    bill.put("discountAmount", rs.getDouble("discount_amount"));
+                    bill.put("totalAmount", rs.getDouble("total_amount"));
+                    String status = rs.getString("status");
+                    bill.put("status", status != null ? status : "unpaid");
+
+                    String paymentMethod = rs.getString("payment_method");
+                    bill.put("paymentMethod", paymentMethod);
+
+                    Timestamp createdAt = rs.getTimestamp("created_at");
+                    if (createdAt != null) {
+                        bill.put("createdAt", createdAt.toLocalDateTime().toString());
+                    }
+                    Timestamp paidAt = rs.getTimestamp("paid_at");
+                    if (paidAt != null) {
+                        bill.put("paidAt", paidAt.toLocalDateTime().toString());
+                    }
+
+                    bills.add(bill);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error fetching receptionist bills: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return bills;
+    }
+
+    /**
      * Record payment for an invoice
      */
     public boolean recordPayment(int invoiceId, String paymentMethod, double paidAmount) {
         System.out.println("\n💳 BILLING SERVICE: Recording payment for invoice ID: " + invoiceId);
 
-        String query = "UPDATE invoices SET payment_status = 'paid', amount_paid = amount_paid + ? WHERE id = ?";
+        if (paymentMethod == null || paymentMethod.trim().isEmpty()) {
+            System.out.println("❌ Payment method is required");
+            return false;
+        }
+        if (paidAmount <= 0) {
+            System.out.println("❌ Paid amount must be greater than 0");
+            return false;
+        }
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
 
-            pstmt.setDouble(1, paidAmount);
-            pstmt.setInt(2, invoiceId);
+            String invoiceNumber = null;
+            String consultationType = null;
+            String status = null;
+            Double totalAmount = null;
+            Integer doctorId = null;
 
-            int affectedRows = pstmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("✅ Payment recorded successfully");
-                System.out.println("   Amount: $" + String.format("%.2f", paidAmount));
-                System.out.println("   Method: " + paymentMethod);
-                return true;
+            String invoiceQuery = "SELECT invoice_number, consultation_type, total_amount, status, doctor_id FROM invoices WHERE id = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(invoiceQuery)) {
+                pstmt.setInt(1, invoiceId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (!rs.next()) {
+                        System.out.println("❌ Invoice not found");
+                        conn.rollback();
+                        return false;
+                    }
+                    invoiceNumber = rs.getString("invoice_number");
+                    consultationType = rs.getString("consultation_type");
+                    totalAmount = rs.getDouble("total_amount");
+                    status = rs.getString("status");
+                    int dId = rs.getInt("doctor_id");
+                    doctorId = rs.wasNull() ? null : dId;
+                }
             }
+
+            if (status != null && status.equalsIgnoreCase("paid")) {
+                System.out.println("ℹ️ Invoice is already paid");
+                conn.rollback();
+                return false;
+            }
+            if (totalAmount == null || totalAmount <= 0) {
+                System.out.println("❌ Invalid invoice total amount");
+                conn.rollback();
+                return false;
+            }
+
+            // This system tracks payments as paid/unpaid (no partial payments in schema).
+            // Enforce full payment to prevent inconsistent reporting.
+            if (Math.abs(paidAmount - totalAmount) > 0.01) {
+                System.out.println("❌ Paid amount must equal invoice total amount (expected: " + String.format("%.2f", totalAmount) + ")");
+                conn.rollback();
+                return false;
+            }
+
+            String specialization = null;
+            if (doctorId != null) {
+                try (PreparedStatement pstmt = conn.prepareStatement("SELECT specialization FROM doctors WHERE id = ?")) {
+                    pstmt.setInt(1, doctorId);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) {
+                            specialization = rs.getString("specialization");
+                        }
+                    }
+                }
+            }
+
+            String department = (specialization == null || specialization.trim().isEmpty()) ? "Reception" : specialization;
+            String type = (consultationType == null || consultationType.trim().isEmpty()) ? "Payment" : consultationType;
+            String transactionCode = "TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+            String updateInvoiceSql = "UPDATE invoices SET status = 'paid', payment_method = ?, paid_at = CURRENT_TIMESTAMP WHERE id = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(updateInvoiceSql)) {
+                pstmt.setString(1, paymentMethod);
+                pstmt.setInt(2, invoiceId);
+                int updated = pstmt.executeUpdate();
+                if (updated <= 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            String insertTxnSql = "INSERT INTO transactions (invoice_id, transaction_code, type, department, amount, status, transacted_at) " +
+                    "VALUES (?, ?, ?, ?, ?, 'settled', CURRENT_TIMESTAMP)";
+            try (PreparedStatement pstmt = conn.prepareStatement(insertTxnSql)) {
+                pstmt.setInt(1, invoiceId);
+                pstmt.setString(2, transactionCode);
+                pstmt.setString(3, type);
+                pstmt.setString(4, department);
+                pstmt.setDouble(5, paidAmount);
+                pstmt.executeUpdate();
+            }
+
+            conn.commit();
+            System.out.println("✅ Payment recorded successfully");
+            if (invoiceNumber != null) {
+                System.out.println("   Invoice: " + invoiceNumber);
+            }
+            System.out.println("   Amount: Rs." + String.format("%.2f", paidAmount));
+            System.out.println("   Method: " + paymentMethod);
+            System.out.println("   Transaction: " + transactionCode);
+            return true;
         } catch (SQLException e) {
             System.out.println("❌ Error recording payment: " + e.getMessage());
             e.printStackTrace();
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackEx) {
+                    System.out.println("⚠️ Error rolling back payment transaction: " + rollbackEx.getMessage());
+                }
+            }
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException closeEx) {
+                    System.out.println("⚠️ Error closing connection: " + closeEx.getMessage());
+                }
+            }
         }
+
         return false;
     }
 

@@ -7,6 +7,7 @@ import com.NexusHelth.service.PatientService;
 import com.NexusHelth.service.AppointmentService;
 import com.NexusHelth.service.BillingService;
 import com.NexusHelth.service.UserService;
+import com.NexusHelth.service.ClinicSettingsService;
 import com.NexusHelth.dto.AppointmentRequest;
 import com.NexusHelth.dto.AppointmentResponse;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +34,7 @@ public class ReceptionistController {
     private final AppointmentService appointmentService = new AppointmentService();
     private final BillingService billingService = new BillingService();
     private final UserService userService = new UserService();
+    private final ClinicSettingsService clinicSettingsService = new ClinicSettingsService();
 
     /**
      * Check if user is authenticated as receptionist
@@ -381,7 +383,7 @@ public class ReceptionistController {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
 
-        List<Invoice> bills = billingService.getAllInvoices(status);
+        var bills = billingService.getReceptionistBills(status);
         return new StandardResponse(true, "Bills retrieved successfully", bills);
     }
 
@@ -441,6 +443,54 @@ public class ReceptionistController {
     }
 
     // ===================== RECEPTIONIST PROFILE ENDPOINTS =====================
+
+    // ===================== CLINIC SETTINGS (RECEPTIONIST) =====================
+
+    /**
+     * Get global appointment/channeling fee
+     */
+    @GetMapping("/settings/appointment-fee")
+    public StandardResponse getAppointmentFee(HttpSession session) {
+        System.out.println("\n[💰] GET /api/receptionist/settings/appointment-fee");
+
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
+        if (!isReceptionist(user)) {
+            return new StandardResponse(false, "Unauthorized - receptionist role required", null);
+        }
+
+        double fee = clinicSettingsService.getAppointmentFee();
+        Map<String, Object> data = new HashMap<>();
+        data.put("fee", fee);
+        return new StandardResponse(true, "Appointment fee retrieved", data);
+    }
+
+    /**
+     * Update global appointment/channeling fee
+     */
+    @PostMapping("/settings/appointment-fee")
+    public StandardResponse updateAppointmentFee(
+            @RequestParam("fee") double fee,
+            HttpSession session) {
+        System.out.println("\n[💰] POST /api/receptionist/settings/appointment-fee");
+
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
+        if (!isReceptionist(user)) {
+            return new StandardResponse(false, "Unauthorized - receptionist role required", null);
+        }
+
+        if (!clinicSettingsService.isFeeValid(fee)) {
+            return new StandardResponse(false, "Invalid fee amount", null);
+        }
+
+        boolean success = clinicSettingsService.updateAppointmentFee(fee, user.getId());
+        if (!success) {
+            return new StandardResponse(false, "Failed to update appointment fee", null);
+        }
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("fee", clinicSettingsService.getAppointmentFee());
+        return new StandardResponse(true, "Appointment fee updated", data);
+    }
 
     /**
      * Get receptionist's own profile
