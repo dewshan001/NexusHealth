@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.Map;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -181,6 +182,55 @@ public class AuthController {
             session.invalidate();
         }
         return Map.of("success", true);
+    }
+
+    @GetMapping("/api/auth/me")
+    @ResponseBody
+    public Map<String, Object> apiAuthMe(HttpServletRequest request) {
+        String token = TabAuthStore.extractToken(request);
+        if (token == null || token.isBlank()) {
+            return Map.of(
+                    "success", false,
+                    "message", "Authentication required",
+                    "status", 401
+            );
+        }
+
+        User cachedUser = TabAuthStore.getUser(token);
+        if (cachedUser == null) {
+            return Map.of(
+                    "success", false,
+                    "message", "Authentication required",
+                    "status", 401
+            );
+        }
+
+        // Fetch latest user data (especially profile_picture) from DB.
+        // TabAuthStore stores a snapshot from login time and may be missing fields.
+        User user = userService.getUserById(cachedUser.getId());
+        if (user == null) {
+            user = cachedUser;
+        }
+
+        String dashboardPath = UserService.getDashboardPath(user.getRole());
+        if (dashboardPath == null || dashboardPath.isBlank()) {
+            dashboardPath = "/";
+        }
+
+        Map<String, Object> userPayload = new HashMap<>();
+        userPayload.put("id", user.getId());
+        userPayload.put("fullName", user.getFullName());
+        userPayload.put("email", user.getEmail());
+        userPayload.put("role", user.getRole());
+        userPayload.put("status", user.getStatus());
+        userPayload.put("phone", user.getPhone());
+        userPayload.put("profilePicture", user.getProfilePicture());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("user", userPayload);
+        response.put("dashboardPath", dashboardPath);
+        return response;
     }
     
     @GetMapping("/about")

@@ -19,7 +19,7 @@ public class UserService {
      * Login user with any role (admin, doctor, receptionist, pharmacist, patient)
      */
     public User loginUser(String email, String password) {
-        String query = "SELECT id, full_name, email, password_hash, role, status FROM users WHERE email = ?";
+        String query = "SELECT id, full_name, email, password_hash, role, status, phone, profile_picture FROM users WHERE email = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             
@@ -47,6 +47,8 @@ public class UserService {
                     user.setEmail(rs.getString("email"));
                     user.setRole(role);
                     user.setStatus(status);
+                    user.setPhone(rs.getString("phone"));
+                    user.setProfilePicture(rs.getString("profile_picture"));
                     System.out.println("✅ User object created successfully\n");
                     return user;
                 } else {
