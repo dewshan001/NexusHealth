@@ -23,7 +23,9 @@ Use the provided SQL script to create test users for all roles.
 
 ### Option B: Using Command Line
 ```bash
-cd "c:\Users\Dewshan Gunawardhane\Desktop\New project\Fianel\NexusHealth"
+# Go to the NexusHealth project folder (where clinic.db is located)
+# Example (Windows): cd "C:\path\to\NexusHealth"
+# Example (macOS/Linux): cd "/path/to/NexusHealth"
 sqlite3 clinic.db < add-test-users.sql
 ```
 
