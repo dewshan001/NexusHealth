@@ -1,7 +1,7 @@
 # Appointment Booking Interface - Development Prompt
 
 ## Project Overview
-Build an interactive appointment booking system for NexusHealth - a Clinical Management System. The system should allow patients to search for doctors, view availability, and book appointments through an intuitive calendar-based interface.
+Build an interactive appointment booking system for NexusHealth - a Clinical Management System. The system should allow patients to search for doctors, view availability, and book in-person appointments through an intuitive calendar-based interface.
 
 ---
 
@@ -42,7 +42,6 @@ Build an interactive appointment booking system for NexusHealth - a Clinical Man
 - Show slot details:
   - Time (HH:MM format)
   - Doctor name
-  - Consultation type (In-person / Video Call)
   - Slot status (Available/Booked)
 - Color code:
   - Green for available slots
@@ -50,14 +49,7 @@ Build an interactive appointment booking system for NexusHealth - a Clinical Man
   - Yellow for limited availability (only 1-2 slots)
 - Allow selection of preferred slot with visual feedback
 
-### 4. **Consultation Type Selection**
-- Option to choose:
-  - **In-Person:** Physical appointment at clinic
-  - **Video Call:** Remote consultation
-- Display different fees if applicable
-- Show selected consultation type summary
-
-### 5. **Booking Form**
+### 4. **Booking Form**
 Collect patient information:
 - Patient full name (auto-filled if logged in)
 - Phone number
@@ -69,12 +61,11 @@ Collect patient information:
 - Emergency contact (optional)
 - Consent checkbox for privacy policy
 
-### 6. **Booking Confirmation**
+### 5. **Booking Confirmation**
 - Display booking summary:
   - Doctor name and specialization
   - Appointment date and time
-  - Consultation type
-  - Clinic location (for in-person)
+  - Clinic location
   - Consultation fee
   - Patient name and phone
 - Options:
@@ -85,9 +76,8 @@ Collect patient information:
   - Booking confirmation number
   - Download receipt/appointment slip
   - Option to add to calendar (Google/Outlook)
-  - Send confirmation via email/SMS
 
-### 7. **User Interface/UX**
+### 6. **User Interface/UX**
 - **Responsive Design:**
   - Desktop (1200px+): Full calendar with sidebar
   - Tablet (768px-1199px): Adjusted layout
@@ -105,7 +95,7 @@ Collect patient information:
   - High contrast colors for readability
   - Alt text for images
 
-### 8. **Workflow Steps**
+### 7. **Workflow Steps**
 ```
 1. Doctor Selection
    ↓
@@ -115,15 +105,13 @@ Collect patient information:
    ↓
 4. Select Time Slot
    ↓
-5. Choose Consultation Type
+5. Fill Booking Form
    ↓
-6. Fill Booking Form
+6. Review Booking Summary
    ↓
-7. Review Booking Summary
+7. Confirm Appointment
    ↓
-8. Confirm Appointment
-   ↓
-9. Download Confirmation / Receive Notification
+8. Download Confirmation & View Appointment Details
 ```
 
 ---
@@ -147,6 +135,7 @@ Collect patient information:
   name: "Dr. John Smith",
   specialization: "Cardiology",
   clinic: "Heart Care Clinic",
+  location: "123 Medical Street",
   rating: 4.8,
   reviews: 245,
   fee: 500,
@@ -166,9 +155,9 @@ Collect patient information:
   doctorId: 1,
   date: "2026-04-24",
   time: "09:00",
-  consultationType: "in-person",
   status: "confirmed",
   notes: "Patient symptoms",
+  clinicLocation: "Heart Care Clinic",
   createdAt: "2026-04-23"
 }
 ```
@@ -218,14 +207,14 @@ frontend/
 ### Phase 2
 - [ ] Doctor search & filtering
 - [ ] Dynamic availability loading
-- [ ] Email/SMS notifications
 - [ ] Appointment history
+- [ ] Print appointment slip
 
 ### Phase 3
-- [ ] Video consultation setup
 - [ ] Payment integration
 - [ ] Advanced filtering (ratings, experience)
 - [ ] Recurring appointments
+- [ ] Appointment management (reschedule/cancel)
 
 ---
 
@@ -250,13 +239,10 @@ appointmentBooking.selectDate(date)
 // Step 5: Select Time
 appointmentBooking.selectTimeSlot(time);
 
-// Step 6: Choose Consultation Type
-appointmentBooking.setConsultationType(type);
-
-// Step 7: Fill Form
+// Step 6: Fill Form
 appointmentBooking.fillPatientInfo(formData);
 
-// Step 8: Confirm Booking
+// Step 7: Confirm Booking
 appointmentBooking.confirmBooking()
   .then(confirmation => showConfirmation(confirmation));
 ```
@@ -319,6 +305,5 @@ Handle these scenarios:
 - Users should book appointment in < 5 minutes
 - Mobile booking completion rate > 80%
 - Form validation accuracy > 99%
-- Confirmation email delivery > 99%
 - Zero double-bookings
-
+- Appointment confirmation display on first try
