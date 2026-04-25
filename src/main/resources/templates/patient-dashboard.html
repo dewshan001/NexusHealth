@@ -784,6 +784,33 @@
             transition: border-color 0.2s, background 0.3s;
         }
 
+        /* General Form Inputs */
+        .form-input,
+        .form-select,
+        .payment-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1.5px solid var(--input-border);
+            border-radius: 8px;
+            font-family: inherit;
+            outline: none;
+            background: var(--input-bg);
+            color: var(--input-color);
+            transition: border-color 0.2s, background 0.3s;
+        }
+
+        .form-input::placeholder,
+        .payment-input::placeholder {
+            color: var(--input-ph);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .payment-input:focus,
+        .date-input:focus {
+            border-color: rgba(120, 180, 255, 0.5);
+        }
+
         /* Slot section label */
         .slot-label {
             font-size: 0.85rem;
@@ -1890,7 +1917,7 @@
         <div class="modal-content" style="max-width:640px; text-align:left;">
             <h2 style="margin-bottom:0.75rem;">Review Booking Summary</h2>
             <div id="bookingReviewSummary"
-                style="border:1px solid var(--border-color); border-radius:10px; padding:1rem; margin-bottom:1rem; background:var(--bg-light-gray);">
+                style="border:1px solid var(--visit-border); border-radius:10px; padding:1rem; margin-bottom:1rem; background:var(--visit-bg);">
             </div>
             <div style="display:flex; justify-content:flex-end; gap:0.6rem;">
                 <button class="btn btn-outline" onclick="closeModal('bookingReviewModal')">Edit Details</button>
@@ -2594,19 +2621,7 @@
                 return false;
             }
 
-            if (!/^\d{13,19}$/.test(cardNumber)) {
-                error.textContent = 'Card number must be between 13 and 19 digits';
-                input.classList.remove('success');
-                input.classList.add('error');
-                return false;
-            }
-
-            if (!luhnCheck(cardNumber)) {
-                error.textContent = 'Invalid card number (failed validation)';
-                input.classList.remove('success');
-                input.classList.add('error');
-                return false;
-            }
+            // Validation bypassed to allow any card number per user request
 
             error.textContent = '';
             input.classList.remove('error');

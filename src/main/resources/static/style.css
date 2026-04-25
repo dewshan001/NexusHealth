@@ -98,6 +98,28 @@ ul {
     list-style: none;
 }
 
+/* Global Form Elements Base Style */
+input,
+textarea,
+select {
+    background-color: var(--input-bg, var(--bg-card));
+    color: var(--input-color, var(--text-primary));
+    border: 1px solid var(--input-border, var(--border-color));
+    font-family: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--input-ph, var(--text-muted));
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--primary-medical-blue);
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
