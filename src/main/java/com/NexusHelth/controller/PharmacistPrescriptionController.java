@@ -63,10 +63,10 @@ public class PharmacistPrescriptionController {
             return ResponseEntity.badRequest().body(response);
         }
 
-        // Get the generated invoice details
-        Map<String, Object> invoiceData = invoiceService.generateInvoiceForPrescription(id);
-        if ((Boolean) invoiceData.get("success")) {
-            response.put("invoiceId", invoiceData.get("invoiceId"));
+        // Fetch the invoice created during dispensing without creating a duplicate.
+        Map<String, Object> invoiceData = invoiceService.getInvoiceByPrescriptionId(id);
+        if ((Boolean) invoiceData.getOrDefault("found", false)) {
+            response.put("invoiceId", invoiceData.get("id"));
             response.put("invoiceData", invoiceData);
         }
 

@@ -1,15 +1,11 @@
 package com.NexusHelth.service;
 
-import com.NexusHelth.model.Invoice;
-import com.NexusHelth.model.InvoiceItem;
 import com.NexusHelth.util.DatabaseConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,96 +15,112 @@ public class PharmacistInvoiceService {
 
     /**
      * Generate an invoice for a given prescription
-     * Fetches all prescription items with medicine details, calculates total, and saves invoice
+     * Uses the current invoices schema and returns existing invoice if already created.
      */
     public Map<String, Object> generateInvoiceForPrescription(int prescriptionId) {
         Map<String, Object> result = new HashMap<>();
-        
-        String getItemsSql = "SELECT pi.id, pi.medicine_id, pi.quantity, m.name as medicine_name, m.unit_price, " +
-                "p.patient_id, p.consultation_id " +
+
+        if (prescriptionId <= 0) {
+            result.put("success", false);
+            result.put("message", "Invalid prescription id");
+            return result;
+        }
+
+        String prescriptionSql = "SELECT p.patient_id, u.full_name AS patient_name " +
+                "FROM prescriptions p " +
+                "JOIN patients pat ON p.patient_id = pat.id " +
+                "JOIN users u ON pat.user_id = u.id " +
+                "WHERE p.id = ?";
+
+        String subtotalSql = "SELECT COALESCE(SUM(pi.quantity * m.unit_price), 0) AS subtotal " +
                 "FROM prescription_items pi " +
                 "JOIN medicines m ON pi.medicine_id = m.id " +
-                "JOIN prescriptions p ON pi.prescription_id = p.id " +
                 "WHERE pi.prescription_id = ?";
-        
-        String getConsultationSql = "SELECT appointment_id FROM consultations WHERE id = ?";
 
-        String getPatientNameSql = "SELECT u.full_name AS patient_name " +
-            "FROM patients pat " +
-            "JOIN users u ON pat.user_id = u.id " +
-            "WHERE pat.id = ?";
-        
-        String insertInvoiceSql = "INSERT INTO invoices (prescription_id, patient_id, appointment_id, total_amount, " +
-                "discount, payment_status, created_at) VALUES (?, ?, ?, ?, 0.0, 'unpaid', CURRENT_TIMESTAMP)";
-        
-        String insertInvoiceItemSql = "INSERT INTO invoice_items (invoice_id, medicine_id, medicine_name, quantity, " +
-                "unit_price, line_total, created_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+        String existingInvoiceSql = "SELECT id FROM invoices WHERE prescription_id = ? LIMIT 1";
+
+        String insertInvoiceSql = "INSERT INTO invoices (invoice_number, prescription_id, patient_id, doctor_id, patient_name, " +
+                "consultation_type, consultation_amount, pharmacy_addons, subtotal, discount_type, discount_amount, total_amount, status) " +
+                "VALUES (?, ?, ?, NULL, ?, ?, 0.0, ?, ?, 'none', 0.0, ?, 'unpaid')";
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-            conn.setAutoCommit(false); // Start transaction
+            if (!hasInvoicesPrescriptionIdColumn(conn)) {
+                result.put("success", false);
+                result.put("message", "Invoices schema is missing prescription_id column");
+                return result;
+            }
+
+            conn.setAutoCommit(false);
 
             try {
-                // 1. Get prescription items with prices
-                List<Map<String, Object>> items = new ArrayList<>();
-                double totalAmount = 0;
-                int patientId = 0;
-                int appointmentId = 0;
-                
-                try (PreparedStatement pstmt = conn.prepareStatement(getItemsSql)) {
-                    pstmt.setInt(1, prescriptionId);
-                    try (ResultSet rs = pstmt.executeQuery()) {
-                        while (rs.next()) {
-                            int medicineId = rs.getInt("medicine_id");
-                            int quantity = rs.getInt("quantity");
-                            String medicineName = rs.getString("medicine_name");
-                            double unitPrice = rs.getDouble("unit_price");
-                            double lineTotal = quantity * unitPrice;
-                            
-                            Map<String, Object> item = new HashMap<>();
-                            item.put("medicineId", medicineId);
-                            item.put("medicineName", medicineName);
-                            item.put("quantity", quantity);
-                            item.put("unitPrice", unitPrice);
-                            item.put("lineTotal", lineTotal);
-                            
-                            items.add(item);
-                            totalAmount += lineTotal;
-                            
-                            if (patientId == 0) {
-                                patientId = rs.getInt("patient_id");
-                                int consultationId = rs.getInt("consultation_id");
-                                
-                                // Get appointment_id from consultation
-                                try (PreparedStatement consultStmt = conn.prepareStatement(getConsultationSql)) {
-                                    consultStmt.setInt(1, consultationId);
-                                    try (ResultSet consultRs = consultStmt.executeQuery()) {
-                                        if (consultRs.next()) {
-                                            appointmentId = consultRs.getInt("appointment_id");
-                                        }
-                                    }
-                                }
-                            }
+                // Idempotent behavior: reuse existing invoice for this prescription.
+                try (PreparedStatement existingStmt = conn.prepareStatement(existingInvoiceSql)) {
+                    existingStmt.setInt(1, prescriptionId);
+                    try (ResultSet rs = existingStmt.executeQuery()) {
+                        if (rs.next()) {
+                            int invoiceId = rs.getInt("id");
+                            conn.rollback();
+                            Map<String, Object> existing = getInvoiceById(invoiceId);
+                            result.putAll(existing);
+                            result.put("success", true);
+                            result.put("invoiceId", invoiceId);
+                            return result;
                         }
                     }
                 }
-                
-                if (items.isEmpty()) {
+
+                Integer patientId = null;
+                String patientName = null;
+                try (PreparedStatement pstmt = conn.prepareStatement(prescriptionSql)) {
+                    pstmt.setInt(1, prescriptionId);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) {
+                            int pid = rs.getInt("patient_id");
+                            patientId = rs.wasNull() ? null : pid;
+                            patientName = rs.getString("patient_name");
+                        }
+                    }
+                }
+
+                if (patientId == null) {
+                    conn.rollback();
                     result.put("success", false);
-                    result.put("message", "No prescription items found");
+                    result.put("message", "Prescription not found");
                     return result;
                 }
 
-                // 2. Create invoice in database
+                double subtotal = 0.0;
+                try (PreparedStatement pstmt = conn.prepareStatement(subtotalSql)) {
+                    pstmt.setInt(1, prescriptionId);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) {
+                            subtotal = rs.getDouble("subtotal");
+                        }
+                    }
+                }
+
+                if (subtotal <= 0.0) {
+                    conn.rollback();
+                    result.put("success", false);
+                    result.put("message", "Prescription has no billable items");
+                    return result;
+                }
+
+                String invoiceNumber = generateInvoiceNumber(conn);
+                double totalAmount = subtotal;
+
                 int invoiceId = 0;
                 try (PreparedStatement pstmt = conn.prepareStatement(insertInvoiceSql)) {
-                    pstmt.setInt(1, prescriptionId);
-                    pstmt.setInt(2, patientId);
-                    pstmt.setInt(3, appointmentId);
-                    pstmt.setDouble(4, totalAmount);
-                    
+                    pstmt.setString(1, invoiceNumber);
+                    pstmt.setInt(2, prescriptionId);
+                    pstmt.setInt(3, patientId);
+                    pstmt.setString(4, patientName != null ? patientName : "—");
+                    pstmt.setString(5, "Pharmacy Prescription");
+                    pstmt.setDouble(6, subtotal);
+                    pstmt.setDouble(7, subtotal);
+                    pstmt.setDouble(8, totalAmount);
                     pstmt.executeUpdate();
-                    
-                    // SQLite doesn't support getGeneratedKeys(), so query the last inserted rowid
+
                     try (PreparedStatement idPstmt = conn.prepareStatement("SELECT last_insert_rowid() as id");
                          ResultSet idSet = idPstmt.executeQuery()) {
                         if (idSet.next()) {
@@ -116,7 +128,7 @@ public class PharmacistInvoiceService {
                         }
                     }
                 }
-                
+
                 if (invoiceId == 0) {
                     result.put("success", false);
                     result.put("message", "Failed to create invoice");
@@ -124,42 +136,16 @@ public class PharmacistInvoiceService {
                     return result;
                 }
 
-                // 3. Create invoice items
-                try (PreparedStatement pstmt = conn.prepareStatement(insertInvoiceItemSql)) {
-                    for (Map<String, Object> item : items) {
-                        pstmt.setInt(1, invoiceId);
-                        pstmt.setInt(2, (Integer) item.get("medicineId"));
-                        pstmt.setString(3, (String) item.get("medicineName"));
-                        pstmt.setInt(4, (Integer) item.get("quantity"));
-                        pstmt.setDouble(5, (Double) item.get("unitPrice"));
-                        pstmt.setDouble(6, (Double) item.get("lineTotal"));
-                        
-                        pstmt.addBatch();
-                    }
-                    pstmt.executeBatch();
-                }
-
                 conn.commit();
-                
-                // Return invoice data
+
+                Map<String, Object> saved = getInvoiceById(invoiceId);
+                result.putAll(saved);
                 result.put("success", true);
                 result.put("invoiceId", invoiceId);
                 result.put("prescriptionId", prescriptionId);
                 result.put("patientId", patientId);
-                result.put("appointmentId", appointmentId);
                 result.put("totalAmount", totalAmount);
-                result.put("items", items);
-
-                // Helpful display fields
-                try (PreparedStatement nameStmt = conn.prepareStatement(getPatientNameSql)) {
-                    nameStmt.setInt(1, patientId);
-                    try (ResultSet nameRs = nameStmt.executeQuery()) {
-                        if (nameRs.next()) {
-                            result.put("patientName", nameRs.getString("patient_name"));
-                        }
-                    }
-                }
-                
+                result.put("invoiceNumber", invoiceNumber);
                 return result;
 
             } catch (SQLException e) {
@@ -184,17 +170,18 @@ public class PharmacistInvoiceService {
      */
     public Map<String, Object> getInvoiceById(int invoiceId) {
         Map<String, Object> result = new HashMap<>();
-        
-        String invoiceSql = "SELECT i.id, i.prescription_id, i.patient_id, i.appointment_id, " +
-                "i.total_amount, i.discount, i.amount_paid, i.payment_status, i.created_at, " +
-                "u.full_name as patient_name " +
+
+        String invoiceSql = "SELECT i.id, i.invoice_number, i.prescription_id, i.patient_id, i.patient_name, " +
+                "i.discount_amount, i.total_amount, i.status, i.created_at " +
                 "FROM invoices i " +
-                "JOIN patients p ON i.patient_id = p.id " +
-                "JOIN users u ON p.user_id = u.id " +
                 "WHERE i.id = ?";
-        
-        String itemsSql = "SELECT id, medicine_id, medicine_name, quantity, unit_price, line_total " +
-                "FROM invoice_items WHERE invoice_id = ? ORDER BY id";
+
+        String itemsSql = "SELECT pi.id, pi.medicine_id, m.name AS medicine_name, pi.quantity, m.unit_price, " +
+                "(pi.quantity * m.unit_price) AS line_total " +
+                "FROM prescription_items pi " +
+                "JOIN medicines m ON pi.medicine_id = m.id " +
+                "WHERE pi.prescription_id = ? " +
+                "ORDER BY pi.id";
 
         try (Connection conn = DatabaseConnection.getConnection()) {
             // Get invoice
@@ -202,31 +189,42 @@ public class PharmacistInvoiceService {
                 pstmt.setInt(1, invoiceId);
                 try (ResultSet rs = pstmt.executeQuery()) {
                     if (rs.next()) {
+                        int prescriptionId = rs.getInt("prescription_id");
+                        int patientId = rs.getInt("patient_id");
+                        double discount = rs.getDouble("discount_amount");
+                        double totalAmount = rs.getDouble("total_amount");
+                        String status = rs.getString("status");
+
                         result.put("id", rs.getInt("id"));
-                        result.put("prescriptionId", rs.getInt("prescription_id"));
-                        result.put("patientId", rs.getInt("patient_id"));
+                        result.put("invoiceId", rs.getInt("id"));
+                        result.put("invoiceNumber", rs.getString("invoice_number"));
+                        result.put("prescriptionId", prescriptionId);
+                        result.put("patientId", patientId);
                         result.put("patientName", rs.getString("patient_name"));
-                        result.put("appointmentId", rs.getInt("appointment_id"));
-                        result.put("totalAmount", rs.getDouble("total_amount"));
-                        result.put("discount", rs.getDouble("discount"));
-                        result.put("amountPaid", rs.getDouble("amount_paid"));
-                        result.put("paymentStatus", rs.getString("payment_status"));
+                        result.put("totalAmount", totalAmount);
+                        result.put("total_amount", totalAmount);
+                        result.put("discount", discount);
+                        result.put("discountAmount", discount);
+                        result.put("paymentStatus", status);
+                        result.put("status", status);
                         result.put("createdAt", rs.getString("created_at"));
-                        
+
                         // Get items
                         List<Map<String, Object>> items = new ArrayList<>();
-                        try (PreparedStatement itemPstmt = conn.prepareStatement(itemsSql)) {
-                            itemPstmt.setInt(1, invoiceId);
-                            try (ResultSet itemRs = itemPstmt.executeQuery()) {
-                                while (itemRs.next()) {
-                                    Map<String, Object> item = new HashMap<>();
-                                    item.put("id", itemRs.getInt("id"));
-                                    item.put("medicineId", itemRs.getInt("medicine_id"));
-                                    item.put("medicineName", itemRs.getString("medicine_name"));
-                                    item.put("quantity", itemRs.getInt("quantity"));
-                                    item.put("unitPrice", itemRs.getDouble("unit_price"));
-                                    item.put("lineTotal", itemRs.getDouble("line_total"));
-                                    items.add(item);
+                        if (prescriptionId > 0) {
+                            try (PreparedStatement itemPstmt = conn.prepareStatement(itemsSql)) {
+                                itemPstmt.setInt(1, prescriptionId);
+                                try (ResultSet itemRs = itemPstmt.executeQuery()) {
+                                    while (itemRs.next()) {
+                                        Map<String, Object> item = new HashMap<>();
+                                        item.put("id", itemRs.getInt("id"));
+                                        item.put("medicineId", itemRs.getInt("medicine_id"));
+                                        item.put("medicineName", itemRs.getString("medicine_name"));
+                                        item.put("quantity", itemRs.getInt("quantity"));
+                                        item.put("unitPrice", itemRs.getDouble("unit_price"));
+                                        item.put("lineTotal", itemRs.getDouble("line_total"));
+                                        items.add(item);
+                                    }
                                 }
                             }
                         }
@@ -296,12 +294,12 @@ public class PharmacistInvoiceService {
      */
     public List<Map<String, Object>> getAllInvoices(int limit) {
         List<Map<String, Object>> invoices = new ArrayList<>();
-        
-        String sql = "SELECT i.id, i.prescription_id, i.patient_id, i.total_amount, i.payment_status, i.created_at, " +
-                "u.full_name as patient_name " +
+
+        String sql = "SELECT i.id, i.invoice_number, i.prescription_id, i.patient_id, i.total_amount, i.status, i.created_at, " +
+                "COALESCE(i.patient_name, u.full_name, '—') as patient_name " +
                 "FROM invoices i " +
-                "JOIN patients p ON i.patient_id = p.id " +
-                "JOIN users u ON p.user_id = u.id " +
+                "LEFT JOIN patients p ON i.patient_id = p.id " +
+                "LEFT JOIN users u ON p.user_id = u.id " +
                 "ORDER BY i.created_at DESC LIMIT ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -311,12 +309,12 @@ public class PharmacistInvoiceService {
                 while (rs.next()) {
                     Map<String, Object> invoice = new HashMap<>();
                     invoice.put("id", rs.getInt("id"));
-                    invoice.put("invoiceNumber", "INV-" + rs.getInt("id"));
+                    invoice.put("invoiceNumber", rs.getString("invoice_number"));
                     invoice.put("prescriptionId", rs.getInt("prescription_id"));
                     invoice.put("patientId", rs.getInt("patient_id"));
                     invoice.put("patientName", rs.getString("patient_name"));
                     invoice.put("totalAmount", rs.getDouble("total_amount"));
-                    invoice.put("paymentStatus", rs.getString("payment_status"));
+                    invoice.put("paymentStatus", rs.getString("status"));
                     invoice.put("createdAt", rs.getString("created_at"));
                     invoices.add(invoice);
                 }
@@ -326,5 +324,32 @@ public class PharmacistInvoiceService {
         }
 
         return invoices;
+    }
+
+    private boolean hasInvoicesPrescriptionIdColumn(Connection conn) {
+        try (PreparedStatement pragmaStmt = conn.prepareStatement("PRAGMA table_info(invoices)");
+             ResultSet rs = pragmaStmt.executeQuery()) {
+            while (rs.next()) {
+                String col = rs.getString("name");
+                if ("prescription_id".equalsIgnoreCase(col)) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            return false;
+        }
+        return false;
+    }
+
+    private String generateInvoiceNumber(Connection conn) throws SQLException {
+        String query = "SELECT COUNT(*) as count FROM invoices";
+        try (PreparedStatement pstmt = conn.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                int count = rs.getInt("count") + 1;
+                return String.format("INV-%05d", count);
+            }
+        }
+        return "INV-" + System.currentTimeMillis();
     }
 }

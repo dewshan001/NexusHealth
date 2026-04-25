@@ -16,6 +16,8 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <script th:src="@{/theme.js}"></script>
     <script src="/tab-auth.js"></script>
+    <!-- PDF Generation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <!-- External CSS -->
     <link rel="stylesheet" th:href="@{/style.css}">
@@ -1098,6 +1100,10 @@
                 <span class="material-symbols-outlined">recent_patient</span>
                 Patient Accounts
             </button>
+            <button class="nav-tab" data-tab="appointments" onclick="switchTab('appointments', event)">
+                <span class="material-symbols-outlined">event_note</span>
+                Appointments
+            </button>
             <button class="nav-tab" data-tab="reports" onclick="switchTab('reports', event)">
                 <span class="material-symbols-outlined">monitoring</span>
                 Reports
@@ -1232,12 +1238,58 @@
             </div>
 
             <!-- REPORTS & ANALYTICS TAB -->
+            <div id="tab-appointments" class="tab-content">
+                <div class="content-header">
+                    <h2 class="content-title">All Appointments</h2>
+                    <div class="admin-table-actions">
+                        <select id="adminAppointmentDoctorFilter" class="form-select" style="min-width: 260px;"
+                            onchange="loadAdminAppointments()">
+                            <option value="">All Doctors</option>
+                        </select>
+                        <button class="btn btn-outline" onclick="loadAdminAppointments()">
+                            <span class="material-symbols-outlined"
+                                style="font-size: 18px; margin-right: 4px;">refresh</span>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <h3 class="admin-card-title">Appointment Registry</h3>
+                    </div>
+                    <div class="admin-table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Specialization</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminAppointmentsTableBody">
+                                <tr style="text-align: center;">
+                                    <td colspan="8" style="padding: 2rem; color: var(--admin-text-muted);">Loading
+                                        appointments...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <div id="tab-reports" class="tab-content">
                 <div class="content-header">
                     <h2 class="content-title">Reports & Analytics</h2>
                     <div class="admin-table-actions">
-                        <input type="date" id="reportsDateInput" class="form-input" style="width:auto;" onchange="loadReports(this.value)">
-                        <button class="btn btn-outline">
+                        <input type="date" id="reportsDateInput" class="form-input" style="width:auto;"
+                            onchange="loadReports(this.value)">
+                        <button class="btn btn-outline" onclick="downloadReportsPDF()">
                             <span class="material-symbols-outlined"
                                 style="font-size: 18px; margin-right: 4px;">download</span>
                             Export PDF
@@ -1276,11 +1328,12 @@
                 </div>
 
                 <div class="admin-card">
-                    <h3 class="admin-card-title">Recent Financial Transactions</h3>
+                    <h3 class="admin-card-title">Selected Date Transactions</h3>
                     <div class="admin-table-wrap">
                         <table class="data-table">
                             <thead>
                                 <tr>
+                                    <th>Date / Time</th>
                                     <th>Transaction ID</th>
                                     <th>Type</th>
                                     <th>Department</th>
@@ -1288,9 +1341,10 @@
                                     <th>Status</th>
                                 </tr>
                             </thead>
-                            <tbody id="transactionsTableBody">
+                            <tbody id="selectedDateTransactionsTableBody">
                                 <tr style="text-align: center;">
-                                    <td colspan="5" style="padding: 2rem; color: var(--admin-text-muted);">Loading transaction data...</td>
+                                    <td colspan="6" style="padding: 2rem; color: var(--admin-text-muted);">Loading
+                                        transaction data...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1627,6 +1681,11 @@
             // Load data if users tab is activated
             if (tabId === 'users') {
                 loadStaff();
+            }
+
+            if (tabId === 'appointments') {
+                loadAdminAppointmentDoctors();
+                loadAdminAppointments();
             }
         }
 
@@ -2238,6 +2297,166 @@
                 });
         }
 
+        // ═══════════════════════════════════════════════════════
+        // Admin Appointments Management
+        // ═══════════════════════════════════════════════════════
+        let allAdminAppointments = [];
+
+        function loadAdminAppointmentDoctors() {
+            fetch('/api/admin/appointments/doctors', {
+                method: 'GET',
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data || !data.success || !Array.isArray(data.data)) {
+                        throw new Error(data?.error || 'Failed to load doctors');
+                    }
+
+                    const select = document.getElementById('adminAppointmentDoctorFilter');
+                    if (!select) {
+                        return;
+                    }
+
+                    const currentValue = select.value;
+                    select.innerHTML = '<option value="">All Doctors</option>';
+
+                    data.data.forEach(doc => {
+                        const option = document.createElement('option');
+                        option.value = String(doc.id);
+                        option.textContent = `${doc.fullName}${doc.specialization ? ' - ' + doc.specialization : ''}`;
+                        select.appendChild(option);
+                    });
+
+                    if (currentValue) {
+                        select.value = currentValue;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading appointment doctors:', error);
+                    showToast('Failed to load doctors for appointment filter', true);
+                });
+        }
+
+        function loadAdminAppointments() {
+            const doctorId = document.getElementById('adminAppointmentDoctorFilter')?.value || '';
+            const query = doctorId ? `?doctorId=${encodeURIComponent(doctorId)}` : '';
+
+            fetch('/api/admin/appointments' + query, {
+                method: 'GET',
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data || !data.success || !Array.isArray(data.data)) {
+                        throw new Error(data?.error || 'Failed to load appointments');
+                    }
+                    allAdminAppointments = data.data;
+                    renderAdminAppointments(allAdminAppointments);
+                })
+                .catch(error => {
+                    console.error('Error loading admin appointments:', error);
+                    showToast('Failed to load appointments', true);
+                    renderAdminAppointments([]);
+                });
+        }
+
+        function getAppointmentStatusBadgeClass(status) {
+            const normalized = String(status || '').toLowerCase();
+            if (normalized === 'scheduled' || normalized === 'confirmed' || normalized === 'completed') {
+                return 'status-active';
+            }
+            return 'status-inactive';
+        }
+
+        function canAdminCancelAppointment(status) {
+            const normalized = String(status || '').toLowerCase();
+            return normalized !== 'cancelled' && normalized !== 'completed';
+        }
+
+        function renderAdminAppointments(appointments) {
+            const tbody = document.getElementById('adminAppointmentsTableBody');
+            if (!tbody) {
+                return;
+            }
+
+            if (!appointments || appointments.length === 0) {
+                tbody.innerHTML = '<tr style="text-align: center;"><td colspan="8" style="padding: 2rem; color: var(--admin-text-muted);">No appointments found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = appointments.map(appt => {
+                const statusText = String(appt.status || 'unknown');
+                const statusClass = getAppointmentStatusBadgeClass(statusText);
+                const cancelAllowed = canAdminCancelAppointment(statusText);
+                const patientText = `${appt.patientName || 'N/A'}${appt.patientCode ? ' (' + appt.patientCode + ')' : ''}`;
+                const cancelBtn = cancelAllowed
+                    ? `<button type="button" class="btn btn-outline btn-sm action-delete" onclick="cancelAdminAppointment(${appt.id})">Cancel</button>`
+                    : `<span style="color: var(--admin-text-muted); font-size: 0.85rem; font-style: italic;">Locked</span>`;
+
+                return `
+                    <tr>
+                        <td style="font-family: monospace; color: var(--admin-text-secondary);">#${appt.id}</td>
+                        <td>${appt.appointmentDate || 'N/A'}</td>
+                        <td>${appt.appointmentTime || 'N/A'}</td>
+                        <td>${patientText}</td>
+                        <td>${appt.doctorName || 'N/A'}</td>
+                        <td>${appt.specialization || 'N/A'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td><div class="admin-table-actions">${cancelBtn}</div></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function cancelAdminAppointment(appointmentId) {
+            const target = allAdminAppointments.find(a => Number(a.id) === Number(appointmentId));
+            const label = target
+                ? `${target.patientName || 'Patient'} with ${target.doctorName || 'Doctor'} on ${target.appointmentDate || ''} ${target.appointmentTime || ''}`
+                : `appointment #${appointmentId}`;
+
+            if (!confirm(`Cancel ${label}?`)) {
+                return;
+            }
+
+            const formData = new URLSearchParams();
+            formData.append('appointmentId', String(appointmentId));
+
+            fetch('/api/admin/appointments/cancel', {
+                method: 'POST',
+                credentials: 'include',
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.success) {
+                        showToast(data.message || 'Appointment cancelled successfully');
+                        loadAdminAppointments();
+                    } else {
+                        showToast(data?.message || 'Failed to cancel appointment', true);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error cancelling appointment:', error);
+                    showToast('Failed to cancel appointment', true);
+                });
+        }
+
         // ─── Admin Settings Functions ───
 
         let adminProfilePicBase64 = null;
@@ -2251,7 +2470,7 @@
                 document.getElementById('optionsProfilePic').src = base64;
                 document.getElementById('sidebarProfilePic').src = base64;
                 adminProfilePicBase64 = base64;
-                showToast("Preview updated! Click Save Admin Info to commit.");
+                saveAdminProfile();
             };
             reader.readAsDataURL(file);
         }
@@ -2360,6 +2579,8 @@
         // ═══════════════════════════════════════════════════════
         // Reports & Analytics Dynamic Loading
         // ═══════════════════════════════════════════════════════
+        let currentReportsData = null;
+
         function loadReports(date = null) {
             console.log('[📊] Loading Reports & Analytics...');
 
@@ -2375,7 +2596,8 @@
                 .then(data => {
                     if (data.success) {
                         console.log('[✅] Reports data loaded:', data);
-                        
+                        currentReportsData = data;
+
                         // Update Daily Revenue
                         const dailyRevenue = data.dailyRevenue || 0;
                         document.getElementById('dailyRevenueValue').textContent = 'Rs.' + dailyRevenue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -2389,7 +2611,7 @@
                         document.getElementById('patientsVisitedValue').textContent = patientsVisited;
 
                         // Update Transactions Table
-                        renderTransactionsTable(data.recentTransactions || []);
+                        renderSelectedDateTransactionsTable(data.recentTransactions || []);
                     } else {
                         console.error('[❌] Failed to load reports:', data.message);
                         showToast('Failed to load reports data: ' + data.message, true);
@@ -2401,11 +2623,30 @@
                 });
         }
 
-        function renderTransactionsTable(transactions) {
-            const tbody = document.getElementById('transactionsTableBody');
+        function formatTransactionDateTime(value) {
+            if (!value) {
+                return 'N/A';
+            }
+
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) {
+                return 'N/A';
+            }
+
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function renderSelectedDateTransactionsTable(transactions) {
+            const tbody = document.getElementById('selectedDateTransactionsTableBody');
 
             if (!transactions || transactions.length === 0) {
-                tbody.innerHTML = '<tr style="text-align: center;"><td colspan="5" style="padding: 2rem; color: var(--admin-text-muted);">No transactions found</td></tr>';
+                tbody.innerHTML = '<tr style="text-align: center;"><td colspan="6" style="padding: 2rem; color: var(--admin-text-muted);">No transactions found for the selected date</td></tr>';
                 return;
             }
 
@@ -2413,9 +2654,11 @@
                 const statusClass = txn.status === 'settled' ? 'status-active' : 'status-inactive';
                 const statusLabel = txn.status.charAt(0).toUpperCase() + txn.status.slice(1);
                 const amount = (txn.amount || 0).toFixed(2);
+                const dateTime = formatTransactionDateTime(txn.transactedAt);
 
                 return `
                     <tr>
+                        <td>${dateTime}</td>
                         <td style="font-family: monospace; color: var(--admin-text-secondary);">${txn.transactionId || 'N/A'}</td>
                         <td>${txn.type || 'N/A'}</td>
                         <td>${txn.department || 'N/A'}</td>
@@ -2426,8 +2669,119 @@
             }).join('');
         }
 
+        function downloadReportsPDF() {
+            const dateInput = document.getElementById('reportsDateInput');
+            const selectedDate = dateInput && dateInput.value ? dateInput.value : (currentReportsData && currentReportsData.date) || new Date().toISOString().split('T')[0];
+            const reportData = currentReportsData || {};
+
+            if (!reportData || reportData.success !== true) {
+                showToast('Reports are still loading. Please wait and try again.', true);
+                return;
+            }
+
+            if (typeof html2pdf === 'undefined') {
+                showToast('PDF library not loaded. Please refresh the page and try again.', true);
+                return;
+            }
+
+            const reportDate = selectedDate ? new Date(selectedDate) : new Date();
+            const formattedDate = Number.isNaN(reportDate.getTime())
+                ? selectedDate
+                : reportDate.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+            const dailyRevenue = Number(reportData.dailyRevenue || 0).toFixed(2);
+            const pharmacySales = Number(reportData.pharmacySales || 0).toFixed(2);
+            const patientsVisited = Number(reportData.totalPatientsVisited || 0);
+            const transactions = Array.isArray(reportData.recentTransactions) ? reportData.recentTransactions : [];
+
+            const transactionRows = transactions.length > 0
+                ? transactions.map((txn) => {
+                    const amount = Number(txn.amount || 0).toFixed(2);
+                    const statusLabel = (txn.status || 'N/A').charAt(0).toUpperCase() + (txn.status || 'N/A').slice(1);
+                    const dateTime = formatTransactionDateTime(txn.transactedAt);
+                    return `
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 10px;">${dateTime}</td>
+                            <td style="border: 1px solid #ddd; padding: 10px;">${txn.transactionId || 'N/A'}</td>
+                            <td style="border: 1px solid #ddd; padding: 10px;">${txn.type || 'N/A'}</td>
+                            <td style="border: 1px solid #ddd; padding: 10px;">${txn.department || 'N/A'}</td>
+                            <td style="border: 1px solid #ddd; padding: 10px; text-align: right;">Rs.${amount}</td>
+                            <td style="border: 1px solid #ddd; padding: 10px;">${statusLabel}</td>
+                        </tr>
+                    `;
+                }).join('')
+                : '<tr><td colspan="5" style="border: 1px solid #ddd; padding: 10px; text-align: center; color: #666;">No transactions found</td></tr>';
+
+            const htmlContent = `
+                <div style="width: 794px; padding: 32px; font-family: Arial, sans-serif; background-color: #ffffff; color: #000000; box-sizing: border-box;">
+                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #0066FF; padding-bottom: 20px; background: #ffffff;">
+                        <h1 style="color: #0066FF; margin: 0; font-size: 24px;">NexusHealth Reports</h1>
+                        <p style="margin: 5px 0 0 0; color: #666;">${formattedDate}</p>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-around; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; background: #ffffff;">
+                        <div style="text-align: center; padding: 15px; background: #f5f5f5; border-radius: 8px; flex: 1; min-width: 160px;">
+                            <h3 style="margin: 0 0 10px 0; color: #333;">Daily Revenue</h3>
+                            <p style="font-size: 20px; font-weight: bold; color: #0066FF; margin: 0;">Rs.${dailyRevenue}</p>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: #f5f5f5; border-radius: 8px; flex: 1; min-width: 160px;">
+                            <h3 style="margin: 0 0 10px 0; color: #333;">Pharmacy Sales</h3>
+                            <p style="font-size: 20px; font-weight: bold; color: #10b981; margin: 0;">Rs.${pharmacySales}</p>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: #f5f5f5; border-radius: 8px; flex: 1; min-width: 160px;">
+                            <h3 style="margin: 0 0 10px 0; color: #333;">Patients Visited</h3>
+                            <p style="font-size: 20px; font-weight: bold; color: #8b5cf6; margin: 0;">${patientsVisited}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 style="color: #333; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 20px;">Selected Date Transactions</h2>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 11px; background: #ffffff; table-layout: fixed; word-wrap: break-word;">
+                            <thead>
+                                <tr style="background: #f8f9fa;">
+                                    <th style="border: 1px solid #ddd; padding: 10px; text-align: left; width: 17%;">Date / Time</th>
+                                    <th style="border: 1px solid #ddd; padding: 10px; text-align: left; width: 33%;">Transaction ID</th>
+                                    <th style="border: 1px solid #ddd; padding: 10px; text-align: left; width: 12%;">Type</th>
+                                    <th style="border: 1px solid #ddd; padding: 10px; text-align: left; width: 15%;">Department</th>
+                                    <th style="border: 1px solid #ddd; padding: 10px; text-align: right; width: 11%;">Amount</th>
+                                    <th style="border: 1px solid #ddd; padding: 10px; text-align: left; width: 12%;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>${transactionRows}</tbody>
+                        </table>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 30px; font-size: 11px; color: #999; border-top: 1px solid #ddd; padding-top: 10px;">
+                        <p>Generated on ${new Date().toLocaleString()} | NexusHealth System</p>
+                    </div>
+                </div>
+            `;
+
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: `nexushealth-reports-${selectedDate || 'all'}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },
+                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+
+            // Using from() with an HTML string allows it to render independently in an invisible worker iframe
+            html2pdf().set(opt).from(htmlContent).save().then(() => {
+                showToast('Report PDF downloaded successfully.', false);
+            }).catch((err) => {
+                console.error("PDF generation failed:", err);
+                showToast('Failed to generate the PDF. Please try again.', true);
+            });
+        }
+
         // Session Management (cookie-based HttpSession)
-        
+
         /**
          * Helper function to create fetch options.
          * Automatically includes credentials for cookie-based sessions and per-tab sessionId.
@@ -2445,7 +2799,7 @@
             }
             return options;
         }
-        
+
         /**
          * Handle logout: invalidate session and clear storage.
          */
@@ -2470,6 +2824,8 @@
 
             loadStaff();
             loadPatients();
+            loadAdminAppointmentDoctors();
+            loadAdminAppointments();
             loadReports();
             loadAdminProfile();
         });

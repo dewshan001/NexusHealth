@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.Base64;
+import com.NexusHelth.util.ValidationUtil;
 
 @RestController
 @RequestMapping("/api/receptionist")
@@ -88,6 +89,36 @@ public class ReceptionistController {
             return new StandardResponse(false, "Unauthorized - receptionist role required", null);
         }
 
+        // Basic trim + normalization
+        firstName = firstName != null ? firstName.trim() : null;
+        lastName = lastName != null ? lastName.trim() : null;
+        email = email != null ? email.trim() : null;
+        phone = phone != null ? phone.trim() : null;
+        dateOfBirth = dateOfBirth != null ? dateOfBirth.trim() : null;
+        gender = ValidationUtil.normalizeGender(gender);
+
+        // Minimal validation (keep consistent with update endpoint / DB constraints)
+        if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty()) {
+            return new StandardResponse(false, "First name and last name are required", null);
+        }
+        if (!ValidationUtil.isValidEmail(email)) {
+            return new StandardResponse(false, "Invalid email address", null);
+        }
+        if (!ValidationUtil.isValidPhone(phone)) {
+            return new StandardResponse(false, "Invalid phone number", null);
+        }
+        if (dateOfBirth == null || dateOfBirth.isEmpty()) {
+            return new StandardResponse(false, "Date of birth is required", null);
+        }
+        try {
+            java.time.LocalDate.parse(dateOfBirth);
+        } catch (Exception e) {
+            return new StandardResponse(false, "Invalid date of birth format (expected YYYY-MM-DD)", null);
+        }
+        if (!ValidationUtil.isValidGender(gender)) {
+            return new StandardResponse(false, "Invalid gender value", null);
+        }
+
         // Check if email already exists
         if (patientService.emailExists(email)) {
             return new StandardResponse(false, "Email already exists in the system", null);
@@ -105,6 +136,90 @@ public class ReceptionistController {
         } else {
             return new StandardResponse(false, "Failed to register patient", null);
         }
+    }
+
+    /**
+     * Update a patient's details from receptionist dashboard.
+     * Receptionist is allowed to update patient profile fields plus patient's full name and email.
+     */
+    @PostMapping("/patients/update")
+    public StandardResponse updatePatientDetails(
+            @RequestParam int userId,
+            @RequestParam String fullName,
+            @RequestParam String email,
+            @RequestParam String phone,
+            @RequestParam String dateOfBirth,
+            @RequestParam String gender,
+            @RequestParam String bloodType,
+            @RequestParam String address,
+            HttpSession session) {
+        System.out.println("\n[✏️] POST /api/receptionist/patients/update");
+
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
+        if (!isReceptionist(user)) {
+            return new StandardResponse(false, "Unauthorized - receptionist role required", null);
+        }
+
+        // Basic trim
+        fullName = fullName != null ? fullName.trim() : null;
+        email = email != null ? email.trim() : null;
+        phone = phone != null ? phone.trim() : null;
+        dateOfBirth = dateOfBirth != null ? dateOfBirth.trim() : null;
+        gender = ValidationUtil.normalizeGender(gender);
+        bloodType = bloodType != null ? bloodType.trim() : null;
+        address = address != null ? address.trim() : null;
+
+        // Ensure target is actually a patient
+        Patient existing = patientService.getPatientByUserId(userId);
+        if (existing == null) {
+            return new StandardResponse(false, "Patient not found", null);
+        }
+
+        // Validation (all required)
+        if (!ValidationUtil.isValidFullName(fullName)) {
+            return new StandardResponse(false, "Full name is required (3-100 characters)", null);
+        }
+        if (!ValidationUtil.isValidEmail(email)) {
+            return new StandardResponse(false, "Invalid email address", null);
+        }
+        if (!ValidationUtil.isValidPhone(phone)) {
+            return new StandardResponse(false, "Invalid phone number", null);
+        }
+        if (dateOfBirth == null || dateOfBirth.isEmpty()) {
+            return new StandardResponse(false, "Date of birth is required", null);
+        }
+        try {
+            java.time.LocalDate.parse(dateOfBirth);
+        } catch (Exception e) {
+            return new StandardResponse(false, "Invalid date of birth format (expected YYYY-MM-DD)", null);
+        }
+        if (!ValidationUtil.isValidGender(gender)) {
+            return new StandardResponse(false, "Invalid gender value", null);
+        }
+        if (!ValidationUtil.isValidBloodType(bloodType)) {
+            return new StandardResponse(false, "Invalid blood type", null);
+        }
+        if (!ValidationUtil.isValidAddress(address)) {
+            return new StandardResponse(false, "Address is required (min 5 characters)", null);
+        }
+
+        // Email uniqueness check (if changing)
+        String currentEmail = existing.getEmail();
+        if (currentEmail == null || !currentEmail.equalsIgnoreCase(email)) {
+            if (patientService.emailExistsForOtherUser(email, userId)) {
+                return new StandardResponse(false, "Email already exists in the system", null);
+            }
+        }
+
+        boolean success = patientService.updatePatientDetailsByReceptionist(
+                userId, fullName, email, phone, dateOfBirth, gender, bloodType, address);
+
+        if (success) {
+            Patient updated = patientService.getPatientByUserId(userId);
+            return new StandardResponse(true, "Patient details updated successfully", updated);
+        }
+
+        return new StandardResponse(false, "Failed to update patient details", null);
     }
 
     // ===================== APPOINTMENT ENDPOINTS =====================

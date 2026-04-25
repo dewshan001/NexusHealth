@@ -241,7 +241,7 @@ public class PharmacistPrescriptionService {
                 
                 // 4. Generate invoice after successful dispensing
                 PharmacistInvoiceService invoiceService = new PharmacistInvoiceService();
-                Map<String, Object> invoiceResult = invoiceService.generateInvoiceForPrescription(prescriptionId);
+                invoiceService.generateInvoiceForPrescription(prescriptionId);
 
                 return new DispenseResult(true, "Prescription dispensed successfully");
 

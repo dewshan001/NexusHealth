@@ -1060,8 +1060,33 @@
             color: var(--input-color);
         }
 
-        .form-group input::placeholder {
+        .form-group input::placeholder,
+        .form-select::placeholder {
             color: var(--input-ph);
+        }
+
+        .form-group input:focus,
+        .form-select:focus {
+            border-color: rgba(99, 179, 255, 0.7);
+            box-shadow: 0 0 0 3px rgba(99, 179, 255, 0.12);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.3s;
+            background: var(--input-bg);
+            color: var(--input-color);
+        }
+
+        .form-select option {
+            background: var(--bg-base);
+            color: var(--text-primary);
         }
 
         .form-group input:focus {
@@ -1499,36 +1524,119 @@
 
             <div class="page-hero">
                 <div class="page-hero-text">
-                    <h1>Book an Appointment 📅</h1>
-                    <p>Choose your doctor and pick a convenient time slot.</p>
+                    <h1>Book an Appointment</h1>
+                    <p>Search doctors, view live availability, and confirm your visit.</p>
                 </div>
             </div>
 
             <div class="section-card">
-                <div class="section-card-title">1. Select a Doctor</div>
-                <div class="doctor-grid" id="doctorGrid">
-                    <!-- Dynamic rendering via JS -->
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">Loading doctors...</div>
+                <div class="section-card-title">1. Doctor Search and Filter</div>
+                <div
+                    style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:0.75rem; margin-bottom:1rem;">
+                    <input id="doctorSearchInput" type="text" class="form-input" placeholder="Search by doctor name"
+                        oninput="debouncedLoadDoctors()" aria-label="Search doctor by name">
+                    <input id="doctorSpecializationInput" type="text" class="form-input" placeholder="Specialization"
+                        oninput="debouncedLoadDoctors()" aria-label="Filter by specialization">
+                    <select id="doctorRatingFilter" class="form-select" onchange="loadDoctors()"
+                        aria-label="Filter by rating">
+                        <option value="">Any Rating</option>
+                        <option value="4.5">4.5 and above</option>
+                        <option value="4">4.0 and above</option>
+                        <option value="3">3.0 and above</option>
+                    </select>
+                    <select id="doctorAvailabilityFilter" class="form-select" onchange="loadDoctors()"
+                        aria-label="Filter by availability">
+                        <option value="available" selected>Available Only</option>
+                    </select>
                 </div>
 
-                <div id="booking-slots-section" class="booking-slots">
-                    <div class="booking-separator">
-                        <div
-                            style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
-                            <div class="section-card-title" style="margin-bottom:0; border:none; padding:0;">2. Select a
-                                Date &amp; Time</div>
-                            <input type="date" id="appointment-date" class="date-input" onchange="onDateChange()">
+                <div class="doctor-grid" id="doctorGrid">
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">Loading doctors...</div>
+                </div>
+            </div>
+
+            <div class="section-card" id="bookingSelectionSection" style="display:none;">
+                <div class="section-card-title">2. Date, Calendar, and Time Slot</div>
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; gap:1rem; flex-wrap:wrap;">
+                    <div id="selectedDoctorLabel" style="font-weight:600; color:var(--text-primary);">Doctor not
+                        selected</div>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <button class="btn btn-outline" style="padding:0.35rem 0.6rem;"
+                            onclick="changeBookingMonth(-1)">Prev</button>
+                        <div id="calendarMonthLabel" style="font-weight:600; min-width:150px; text-align:center;">Month
                         </div>
-                        <div id="slotsContainer">
-                            <!-- Dynamic rendering via JS -->
-                        </div>
-                        <div style="margin-top:2rem; text-align:right;">
-                            <button class="btn btn-primary btn-large" onclick="confirmBooking()" id="confirmBtn"
-                                disabled>
-                                Confirm Appointment
-                            </button>
-                        </div>
+                        <button class="btn btn-outline" style="padding:0.35rem 0.6rem;"
+                            onclick="changeBookingMonth(1)">Next</button>
                     </div>
+                </div>
+                <div id="calendarGrid"
+                    style="display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:0.35rem; margin-bottom:1rem;">
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin:0.5rem 0;">
+                    <strong>3. Select Time Slot</strong>
+                    <span id="selectedDateLabel" style="color:var(--text-secondary);">No date selected</span>
+                </div>
+                <div id="slotsContainer"></div>
+            </div>
+
+            <div class="section-card" id="patientBookingFormSection" style="display:none;">
+                <div class="section-card-title">4. Patient Information</div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="bookingPatientName">Full Name</label>
+                        <input id="bookingPatientName" class="form-input" type="text" minlength="3" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bookingPatientEmail">Email</label>
+                        <input id="bookingPatientEmail" class="form-input" type="email" required>
+                    </div>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="bookingPatientPhone">Phone</label>
+                        <input id="bookingPatientPhone" class="form-input" type="tel" pattern="[0-9]{10}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bookingLanguage">Preferred Language</label>
+                        <select id="bookingLanguage" class="form-select">
+                            <option value="English">English</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="Tamil">Tamil</option>
+                            <option value="Sinhala">Sinhala</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="bookingSymptoms">Symptoms / Chief Complaint (optional)</label>
+                    <textarea id="bookingSymptoms" class="form-input" style="min-height:90px; resize:vertical;"
+                        placeholder="Describe your symptoms"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Medical History Snapshot</label>
+                    <div id="bookingMedicalHistory"
+                        style="padding:0.75rem; border:1px solid var(--input-border); border-radius:10px; background:var(--input-bg); color:var(--text-primary);">
+                        Loading...</div>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="bookingEmergencyName">Emergency Contact Name (optional)</label>
+                        <input id="bookingEmergencyName" class="form-input" type="text">
+                    </div>
+                    <div class="form-group">
+                        <label for="bookingEmergencyPhone">Emergency Contact Phone (optional)</label>
+                        <input id="bookingEmergencyPhone" class="form-input" type="tel">
+                    </div>
+                </div>
+                <label style="display:flex; gap:0.5rem; align-items:flex-start; margin-top:0.5rem;">
+                    <input id="bookingConsent" type="checkbox" style="margin-top:0.2rem;">
+                    <span style="font-size:0.9rem; color:var(--text-secondary);">I consent to NexusHealth privacy policy
+                        and appointment processing terms.</span>
+                </label>
+                <div style="margin-top:1rem; text-align:right;">
+                    <button class="btn btn-primary btn-large" onclick="openBookingReview()" id="confirmBtn"
+                        disabled>Review Booking</button>
                 </div>
             </div>
 
@@ -1561,7 +1669,8 @@
                         <tbody id="paymentHistoryTableBody">
                             <tr style="text-align:center;">
                                 <td colspan="6" style="padding:2rem; color:var(--text-muted);">
-                                    <span class="material-symbols-outlined" style="font-size:48px; display:block; margin-bottom:0.5rem;">payment</span>
+                                    <span class="material-symbols-outlined"
+                                        style="font-size:48px; display:block; margin-bottom:0.5rem;">payment</span>
                                     Loading payment history...
                                 </td>
                             </tr>
@@ -1587,7 +1696,8 @@
                         <tbody id="prescriptionBillsTableBody">
                             <tr style="text-align:center;">
                                 <td colspan="6" style="padding:2rem; color:var(--text-muted);">
-                                    <span class="material-symbols-outlined" style="font-size:48px; display:block; margin-bottom:0.5rem;">receipt_long</span>
+                                    <span class="material-symbols-outlined"
+                                        style="font-size:48px; display:block; margin-bottom:0.5rem;">receipt_long</span>
                                     Loading prescription bills...
                                 </td>
                             </tr>
@@ -1716,21 +1826,24 @@
     <div class="modal-overlay" id="receiptModal">
         <div class="modal-content" style="max-width:580px; text-align:left;">
             <div
-                style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px dashed #E5E7EB; padding-bottom:1.25rem; margin-bottom:1.25rem;">
+                style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px dashed var(--border-color); padding-bottom:1.25rem; margin-bottom:1.25rem;">
                 <div>
-                    <h2 style="color:#0066FF; margin-bottom:0.35rem;">NexusHealth</h2>
-                    <p style="font-size:0.82rem; color:#6B7280;">123 Wellness Ave, Suite 400<br>Healthcare City, HC
+                    <h2 style="color:var(--primary-medical-blue); margin-bottom:0.35rem;">NexusHealth</h2>
+                    <p style="font-size:0.82rem; color:var(--text-muted);">123 Wellness Ave, Suite 400<br>Healthcare
+                        City, HC
                         90210</p>
                 </div>
                 <div style="text-align:right;">
                     <h3 style="font-size:1.1rem;">DIGITAL RECEIPT</h3>
-                    <p style="font-size:0.82rem; color:#6B7280;" id="receiptIdText">Receipt #REC-10492</p>
+                    <p style="font-size:0.82rem; color:var(--text-muted);" id="receiptIdText">Receipt #REC-10492</p>
                 </div>
             </div>
-            <p style="font-size:0.9rem; margin-bottom:0.4rem;"><strong>Patient:</strong> <span id="receiptPatient">—</span></p>
-            <p style="font-size:0.9rem; margin-bottom:1.25rem;"><strong>Date:</strong> <span id="receiptDate">—</span></p>
+            <p style="font-size:0.9rem; margin-bottom:0.4rem;"><strong>Patient:</strong> <span
+                    id="receiptPatient">—</span></p>
+            <p style="font-size:0.9rem; margin-bottom:1.25rem;"><strong>Date:</strong> <span id="receiptDate">—</span>
+            </p>
             <table style="width:100%; border-collapse:collapse; margin-bottom:1.5rem;">
-                <tr style="border-bottom:1px solid #E5E7EB;">
+                <tr style="border-bottom:1px solid var(--border-color);">
                     <th style="text-align:left; padding:0.4rem 0;">Description</th>
                     <th style="text-align:right; padding:0.4rem 0;">Amount</th>
                 </tr>
@@ -1738,9 +1851,11 @@
                     <td style="padding:0.9rem 0;" id="receiptDesc">—</td>
                     <td style="text-align:right; padding:0.9rem 0;" id="receiptAmount">—</td>
                 </tr>
-                <tr style="border-top:2px solid #E5E7EB;">
+                <tr style="border-top:2px solid var(--border-color);">
                     <td style="padding:0.9rem 0; font-weight:700; text-align:right;">Total Paid</td>
-                    <td style="text-align:right; padding:0.9rem 0; font-weight:700; color:#059669;" id="receiptTotal">—</td>
+                    <td style="text-align:right; padding:0.9rem 0; font-weight:700; color:var(--success-soft-green);"
+                        id="receiptTotal">—
+                    </td>
                 </tr>
             </table>
             <div style="text-align:center; display:flex; gap:0.75rem; justify-content:center;">
@@ -1755,10 +1870,33 @@
         <div class="modal-content">
             <span class="material-symbols-outlined modal-icon">check_circle</span>
             <h2 style="margin-bottom:0.75rem;">Booking Confirmed!</h2>
-            <p style="color:#6B7280; margin-bottom:2rem;">Your appointment has been successfully scheduled. A
-                confirmation has been sent to your email.</p>
+            <p style="color:var(--text-muted); margin-bottom:0.5rem;">Your appointment has been successfully scheduled.
+            </p>
+            <p id="bookingConfirmationNo" style="font-weight:700; margin-bottom:1rem; color:var(--text-primary);">
+                Confirmation #: -
+            </p>
+            <div style="display:flex; gap:0.6rem; justify-content:center; margin-bottom:1.25rem; flex-wrap:wrap;">
+                <a id="addGoogleCalendarLink" href="#" target="_blank" class="btn btn-outline"
+                    style="text-decoration:none;">Add to Google Calendar</a>
+                <a id="addOutlookCalendarLink" href="#" target="_blank" class="btn btn-outline"
+                    style="text-decoration:none;">Add to Outlook</a>
+            </div>
             <button class="btn btn-primary btn-large" onclick="closeModal('bookingModal'); resetTab('overview')">Go to
                 Dashboard</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="bookingReviewModal">
+        <div class="modal-content" style="max-width:640px; text-align:left;">
+            <h2 style="margin-bottom:0.75rem;">Review Booking Summary</h2>
+            <div id="bookingReviewSummary"
+                style="border:1px solid var(--border-color); border-radius:10px; padding:1rem; margin-bottom:1rem; background:var(--bg-light-gray);">
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.6rem;">
+                <button class="btn btn-outline" onclick="closeModal('bookingReviewModal')">Edit Details</button>
+                <button class="btn btn-outline" onclick="cancelBookingFlow()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmBookingFromReview()">Confirm and Continue</button>
+            </div>
         </div>
     </div>
 
@@ -1766,15 +1904,20 @@
     <div class="modal-overlay" id="paymentModal">
         <div class="modal-content" style="max-width:420px;">
             <h2 style="margin-bottom:0.5rem;">Complete Payment 💳</h2>
-            <p id="paymentModalSubtitle" style="color:#6B7280; margin-bottom:1.5rem; font-size:0.9rem;">Enter your card details to book this appointment</p>
-            
+            <p id="paymentModalSubtitle" style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">Enter
+                your card
+                details to book this appointment</p>
+
             <!-- Appointment Fee Display -->
-            <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:12px; margin-bottom:1.5rem;">
-                <div style="display:flex; justify-content:space-between; color:rgba(255,255,255,0.7); margin-bottom:8px;">
+            <div
+                style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:12px; margin-bottom:1.5rem;">
+                <div
+                    style="display:flex; justify-content:space-between; color:rgba(255,255,255,0.7); margin-bottom:8px;">
                     <span id="paymentPrimaryLabel">Appointment Fee:</span>
                     <span id="appointmentFeeDisplay" class="text-primary">Rs. 500</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; color:rgba(255,255,255,0.9); font-weight:600; font-size:1.1rem;">
+                <div
+                    style="display:flex; justify-content:space-between; color:rgba(255,255,255,0.9); font-weight:600; font-size:1.1rem;">
                     <span>Total Amount:</span>
                     <span id="totalAmountDisplay" class="text-primary">Rs. 500</span>
                 </div>
@@ -1784,38 +1927,51 @@
             <form id="paymentForm" onsubmit="handlePaymentSubmit(event)">
                 <!-- Cardholder Name -->
                 <div style="margin-bottom:1rem;">
-                    <label style="display:block; color:rgba(255,255,255,0.8); font-weight:500; margin-bottom:0.35rem; font-size:0.9rem;">Cardholder Name</label>
+                    <label
+                        style="display:block; color:rgba(255,255,255,0.8); font-weight:500; margin-bottom:0.35rem; font-size:0.9rem;">Cardholder
+                        Name</label>
                     <input type="text" id="cardholderName" placeholder="John Doe" class="payment-input" maxlength="100">
                     <span id="cardholderNameError" class="payment-error"></span>
                 </div>
 
                 <!-- Card Number -->
                 <div style="margin-bottom:1rem;">
-                    <label style="display:block; color:rgba(255,255,255,0.8); font-weight:500; margin-bottom:0.35rem; font-size:0.9rem;">Card Number</label>
-                    <input type="text" id="cardNumber" placeholder="4532 0151 1283 0366" class="payment-input" maxlength="19" inputmode="numeric" oninput="formatCardNumber(event)">
+                    <label
+                        style="display:block; color:rgba(255,255,255,0.8); font-weight:500; margin-bottom:0.35rem; font-size:0.9rem;">Card
+                        Number</label>
+                    <input type="text" id="cardNumber" placeholder="4532 0151 1283 0366" class="payment-input"
+                        maxlength="19" inputmode="numeric" oninput="formatCardNumber(event)">
                     <span id="cardNumberError" class="payment-error"></span>
                 </div>
 
                 <!-- Expiry Date & CVV (side by side) -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
                     <div>
-                        <label style="display:block; color:rgba(255,255,255,0.8); font-weight:500; margin-bottom:0.35rem; font-size:0.9rem;">Expiry Date</label>
-                        <input type="text" id="expiryDate" placeholder="MM/YY" class="payment-input" maxlength="5" inputmode="numeric" oninput="formatExpiryDate(event)">
+                        <label
+                            style="display:block; color:rgba(255,255,255,0.8); font-weight:500; margin-bottom:0.35rem; font-size:0.9rem;">Expiry
+                            Date</label>
+                        <input type="text" id="expiryDate" placeholder="MM/YY" class="payment-input" maxlength="5"
+                            inputmode="numeric" oninput="formatExpiryDate(event)">
                         <span id="expiryDateError" class="payment-error"></span>
                     </div>
                     <div>
-                        <label style="display:block; color:rgba(255,255,255,0.8); font-weight:500; margin-bottom:0.35rem; font-size:0.9rem;">CVV</label>
-                        <input type="text" id="cvv" placeholder="123" class="payment-input" maxlength="4" inputmode="numeric">
+                        <label
+                            style="display:block; color:rgba(255,255,255,0.8); font-weight:500; margin-bottom:0.35rem; font-size:0.9rem;">CVV</label>
+                        <input type="text" id="cvv" placeholder="123" class="payment-input" maxlength="4"
+                            inputmode="numeric">
                         <span id="cvvError" class="payment-error"></span>
                     </div>
                 </div>
 
                 <!-- Error Message -->
-                <div id="paymentErrorMsg" style="display:none; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; padding:10px; border-radius:6px; margin-bottom:1rem; font-size:0.85rem;"></div>
+                <div id="paymentErrorMsg"
+                    style="display:none; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; padding:10px; border-radius:6px; margin-bottom:1rem; font-size:0.85rem;">
+                </div>
 
                 <!-- Buttons -->
                 <div style="display:flex; gap:0.75rem;">
-                    <button type="button" class="btn btn-outline" style="flex:1;" onclick="closeModal('paymentModal')">Cancel</button>
+                    <button type="button" class="btn btn-outline" style="flex:1;"
+                        onclick="closeModal('paymentModal')">Cancel</button>
                     <button type="submit" id="payNowBtn" class="btn btn-primary" style="flex:1;">Pay Now</button>
                 </div>
             </form>
@@ -1870,7 +2026,15 @@
 
         // ─── Booking logic ──────────────────────────
         let selectedDocId = null;
+        let selectedDoctor = null;
+        let selectedDate = null;
         let selectedTime = null;
+        let selectedSlotCount = 0;
+        let currentCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        let monthAvailabilityMap = {};
+        let doctorDataMap = {};
+        let loadDoctorTimer = null;
+        let clinicSettingsCache = { appointmentFee: 0, address: '' };
 
         let paymentContext = {
             type: 'appointment',
@@ -1903,20 +2067,48 @@
             if (totalEl) totalEl.textContent = amountText;
         }
 
+        function debouncedLoadDoctors() {
+            if (loadDoctorTimer) {
+                clearTimeout(loadDoctorTimer);
+            }
+            loadDoctorTimer = setTimeout(loadDoctors, 250);
+        }
+
         function loadDoctors() {
-            fetch('/api/appointments/doctors', { credentials: 'include' })
+            const search = encodeURIComponent((document.getElementById('doctorSearchInput')?.value || '').trim());
+            const specialization = encodeURIComponent((document.getElementById('doctorSpecializationInput')?.value || '').trim());
+            const minRating = encodeURIComponent((document.getElementById('doctorRatingFilter')?.value || '').trim());
+            const availabilityStatus = encodeURIComponent((document.getElementById('doctorAvailabilityFilter')?.value || '').trim());
+
+            const url = `/api/appointments/doctors?search=${search}&specialization=${specialization}&minRating=${minRating}&availabilityStatus=${availabilityStatus}`;
+            fetch(url, { credentials: 'include' })
                 .then(res => res.json())
                 .then(data => {
                     const grid = document.getElementById('doctorGrid');
                     if (data.success && data.data && data.data.length > 0) {
                         grid.innerHTML = '';
+                        doctorDataMap = {};
                         data.data.forEach(doc => {
+                            doctorDataMap[String(doc.id)] = doc;
                             const imgUrl = doc.profilePicture ? doc.profilePicture : `https://images.unsplash.com/photo-155983${9734 + doc.id}-2b71ea197ec2?auto=format&fit=crop&w=150&q=80`;
+                            const rating = Number(doc.rating || 0).toFixed(1);
+                            const years = Number(doc.yearsExperience || 0);
+                            const fee = Number(doc.consultationFee || 0).toFixed(2);
+                            const duration = Number(doc.consultationDurationMin || 30);
+                            const status = doc.availabilityStatus || 'Available';
+                            const isUnavailable = String(status).toLowerCase() === 'unavailable';
                             grid.innerHTML += `
-                                <div class="doc-select-card" onclick="selectDoctor(this, ${doc.id})">
+                                <div class="doc-select-card" style="text-align:left;" onclick="selectDoctor(this, ${doc.id})">
                                     <img src="${imgUrl}" alt="Dr">
                                     <div class="doc-name">${doc.fullName}</div>
                                     <div class="doc-spec">${doc.specialization || 'General'}</div>
+                                    <div style="margin-top:0.4rem; font-size:0.85rem; color:#6B7280;">Experience: ${years} yrs</div>
+                                    <div style="font-size:0.85rem; color:#6B7280;">Rating: ${rating}</div>
+                                    <div style="font-size:0.85rem; color:#6B7280;">Hours: ${doc.workingHoursStart || '09:00'} - ${doc.workingHoursEnd || '17:00'}</div>
+                                    <div style="font-size:0.85rem; color:#6B7280;">Duration: ${duration} min</div>
+                                    <div style="font-size:0.85rem; color:var(--text-muted);">Fee: Rs. ${fee}</div>
+                                    <div style="margin-top:0.35rem; font-size:0.82rem; font-weight:600; color:${isUnavailable ? '#E5354B' : 'var(--success-soft-green)'};">${status}</div>
+                                    <button type="button" class="btn btn-primary" style="margin-top:0.7rem; width:100%;" ${isUnavailable ? 'disabled' : ''}>Book Appointment</button>
                                 </div>
                             `;
                         });
@@ -1930,8 +2122,313 @@
                 });
         }
 
+        function selectDoctor(el, docId) {
+            document.querySelectorAll('.doc-select-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+
+            selectedDocId = docId;
+            selectedDoctor = doctorDataMap[String(docId)] || null;
+            selectedDate = null;
+            selectedTime = null;
+            monthAvailabilityMap = {};
+            selectedSlotCount = 0;
+
+            const doctorLabel = document.getElementById('selectedDoctorLabel');
+            if (doctorLabel && selectedDoctor) {
+                doctorLabel.textContent = `${selectedDoctor.fullName} (${selectedDoctor.specialization || 'General'})`;
+            }
+
+            document.getElementById('bookingSelectionSection').style.display = 'block';
+            document.getElementById('patientBookingFormSection').style.display = 'none';
+            document.getElementById('selectedDateLabel').textContent = 'No date selected';
+            document.getElementById('slotsContainer').innerHTML = '<p style="color:var(--text-secondary);">Select an available date from the calendar.</p>';
+
+            loadMonthAvailability();
+            validateBooking();
+        }
+
+        function changeBookingMonth(offset) {
+            currentCalendarMonth = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + offset, 1);
+            if (selectedDocId) {
+                loadMonthAvailability();
+            }
+        }
+
+        function loadMonthAvailability() {
+            if (!selectedDocId) return;
+
+            const firstDay = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth(), 1);
+            const lastDay = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + 1, 0);
+            const startDate = formatDateISO(firstDay);
+            const endDate = formatDateISO(lastDay);
+
+            document.getElementById('calendarGrid').innerHTML = '<div style="grid-column:1/-1; text-align:center; color:var(--text-secondary);">Loading calendar...</div>';
+            document.getElementById('calendarMonthLabel').textContent = firstDay.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            fetch(`/api/appointments/doctors/${selectedDocId}/availability?startDate=${startDate}&endDate=${endDate}`, { credentials: 'include' })
+                .then(res => res.json())
+                .then(data => {
+                    monthAvailabilityMap = {};
+                    if (data && data.success && Array.isArray(data.data)) {
+                        data.data.forEach(row => {
+                            monthAvailabilityMap[row.date] = row;
+                        });
+                    }
+                    renderCalendar();
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('calendarGrid').innerHTML = '<div style="grid-column:1/-1; text-align:center; color:var(--icon-red-clr, #E5354B);">Failed to load calendar availability.</div>';
+                });
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const month = currentCalendarMonth.getMonth();
+            const year = currentCalendarMonth.getFullYear();
+            const firstDay = new Date(year, month, 1);
+            const firstWeekDay = firstDay.getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            let html = weekdays.map(d => `<div style="text-align:center; font-size:0.8rem; color:var(--text-muted); font-weight:600; padding:0.2rem 0;">${d}</div>`).join('');
+
+            for (let i = 0; i < firstWeekDay; i++) {
+                html += '<div></div>';
+            }
+
+            for (let day = 1; day <= lastDate; day++) {
+                const dateObj = new Date(year, month, day);
+                const dateIso = formatDateISO(dateObj);
+                const isPast = dateObj < today;
+                const info = monthAvailabilityMap[dateIso];
+                const availableSlots = info ? Number(info.availableSlots || 0) : 0;
+                const hasAvailability = !isPast && availableSlots > 0;
+                const isSelected = selectedDate === dateIso;
+                const bg = isSelected ? 'var(--primary-medical-blue)' : (hasAvailability ? 'var(--success-soft-green)' : 'var(--slot-bg)');
+                const text = isSelected ? '#FFFFFF' : (hasAvailability ? '#FFFFFF' : 'var(--text-muted)');
+                const border = isSelected ? '2px solid var(--primary-blue-hover)' : '1px solid var(--slot-border)';
+                const cursor = hasAvailability ? 'pointer' : 'not-allowed';
+
+                html += `
+                    <button type="button" aria-label="${dateIso}" onclick="selectCalendarDate('${dateIso}')"
+                        ${hasAvailability ? '' : 'disabled'}
+                        style="min-height:64px; border-radius:10px; border:${border}; background:${bg}; color:${text}; cursor:${cursor}; padding:0.35rem; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                        <span style="font-weight:700; line-height:1;">${day}</span>
+                        <span style="font-size:0.72rem; opacity:0.95; margin-top:0.2rem;">${hasAvailability ? availableSlots + ' slots' : 'Unavailable'}</span>
+                    </button>
+                `;
+            }
+
+            grid.innerHTML = html;
+        }
+
+        function selectCalendarDate(dateIso) {
+            selectedDate = dateIso;
+            selectedTime = null;
+            renderCalendar();
+            document.getElementById('selectedDateLabel').textContent = new Date(dateIso + 'T00:00:00').toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+            loadSlots();
+            validateBooking();
+        }
+
+        function loadSlots() {
+            const container = document.getElementById('slotsContainer');
+            if (!selectedDocId || !selectedDate) return;
+
+            container.innerHTML = '<p style="text-align:center; padding:1rem; color:var(--text-secondary);">Loading time slots...</p>';
+
+            fetch(`/api/appointments/booked?doctorId=${selectedDocId}&date=${selectedDate}`, { credentials: 'include' })
+                .then(res => res.json())
+                .then(data => {
+                    const booked = (data && data.success) ? (data.bookedSlots || data.slots || []) : [];
+                    renderSlots(booked);
+                })
+                .catch(err => {
+                    console.error(err);
+                    container.innerHTML = '<p style="text-align:center; color:var(--icon-red-clr, #E5354B);">Error loading slots</p>';
+                });
+        }
+
+        function generateWorkingSlotsForSelectedDoctor() {
+            if (!selectedDoctor) return [];
+            const start = (selectedDoctor.workingHoursStart || '09:00').slice(0, 5);
+            const end = (selectedDoctor.workingHoursEnd || '17:00').slice(0, 5);
+            const duration = Number(selectedDoctor.consultationDurationMin || 30);
+
+            const slots = [];
+            let current = toMinutes(start);
+            const endMinutes = toMinutes(end);
+            while (current + duration <= endMinutes) {
+                slots.push(toHHMM(current));
+                current += duration;
+            }
+            return slots;
+        }
+
+        function renderSlots(bookedSlots) {
+            const container = document.getElementById('slotsContainer');
+            const allSlots = generateWorkingSlotsForSelectedDoctor();
+
+            if (!allSlots.length) {
+                container.innerHTML = '<p style="color:var(--icon-red-clr, #E5354B);">No slots available for this doctor schedule.</p>';
+                return;
+            }
+
+            const bookedSet = new Set((bookedSlots || []).map(normalizeSlot));
+            const availableCount = allSlots.filter(t => !bookedSet.has(normalizeSlot(t))).length;
+            selectedSlotCount = availableCount;
+
+            let html = '<div class="slot-grid">';
+            allSlots.forEach(t => {
+                const isBooked = bookedSet.has(normalizeSlot(t));
+                const isSelected = selectedTime === t;
+                const limited = !isBooked && availableCount <= 2;
+                const bg = isBooked ? 'var(--slot-bg)' : (isSelected ? 'var(--primary-medical-blue)' : (limited ? '#F59E0B' : 'var(--success-soft-green)'));
+                const color = isBooked ? 'var(--text-muted)' : '#FFFFFF';
+                const status = isBooked ? 'Booked' : (limited ? 'Limited' : 'Available');
+
+                html += `
+                    <button type="button" class="time-slot ${isBooked ? 'disabled' : ''} ${isSelected ? 'selected' : ''}" ${isBooked ? 'disabled' : ''}
+                        onclick="selectSlot('${t}')"
+                        style="background:${bg}; color:${color}; border:${isSelected ? '2px solid var(--primary-blue-hover)' : '1px solid var(--slot-border)'};">
+                        <span>${t}</span>
+                        <small style="display:block; font-size:0.72rem; opacity:0.95;">${status}</small>
+                    </button>
+                `;
+            });
+            html += '</div>';
+
+            container.innerHTML = html;
+            if (availableCount > 0) {
+                document.getElementById('patientBookingFormSection').style.display = 'block';
+            }
+        }
+
+        function selectSlot(slotTime) {
+            selectedTime = slotTime;
+            loadSlots();
+            validateBooking();
+        }
+
+        function validateBooking() {
+            const hasCore = !!(selectedDocId && selectedDate && selectedTime);
+            const consentChecked = !!document.getElementById('bookingConsent')?.checked;
+            const name = (document.getElementById('bookingPatientName')?.value || '').trim();
+            const email = (document.getElementById('bookingPatientEmail')?.value || '').trim();
+            const phone = (document.getElementById('bookingPatientPhone')?.value || '').trim();
+            const phoneOk = /^\d{10}$/.test(phone);
+            const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+            document.getElementById('confirmBtn').disabled = !(hasCore && consentChecked && name.length >= 3 && emailOk && phoneOk);
+        }
+
+        function updateMedicalHistorySnapshot(patient) {
+            const history = [];
+            if (patient?.bloodType) history.push(`Blood Type: ${patient.bloodType}`);
+            if (patient?.gender) history.push(`Gender: ${patient.gender}`);
+            if (patient?.dateOfBirth) history.push(`DOB: ${patient.dateOfBirth}`);
+            const historyEl = document.getElementById('bookingMedicalHistory');
+            if (!historyEl) return;
+            historyEl.textContent = history.length ? history.join(' | ') : 'No medical history fields available.';
+        }
+
+        function openBookingReview() {
+            validateBooking();
+            if (document.getElementById('confirmBtn').disabled) {
+                showSavedToast('Please complete all required booking fields');
+                return;
+            }
+
+            const review = document.getElementById('bookingReviewSummary');
+            const amountText = document.getElementById('totalAmountDisplay')?.textContent || 'Rs. 0.00';
+            const clinicAddress = clinicSettingsCache.address || 'Address not configured';
+            const duration = selectedDoctor?.consultationDurationMin || 30;
+
+            review.innerHTML = `
+                <p><strong>Doctor:</strong> ${selectedDoctor?.fullName || '-'} (${selectedDoctor?.specialization || 'General'})</p>
+                <p><strong>Date and Time:</strong> ${selectedDate || '-'} ${selectedTime || ''}</p>
+                <p><strong>Clinic Location:</strong> ${clinicAddress}</p>
+                <p><strong>Consultation Fee:</strong> ${amountText}</p>
+                <p><strong>Patient:</strong> ${(document.getElementById('bookingPatientName').value || '').trim()} (${(document.getElementById('bookingPatientPhone').value || '').trim()})</p>
+                <p><strong>Duration:</strong> ${duration} minutes</p>
+                <p><strong>Symptoms:</strong> ${(document.getElementById('bookingSymptoms').value || '').trim() || 'N/A'}</p>
+            `;
+
+            document.getElementById('bookingReviewModal').classList.add('active');
+        }
+
+        async function confirmBookingFromReview() {
+            document.getElementById('bookingReviewModal').classList.remove('active');
+
+            if (window.reschedulingAppointmentId) {
+                // If rescheduling, skip the payment logic completely
+                proceedWithBooking();
+                return;
+            }
+
+            paymentContext = { type: 'appointment', invoiceId: null };
+            resetPaymentModalUI();
+            await refreshAppointmentFeeDisplay();
+
+            setPaymentModalPurpose({
+                subtitle: 'Enter your card details to book this appointment',
+                primaryLabel: 'Appointment Fee:',
+                amountText: (document.getElementById('totalAmountDisplay') && document.getElementById('totalAmountDisplay').textContent) ? document.getElementById('totalAmountDisplay').textContent : 'Rs. 0.00'
+            });
+
+            document.getElementById('paymentModal').classList.add('active');
+        }
+
+        function cancelBookingFlow() {
+            document.getElementById('bookingReviewModal').classList.remove('active');
+            selectedDate = null;
+            selectedTime = null;
+            document.getElementById('patientBookingFormSection').style.display = 'none';
+            document.getElementById('slotsContainer').innerHTML = '<p style="color:var(--text-secondary);">Select another date and time slot.</p>';
+            renderCalendar();
+            validateBooking();
+        }
+
+        function formatDateISO(d) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function toMinutes(hhmm) {
+            const parts = String(hhmm || '00:00').split(':');
+            const h = Number(parts[0] || 0);
+            const m = Number(parts[1] || 0);
+            return (h * 60) + m;
+        }
+
+        function toHHMM(minutes) {
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function normalizeSlot(time) {
+            const text = String(time || '').trim().toUpperCase();
+            if (/^\d{2}:\d{2}$/.test(text)) return text;
+            const match = text.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
+            if (!match) return text;
+            let hour = Number(match[1]);
+            const minute = Number(match[2]);
+            const ampm = match[3];
+            if (ampm === 'PM' && hour < 12) hour += 12;
+            if (ampm === 'AM' && hour === 12) hour = 0;
+            return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+        }
+
         // Session Management (cookie-based HttpSession)
-        
+
         /**
          * Helper function to create fetch options.
          * Automatically includes credentials for cookie-based sessions and per-tab sessionId.
@@ -1949,7 +2446,7 @@
             }
             return options;
         }
-        
+
         /**
          * Handle logout: invalidate session and clear storage.
          */
@@ -1963,15 +2460,10 @@
             }
         }
 
-        // Set min date to today
         document.addEventListener("DOMContentLoaded", () => {
-            const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
-            const dateInput = document.getElementById('appointment-date');
-            dateInput.min = today;
-            dateInput.value = today;
-
             // Load the current appointment fee for the payment modal display.
             refreshAppointmentFeeDisplay();
+            refreshClinicSettings();
 
             // Set up payment input listeners for real-time validation
             document.getElementById('cardholderName').addEventListener('blur', validateCardholderName);
@@ -1992,7 +2484,30 @@
             document.getElementById('cvv').addEventListener('input', () => {
                 document.getElementById('cvvError').textContent = '';
             });
+
+            ['bookingPatientName', 'bookingPatientEmail', 'bookingPatientPhone', 'bookingConsent'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', validateBooking);
+                    el.addEventListener('change', validateBooking);
+                }
+            });
         });
+
+        async function refreshClinicSettings() {
+            try {
+                const res = await fetch('/api/appointments/clinic-settings', { credentials: 'include' });
+                const data = await res.json();
+                if (data && data.success && data.data) {
+                    clinicSettingsCache = {
+                        appointmentFee: Number(data.data.appointmentFee || 0),
+                        address: data.data.address || ''
+                    };
+                }
+            } catch (e) {
+                console.warn('Could not load clinic settings:', e);
+            }
+        }
 
         // ─── Appointment Fee (live) ─────────────────
         async function refreshAppointmentFeeDisplay() {
@@ -2019,96 +2534,8 @@
             }
         }
 
-        function selectDoctor(el, docId) {
-            document.querySelectorAll('.doc-select-card').forEach(c => c.classList.remove('selected'));
-            el.classList.add('selected');
-            selectedDocId = docId;
-            selectedTime = null;
-            document.getElementById('booking-slots-section').classList.add('visible');
-            validateBooking();
-            loadSlots();
-        }
 
-        function onDateChange() {
-            if (selectedDocId) {
-                selectedTime = null;
-                validateBooking();
-                loadSlots();
-            }
-        }
 
-        function loadSlots() {
-            const date = document.getElementById('appointment-date').value;
-            const container = document.getElementById('slotsContainer');
-            if (!date) return;
-            container.innerHTML = '<p style="text-align:center; padding: 1rem;">Loading time slots...</p>';
-
-            fetch(`/api/appointments/booked?doctorId=${selectedDocId}&date=${date}`, { credentials: 'include' })
-                .then(res => res.json())
-                .then(data => {
-                    const booked = data.success ? data.slots : [];
-                    renderSlots(booked);
-                })
-                .catch(err => {
-                    console.error(err);
-                    container.innerHTML = '<p style="text-align:center; color:red;">Error loading slots</p>';
-                });
-        }
-
-        function renderSlots(bookedSlots) {
-            const container = document.getElementById('slotsContainer');
-            const morningSlots = ["09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM"];
-            const afternoonSlots = ["01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM"];
-
-            let html = '<p class="slot-label">Morning Slots</p><div class="slot-grid">';
-            morningSlots.forEach(t => {
-                const isBooked = bookedSlots.includes(t);
-                const cls = isBooked ? 'time-slot disabled' : 'time-slot';
-                const onClick = isBooked ? '' : 'onclick="selectSlot(this)"';
-                html += `<div class="${cls}" ${onClick}>${t}</div>`;
-            });
-            html += '</div>';
-
-            html += '<p class="slot-label">Afternoon Slots</p><div class="slot-grid">';
-            afternoonSlots.forEach(t => {
-                const isBooked = bookedSlots.includes(t);
-                const cls = isBooked ? 'time-slot disabled' : 'time-slot';
-                const onClick = isBooked ? '' : 'onclick="selectSlot(this)"';
-                html += `<div class="${cls}" ${onClick}>${t}</div>`;
-            });
-            html += '</div>';
-
-            container.innerHTML = html;
-        }
-
-        function selectSlot(el) {
-            if (el.classList.contains('disabled')) return;
-            document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-            el.classList.add('selected');
-            selectedTime = el.innerText;
-            validateBooking();
-        }
-
-        function validateBooking() {
-            document.getElementById('confirmBtn').disabled = !(selectedDocId && selectedTime && document.getElementById('appointment-date').value);
-        }
-
-        async function confirmBooking() {
-            paymentContext = { type: 'appointment', invoiceId: null };
-            resetPaymentModalUI();
-
-            // Ensure the modal shows the latest fee before user pays.
-            await refreshAppointmentFeeDisplay();
-
-            setPaymentModalPurpose({
-                subtitle: 'Enter your card details to book this appointment',
-                primaryLabel: 'Appointment Fee:',
-                amountText: (document.getElementById('totalAmountDisplay') && document.getElementById('totalAmountDisplay').textContent) ? document.getElementById('totalAmountDisplay').textContent : 'Rs. 0.00'
-            });
-
-            // Open payment modal
-            document.getElementById('paymentModal').classList.add('active');
-        }
 
         function openInvoicePayment(invoiceId, totalAmount) {
             const amountNum = Number(totalAmount);
@@ -2309,7 +2736,7 @@
         // Format expiry date with slash
         function formatExpiryDate(event) {
             let value = event.target.value.replace(/\D/g, '');
-            
+
             if (value.length >= 2) {
                 value = value.slice(0, 2) + '/' + value.slice(2, 4);
             }
@@ -2397,7 +2824,7 @@
             return fetch(`/api/appointments/booked?doctorId=${doctorId}&date=${date}`, { credentials: 'include' })
                 .then(res => res.json())
                 .then(data => {
-                    const bookedSlots = data.success ? data.slots : [];
+                    const bookedSlots = data.success ? (data.bookedSlots || data.slots || []) : [];
                     return !bookedSlots.includes(time);
                 })
                 .catch(err => {
@@ -2408,7 +2835,7 @@
 
         // Proceed with booking after payment validation
         function proceedWithBooking() {
-            const date = document.getElementById('appointment-date').value;
+            const date = selectedDate;
             const btn = document.getElementById('payNowBtn');
             btn.disabled = true;
             btn.innerText = "Processing...";
@@ -2417,7 +2844,7 @@
             verifySlotAvailability(selectedDocId, date, selectedTime).then(isAvailable => {
                 if (!isAvailable) {
                     // Slot no longer available
-                    document.getElementById('paymentErrorMsg').innerHTML = 
+                    document.getElementById('paymentErrorMsg').innerHTML =
                         '<div style="margin-bottom: 1rem;"><strong>❌ Time slot is no longer available</strong></div>' +
                         '<p style="font-size: 0.85rem; margin-bottom: 1rem;">Another patient booked this slot while you were completing payment.</p>' +
                         '<button onclick="retryBooking()" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500;">← Go Back & Select Another Slot</button>';
@@ -2432,8 +2859,21 @@
                 formData.append('doctorId', selectedDocId);
                 formData.append('date', date);
                 formData.append('time', selectedTime);
+                formData.append('symptoms', (document.getElementById('bookingSymptoms').value || '').trim());
+                formData.append('preferredLanguage', document.getElementById('bookingLanguage').value || 'English');
+                formData.append('emergencyContactName', (document.getElementById('bookingEmergencyName').value || '').trim());
+                formData.append('emergencyContactPhone', (document.getElementById('bookingEmergencyPhone').value || '').trim());
+                formData.append('consentAccepted', document.getElementById('bookingConsent').checked ? 'true' : 'false');
 
-                fetch('/api/appointments/book', {
+                let endpoint = '/api/appointments/book';
+                if (window.reschedulingAppointmentId) {
+                    endpoint = '/api/appointments/' + window.reschedulingAppointmentId + '/reschedule';
+                    formData.delete('doctorId');
+                    formData.append('newDate', date);
+                    formData.append('newTime', selectedTime);
+                }
+
+                fetch(endpoint, {
                     method: 'POST',
                     body: formData,
                     credentials: 'include'
@@ -2443,16 +2883,42 @@
                         if (data.success) {
                             // Close payment modal and show success
                             document.getElementById('paymentModal').classList.remove('active');
+                            const appointmentId = data.appointmentId || '-';
+                            document.getElementById('bookingConfirmationNo').textContent = `Confirmation #: ${appointmentId}`;
+
+                            const doctorName = encodeURIComponent(selectedDoctor?.fullName || 'Doctor');
+                            const details = encodeURIComponent(`Consultation with ${selectedDoctor?.fullName || 'Doctor'} - ${selectedDoctor?.specialization || 'General'}`);
+                            const startDateTime = encodeURIComponent(`${selectedDate.replace(/-/g, '')}T${(selectedTime || '00:00').replace(':', '')}00`);
+                            const endDateTime = encodeURIComponent(`${selectedDate.replace(/-/g, '')}T${(selectedTime || '00:00').replace(':', '')}00`);
+                            document.getElementById('addGoogleCalendarLink').href = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${doctorName}&dates=${startDateTime}/${endDateTime}&details=${details}`;
+                            document.getElementById('addOutlookCalendarLink').href = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${doctorName}&body=${details}`;
+
                             document.getElementById('bookingModal').classList.add('active');
-                            
+
                             // Reset booking form
                             selectedDocId = null;
+                            selectedDoctor = null;
+                            selectedDate = null;
                             selectedTime = null;
                             document.querySelectorAll('.doc-select-card').forEach(c => c.classList.remove('selected'));
-                            document.getElementById('booking-slots-section').classList.remove('visible');
+                            document.getElementById('bookingSelectionSection').style.display = 'none';
+                            document.getElementById('patientBookingFormSection').style.display = 'none';
+
+                            if (window.reschedulingAppointmentId) {
+                                document.getElementById('bookingConfirmationNo').textContent = 'Appointment Rescheduled Successfully!';
+                                window.reschedulingAppointmentId = null;
+                                document.querySelector('#tab-booking .page-hero-text h1').innerHTML = "Book an Appointment";
+                                document.querySelector('#tab-booking .page-hero-text p').innerHTML = "Search doctors, view live availability, and confirm your visit.";
+                            }
+
+                            document.getElementById('bookingSymptoms').value = '';
+                            document.getElementById('bookingEmergencyName').value = '';
+                            document.getElementById('bookingEmergencyPhone').value = '';
+                            document.getElementById('bookingConsent').checked = false;
+                            validateBooking();
                             loadPatientData();
                         } else {
-                            document.getElementById('paymentErrorMsg').innerHTML = 
+                            document.getElementById('paymentErrorMsg').innerHTML =
                                 '<div style="margin-bottom: 1rem;"><strong>❌ Booking Failed</strong></div>' +
                                 '<p style="font-size: 0.85rem; margin-bottom: 1rem;">' + (data.message || 'An error occurred during booking. Please try again.') + '</p>' +
                                 '<button onclick="retryBooking()" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500;">← Back to Slot Selection</button>';
@@ -2463,7 +2929,7 @@
                     })
                     .catch(err => {
                         console.error(err);
-                        document.getElementById('paymentErrorMsg').innerHTML = 
+                        document.getElementById('paymentErrorMsg').innerHTML =
                             '<div style="margin-bottom: 1rem;"><strong>❌ Connection Error</strong></div>' +
                             '<p style="font-size: 0.85rem; margin-bottom: 1rem;">Failed to connect to server. Please check your internet connection and try again.</p>' +
                             '<button onclick="retryBooking()" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500;">← Back to Slot Selection</button>';
@@ -2495,18 +2961,18 @@
                         const doctorInfo = inv.doctorName ? ' (' + inv.doctorName + ')' : '';
                         document.getElementById('receiptIdText').innerText = 'Receipt #' + (inv.invoiceNumber || invoiceId);
                         document.getElementById('receiptPatient').innerText = inv.patientName || 'Unknown';
-                        document.getElementById('receiptDate').innerText = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A';
+                        document.getElementById('receiptDate').innerText = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
                         document.getElementById('receiptDesc').innerText = (inv.consultationType || 'Consultation') + doctorInfo;
                         document.getElementById('receiptAmount').innerText = 'Rs.' + (inv.totalAmount || 0).toFixed(2);
                         document.getElementById('receiptTotal').innerText = 'Rs.' + (inv.totalAmount || 0).toFixed(2);
                         document.getElementById('receiptModal').classList.add('active');
                     } else {
-                        alert('Failed to load receipt details');
+                        showSavedToast('Failed to load receipt details');
                     }
                 })
                 .catch(err => {
                     console.error('Error loading receipt:', err);
-                    alert('Error loading receipt');
+                    showSavedToast('Error loading receipt');
                 });
         }
 
@@ -2518,7 +2984,7 @@
         function loadPaymentHistory() {
             const tbody = document.getElementById('paymentHistoryTableBody');
             const rxTbody = document.getElementById('prescriptionBillsTableBody');
-            
+
             fetch('/api/patient/invoices', { credentials: 'include' })
                 .then(res => res.json())
                 .then(data => {
@@ -2530,7 +2996,7 @@
 
                     if (appointmentInvoices.length > 0) {
                         tbody.innerHTML = appointmentInvoices.map(inv => {
-                            const dateStr = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A';
+                            const dateStr = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
                             const statusClass = inv.status && inv.status.toLowerCase() === 'paid' ? 'status-paid' : 'status-unpaid';
                             const statusText = inv.status && inv.status.toLowerCase() === 'paid' ? 'Paid' : 'Unpaid';
                             const doctorName = inv.doctorName ? inv.doctorName : '—';
@@ -2567,7 +3033,7 @@
                     if (rxTbody) {
                         if (prescriptionInvoices.length > 0) {
                             rxTbody.innerHTML = prescriptionInvoices.map(inv => {
-                                const dateStr = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A';
+                                const dateStr = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
                                 const isPaid = inv.status && inv.status.toLowerCase() === 'paid';
                                 const statusClass = isPaid ? 'status-paid' : 'status-unpaid';
                                 const statusText = isPaid ? 'Paid' : 'Unpaid';
@@ -2641,7 +3107,7 @@
                 document.getElementById('optionsProfilePic').src = base64;
                 document.getElementById('navProfilePic').src = base64;
                 currentProfilePicBase64 = base64;
-                showSavedToast("Preview updated! Click Save Changes to commit.");
+                saveProfile();
             };
             reader.readAsDataURL(file);
         }
@@ -2689,7 +3155,7 @@
                     showSavedToast("Profile updated successfully!");
                     loadPatientData();
                 } else {
-                    alert("Failed: " + data.message);
+                    showSavedToast("Failed: " + data.message);
                 }
             });
         }
@@ -2700,11 +3166,11 @@
             const confirmPass = document.getElementById('settingsConfirmPass').value;
 
             if (newPass !== confirmPass) {
-                alert("New passwords do not match.");
+                showSavedToast("New passwords do not match.");
                 return;
             }
             if (!currentPass || !newPass) {
-                alert("Please fill in all password fields.");
+                showSavedToast("Please fill in all password fields.");
                 return;
             }
 
@@ -2725,7 +3191,7 @@
                     document.getElementById('settingsNewPass').value = '';
                     document.getElementById('settingsConfirmPass').value = '';
                 } else {
-                    alert("Failed: " + data.message);
+                    showSavedToast("Failed: " + data.message);
                 }
             });
         }
@@ -2817,6 +3283,16 @@
                         document.getElementById('settingsName').value = patient.fullName || '';
                         document.getElementById('settingsPhone').value = patient.phone || '';
 
+                        // Populate booking form auto-filled fields
+                        const bookingName = document.getElementById('bookingPatientName');
+                        const bookingEmail = document.getElementById('bookingPatientEmail');
+                        const bookingPhone = document.getElementById('bookingPatientPhone');
+                        if (bookingName) bookingName.value = patient.fullName || '';
+                        if (bookingEmail) bookingEmail.value = patient.email || '';
+                        if (bookingPhone) bookingPhone.value = (patient.phone || '').replace(/\D/g, '').slice(0, 10);
+                        updateMedicalHistorySnapshot(patient);
+                        validateBooking();
+
                         // Update page hero
                         const firstName = patient.fullName.split(' ')[0];
                         document.getElementById('welcomeMessage').textContent = `Welcome back, ${firstName}! 👋`;
@@ -2867,7 +3343,7 @@
                                         </div>
                                     </div>
                                     <div class="visit-actions">
-                                        <button class="btn btn-outline" style="font-size:0.82rem; padding:0.4rem 0.9rem;">Reschedule</button>
+                                        <button class="btn btn-outline" style="font-size:0.82rem; padding:0.4rem 0.9rem;" onclick="initiateReschedule(${visit.id || 0}, ${visit.doctorId || 0})">Reschedule</button>
                                     </div>
                                 </div>
                                 `;
@@ -2955,6 +3431,46 @@
                 document.getElementById('prescriptionsList').innerHTML =
                     '<p style="color:var(--text-muted); padding:1rem;">Could not load prescriptions.</p>';
             }
+        }
+
+        // ─── Reschedule Logic ───────────────────────
+        window.reschedulingAppointmentId = null;
+        function initiateReschedule(appointmentId, doctorId) {
+            if (!appointmentId || !doctorId) {
+                showSavedToast('Cannot reschedule this appointment due to missing ID.');
+                return;
+            }
+            window.reschedulingAppointmentId = appointmentId;
+
+            // Update UI tab appearance programmatically
+            document.querySelectorAll('.nav-tab').forEach(t => {
+                t.classList.remove('active');
+                if (t.textContent.includes('Book Appointment')) t.classList.add('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab-booking').classList.add('active');
+
+            // Adjust header
+            document.querySelector('#tab-booking .page-hero-text h1').innerHTML = "Reschedule Appointment 🗓️";
+            document.querySelector('#tab-booking .page-hero-text p').innerHTML = "Select a new date and time for your appointment.";
+
+            showSavedToast('Select a new time slot to reschedule.');
+
+            // Attempt to click the right doctor card
+            setTimeout(() => {
+                const docCard = Array.from(document.querySelectorAll('.doc-select-card')).find(c =>
+                    c.getAttribute('onclick') && c.getAttribute('onclick').includes('selectDoctor(this, ' + doctorId + ')')
+                );
+
+                if (docCard) {
+                    docCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    selectDoctor(docCard, doctorId);
+                } else if (doctorDataMap[String(doctorId)]) {
+                    // Fallback if card isn't visible
+                    const dummyEl = { classList: { add: () => { }, remove: () => { } } };
+                    selectDoctor(dummyEl, doctorId);
+                }
+            }, 300);
         }
 
         // Call loadPatientData explicitly from our own load setup

@@ -541,10 +541,13 @@
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                         <h3 style="font-size: 1.2rem;">Search Patient Records</h3>
-                        <div class="toolbar-search-wrap" style="width: 400px;">
-                            <span class="material-symbols-outlined toolbar-search-icon">search</span>
-                            <input type="text" class="toolbar-search-input"
-                                placeholder="Search by name, patient ID, phone, or DOB...">
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <div class="toolbar-search-wrap" style="width: 400px;">
+                                <span class="material-symbols-outlined toolbar-search-icon">search</span>
+                                <input id="patientSearchInput" type="text" class="toolbar-search-input"
+                                    placeholder="Search by name, patient ID, phone, or DOB..." autocomplete="off">
+                            </div>
+                            <button class="btn btn-outline" type="button" onclick="refreshPatients()">Refresh</button>
                         </div>
                     </div>
 
@@ -784,9 +787,9 @@
                 <div class="form-group">
                     <label class="form-label">Gender</label>
                     <select class="form-select" id="registerGender">
-                        <option>Male</option>
-                        <option>Female</option>
-                        <option>Other</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
                     </select>
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
@@ -804,6 +807,89 @@
                 <button class="btn btn-primary"
                     onclick="registerNewPatient()">Complete
                     Registration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Patient Details Modal -->
+    <div class="modal-overlay" id="updatePatientModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
+        <div class="modal-content"
+            style="background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); padding: 2.5rem; border-radius: var(--border-radius-md); max-width: 680px; width: 92%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.3rem;">Update Patient Details</h3>
+                <span class="material-symbols-outlined" style="cursor: pointer; color: var(--text-secondary);"
+                    onclick="closeModal('updatePatientModal')">close</span>
+            </div>
+
+            <input type="hidden" id="updatePatientUserId">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-input" id="updatePatientFullName" placeholder="Patient full name" required>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" id="updatePatientEmail" placeholder="patient@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Contact Number</label>
+                    <input type="tel" class="form-input" id="updatePatientPhone" placeholder="+1 (xxx) xxx-xxxx" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date of Birth</label>
+                    <input type="date" class="form-input" id="updatePatientDOB" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gender</label>
+                    <select class="form-select" id="updatePatientGender" required>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Blood Type</label>
+                    <select class="form-select" id="updatePatientBloodType" required>
+                        <option>O+</option>
+                        <option>O-</option>
+                        <option>A+</option>
+                        <option>A-</option>
+                        <option>B+</option>
+                        <option>B-</option>
+                        <option>AB+</option>
+                        <option>AB-</option>
+                    </select>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Address</label>
+                    <textarea class="form-input" id="updatePatientAddress" rows="3" placeholder="Patient address" required></textarea>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                <button class="btn btn-outline" onclick="closeModal('updatePatientModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="savePatientUpdates()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal (in-page replacement for browser confirm()) -->
+    <div class="modal-overlay" id="confirmModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2100; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle"
+            style="background: var(--rcp-card-bg); border: 1px solid var(--rcp-card-border); padding: 1.75rem; border-radius: var(--border-radius-md); max-width: 520px; width: 92%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h3 id="confirmModalTitle" style="font-size: 1.15rem;">Confirm Action</h3>
+                <span class="material-symbols-outlined" style="cursor: pointer; color: var(--text-secondary);"
+                    onclick="document.getElementById('confirmModalCancel').click()">close</span>
+            </div>
+            <p id="confirmModalMessage" style="color: var(--text-secondary); margin-bottom: 1.5rem;">Are you sure?</p>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button class="btn btn-outline" id="confirmModalCancel" type="button">Cancel</button>
+                <button class="btn btn-primary" id="confirmModalOk" type="button">OK</button>
             </div>
         </div>
     </div>
@@ -1170,6 +1256,89 @@
             document.getElementById(modalId).style.display = 'none';
         }
 
+        // In-page confirm dialog (replaces browser confirm())
+        let __confirmModalActive = null;
+
+        function confirmInPage(message, options) {
+            const opts = options || {};
+            const okText = opts.okText || 'OK';
+            const cancelText = opts.cancelText || 'Cancel';
+
+            const overlay = document.getElementById('confirmModal');
+            const msgEl = document.getElementById('confirmModalMessage');
+            const okBtn = document.getElementById('confirmModalOk');
+            const cancelBtn = document.getElementById('confirmModalCancel');
+
+            if (!overlay || !msgEl || !okBtn || !cancelBtn) {
+                return Promise.resolve(window.confirm(message));
+            }
+
+            // If another confirm is open, close it as cancelled
+            if (__confirmModalActive && typeof __confirmModalActive.close === 'function') {
+                __confirmModalActive.close(false);
+            }
+
+            msgEl.textContent = String(message || 'Are you sure?');
+            okBtn.textContent = okText;
+            cancelBtn.textContent = cancelText;
+
+            overlay.style.display = 'flex';
+
+            return new Promise((resolve) => {
+                let closed = false;
+
+                function cleanup() {
+                    document.removeEventListener('keydown', onKeydown);
+                    overlay.removeEventListener('click', onOverlayClick);
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    __confirmModalActive = null;
+                }
+
+                function close(result) {
+                    if (closed) return;
+                    closed = true;
+                    overlay.style.display = 'none';
+                    cleanup();
+                    resolve(!!result);
+                }
+
+                function onOk(e) {
+                    e.preventDefault();
+                    close(true);
+                }
+
+                function onCancel(e) {
+                    e.preventDefault();
+                    close(false);
+                }
+
+                function onKeydown(e) {
+                    if (e.key === 'Escape') {
+                        close(false);
+                    }
+                }
+
+                function onOverlayClick(e) {
+                    if (e.target === overlay) {
+                        close(false);
+                    }
+                }
+
+                __confirmModalActive = { close: close };
+
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+                overlay.addEventListener('click', onOverlayClick);
+                document.addEventListener('keydown', onKeydown);
+
+                // Focus OK button for keyboard users
+                setTimeout(() => {
+                    try { okBtn.focus(); } catch (e) { /* ignore */ }
+                }, 0);
+            });
+        }
+
         // Options Image Upload
         function updateProfilePic(event) {
             const file = event.target.files[0];
@@ -1257,15 +1426,22 @@
         }
 
         // ==================== INITIALIZATION ====================
-        // Load receptionist profile on page load
-        (async function initializeDashboard() {
+        // NOTE: called from DOMContentLoaded at the bottom of this script.
+        async function initializeDashboard() {
             console.log("🚀 Initializing receptionist dashboard...");
             loadReceptionistProfile();
             loadAppointmentFee();
+
+            // Always start with the full list (prevents "no patients" due to stale/autofilled search text).
+            const searchInput = document.getElementById('patientSearchInput');
+            if (searchInput) {
+                searchInput.value = '';
+            }
             loadPatients();
+
             loadAppointmentsForToday();
             loadBills();
-        })();
+        }
 
         // ==================== CLINIC SETTINGS (FEE) ====================
         async function loadAppointmentFee() {
@@ -1342,12 +1518,164 @@
         }
 
         // ==================== PATIENT FUNCTIONS ====================
+        // Cache patient objects by userId for modal prefills and safe onclick handlers.
+        const patientCache = new Map();
+        let lastPatientSearchTerm = '';
+
+        function cachePatients(patients) {
+            patientCache.clear();
+            if (!Array.isArray(patients)) return;
+            patients.forEach(p => {
+                if (p && p.userId !== undefined && p.userId !== null) {
+                    patientCache.set(String(p.userId), p);
+                }
+            });
+        }
+
+        function getCachedPatient(userId) {
+            return patientCache.get(String(userId));
+        }
+
+        function isValidEmailClient(email) {
+            return /^[A-Za-z0-9+_.-]+@(.+)$/.test(email);
+        }
+
+        function isValidPhoneClient(phone) {
+            // Keep consistent with backend ValidationUtil (basic non-empty, len >= 7)
+            return !!phone && phone.trim().length >= 7;
+        }
+
+        function openUpdatePatientModal(userId) {
+            const patient = getCachedPatient(userId);
+            if (!patient) {
+                showToast('Patient data not available. Please refresh and try again.', true);
+                return;
+            }
+
+            document.getElementById('updatePatientUserId').value = patient.userId;
+            document.getElementById('updatePatientFullName').value = patient.fullName || '';
+            document.getElementById('updatePatientEmail').value = patient.email || '';
+            document.getElementById('updatePatientPhone').value = patient.phone || '';
+
+            const dob = patient.dateOfBirth && patient.dateOfBirth !== 'N/A' ? patient.dateOfBirth : '';
+            document.getElementById('updatePatientDOB').value = dob;
+
+            // DB expects: male/female/other. Normalize any legacy values (e.g., "Male").
+            const genderRaw = (patient.gender || 'male');
+            const genderNormalized = String(genderRaw).trim().toLowerCase();
+            const genderValue = (genderNormalized === 'male' || genderNormalized === 'female' || genderNormalized === 'other')
+                ? genderNormalized
+                : 'male';
+            document.getElementById('updatePatientGender').value = genderValue;
+            document.getElementById('updatePatientBloodType').value = patient.bloodType || 'O+';
+            document.getElementById('updatePatientAddress').value = patient.address || '';
+
+            openModal('updatePatientModal');
+        }
+
+        async function savePatientUpdates() {
+            const userId = parseInt(document.getElementById('updatePatientUserId').value, 10);
+            const fullName = document.getElementById('updatePatientFullName').value.trim();
+            const email = document.getElementById('updatePatientEmail').value.trim();
+            const phone = document.getElementById('updatePatientPhone').value.trim();
+            const dateOfBirth = document.getElementById('updatePatientDOB').value;
+            const gender = document.getElementById('updatePatientGender').value;
+            const bloodType = document.getElementById('updatePatientBloodType').value;
+            const address = document.getElementById('updatePatientAddress').value.trim();
+
+            if (!userId || userId <= 0) {
+                showToast('Invalid patient selected', true);
+                return;
+            }
+            if (!fullName || fullName.length < 3) {
+                showToast('Full name is required', true);
+                return;
+            }
+            if (!email || !isValidEmailClient(email)) {
+                showToast('Please enter a valid email address', true);
+                return;
+            }
+            if (!isValidPhoneClient(phone)) {
+                showToast('Please enter a valid phone number', true);
+                return;
+            }
+            if (!dateOfBirth) {
+                showToast('Date of birth is required', true);
+                return;
+            }
+            if (!gender) {
+                showToast('Gender is required', true);
+                return;
+            }
+            if (!bloodType) {
+                showToast('Blood type is required', true);
+                return;
+            }
+            if (!address || address.length < 5) {
+                showToast('Address is required', true);
+                return;
+            }
+
+            const params = new URLSearchParams({
+                userId: String(userId),
+                fullName,
+                email,
+                phone,
+                dateOfBirth,
+                gender,
+                bloodType,
+                address
+            });
+
+            try {
+                const response = await fetch('/api/receptionist/patients/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: params.toString(),
+                    credentials: 'include'
+                });
+
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const data = await response.json();
+                if (data && data.success) {
+                    closeModal('updatePatientModal');
+                    showToast('Patient details updated successfully');
+                    // Refresh list using latest search term
+                    if (lastPatientSearchTerm && lastPatientSearchTerm.length > 2) {
+                        loadPatients(lastPatientSearchTerm);
+                    } else {
+                        loadPatients();
+                    }
+                } else {
+                    showToast(data?.message || 'Failed to update patient details', true);
+                }
+            } catch (error) {
+                console.error('❌ Error updating patient details:', error);
+                showToast('Error updating patient details', true);
+            }
+        }
+
+        function quickBookPatient(userId) {
+            const patient = getCachedPatient(userId);
+            const name = patient && patient.fullName ? patient.fullName : 'patient';
+            switchTab('appointments', null);
+            showToast(`Quick-Booking activated for ${name}`);
+        }
+
         function loadPatients(searchTerm = null) {
             console.log("📋 Loading patients...");
             let url = "/api/receptionist/patients";
             if (searchTerm) {
                 url += "?search=" + encodeURIComponent(searchTerm);
             }
+
+            lastPatientSearchTerm = searchTerm || '';
 
             fetch(url, {
                 credentials: 'include'
@@ -1361,6 +1689,7 @@
                 })
                 .then(data => {
                     if (data.success && data.data) {
+                        cachePatients(data.data);
                         populatePatientTable(data.data);
                     } else {
                         showToast("Failed to load patients: " + data.message, true);
@@ -1370,6 +1699,16 @@
                     console.error("❌ Error loading patients:", error);
                     showToast("Error loading patients", true);
                 });
+        }
+
+        function refreshPatients() {
+            const input = document.getElementById('patientSearchInput');
+            const term = input ? input.value.trim() : '';
+            if (term) {
+                loadPatients(term);
+            } else {
+                loadPatients();
+            }
         }
 
         function populatePatientTable(patients) {
@@ -1392,9 +1731,9 @@
                     <td>${lastVisit}</td>
                     <td>
                         <button class="btn btn-outline" style="padding:0.3rem 0.6rem;"
-                            onclick="showToast('Update feature coming soon')">Update Details</button>
+                            onclick="openUpdatePatientModal(${patient.userId})">Update Details</button>
                         <button class="btn btn-primary" style="padding:0.3rem 0.6rem;"
-                            onclick="switchTab('appointments', null); showToast('Quick-Booking activated for ${patient.fullName}')">Book</button>
+                            onclick="quickBookPatient(${patient.userId})">Book</button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -1405,14 +1744,19 @@
         let searchTimeout;
         function onPatientSearch(event) {
             clearTimeout(searchTimeout);
-            const searchTerm = event.target.value;
-            if (searchTerm.length > 2) {
-                searchTimeout = setTimeout(() => {
-                    loadPatients(searchTerm);
-                }, 300);
-            } else if (searchTerm.length === 0) {
+            const searchTerm = (event && event.target && typeof event.target.value === 'string')
+                ? event.target.value.trim()
+                : '';
+
+            if (searchTerm.length === 0) {
                 loadPatients();
+                return;
             }
+
+            // Search for any non-empty term (1+ chars)
+            searchTimeout = setTimeout(() => {
+                loadPatients(searchTerm);
+            }, 300);
         }
 
         function registerNewPatient() {
@@ -1683,8 +2027,9 @@
                 });
         }
 
-        function cancelAppointmentConfirm(appointmentId) {
-            if (confirm("Are you sure you want to cancel this appointment?")) {
+        async function cancelAppointmentConfirm(appointmentId) {
+            const confirmed = await confirmInPage('Are you sure you want to cancel this appointment?');
+            if (confirmed) {
                 console.log('❌ Cancelling appointment', appointmentId);
 
                 fetch('/api/receptionist/appointments/' + appointmentId + '/cancel', {
@@ -1710,8 +2055,9 @@
             }
         }
 
-        function checkInAppointment(appointmentId) {
-            if (confirm("Mark patient as checked in?")) {
+        async function checkInAppointment(appointmentId) {
+            const confirmed = await confirmInPage('Mark patient as checked in?');
+            if (confirmed) {
                 console.log('✅ Checking in appointment', appointmentId);
 
                 fetch('/api/receptionist/appointments/' + appointmentId + '/check-in', {
@@ -1997,23 +2343,35 @@
             document.getElementById('billPrescriptionId').value = selected.prescriptionId;
             const subtotal = Number(selected.subtotal || 0);
             document.getElementById('billSubtotal').value = `Rs.${subtotal.toFixed(2)}`;
+            document.getElementById('billDiscount').value = '0';
             recalcBillTotals();
+        }
+
+        function parseMoneyValue(rawValue) {
+            const text = String(rawValue == null ? '' : rawValue).replace(/,/g, '');
+            const match = text.match(/-?\d+(?:\.\d+)?/);
+            if (!match) return 0;
+            const value = Number(match[0]);
+            return Number.isFinite(value) ? value : 0;
         }
 
         function recalcBillTotals() {
             const subtotalText = document.getElementById('billSubtotal').value || 'Rs.0.00';
-            const subtotal = Number(String(subtotalText).replace(/[^0-9.]/g, '')) || 0;
-            let discount = Number(document.getElementById('billDiscount').value || 0);
+            const subtotal = parseMoneyValue(subtotalText);
+            let discount = parseMoneyValue(document.getElementById('billDiscount').value || 0);
+            if (!Number.isFinite(discount)) discount = 0;
             if (discount < 0) discount = 0;
             if (discount > subtotal) discount = subtotal;
-            document.getElementById('billDiscount').value = discount;
+            discount = Math.round(discount * 100) / 100;
+            document.getElementById('billDiscount').value = String(discount);
             const total = subtotal - discount;
             document.getElementById('billTotal').value = `Rs.${total.toFixed(2)}`;
         }
 
         function generatePrescriptionBill() {
             const prescriptionId = Number(document.getElementById('billPrescriptionId').value || 0);
-            const discountAmount = Number(document.getElementById('billDiscount').value || 0);
+            recalcBillTotals();
+            const discountAmount = parseMoneyValue(document.getElementById('billDiscount').value || 0);
 
             if (!prescriptionId) {
                 showToast('Please select a prescription', true);
@@ -2022,7 +2380,7 @@
 
             const params = new URLSearchParams({
                 prescriptionId: prescriptionId,
-                discountAmount: discountAmount
+                discountAmount: String(discountAmount)
             });
 
             fetch('/api/receptionist/prescription-bills/generate', {
@@ -2218,10 +2576,9 @@
         /**
          * Remove receptionist profile picture
          */
-        function removeProfilePicture() {
-            if (!confirm('Are you sure you want to remove your profile picture?')) {
-                return;
-            }
+        async function removeProfilePicture() {
+            const confirmed = await confirmInPage('Are you sure you want to remove your profile picture?');
+            if (!confirmed) return;
 
             fetch('/api/receptionist/profile/picture', {
                 method: 'DELETE',
@@ -2246,7 +2603,7 @@
 
         // ==================== DATE FILTER FOR APPOINTMENTS ====================
         document.addEventListener('DOMContentLoaded', function() {
-            const dateInput = document.querySelector('input[type="date"]');
+            const dateInput = document.getElementById('appointmentDate');
             if (dateInput) {
                 dateInput.addEventListener('change', function() {
                     loadAppointments(this.value);
@@ -2254,10 +2611,13 @@
             }
 
             // Wire up search input
-            const searchInput = document.querySelector('.toolbar-search-input');
+            const searchInput = document.getElementById('patientSearchInput');
             if (searchInput) {
                 searchInput.addEventListener('input', onPatientSearch);
             }
+
+            // Kick off initial data loading after all declarations are initialized
+            initializeDashboard();
         });
     </script>
 </body>

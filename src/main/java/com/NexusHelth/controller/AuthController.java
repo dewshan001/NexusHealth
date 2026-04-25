@@ -41,14 +41,26 @@ public class AuthController {
                              HttpSession session,
                              RedirectAttributes redirectAttributes,
                              jakarta.servlet.http.HttpServletRequest request) {
+        String normalizedEmail = email == null ? "" : email.trim();
+
+        if (!ValidationUtil.isValidEmail(normalizedEmail)) {
+            redirectAttributes.addFlashAttribute("error", "Please enter a valid email address");
+            return "redirect:/login?authError=invalidEmail";
+        }
+
+        if (!ValidationUtil.isValidPassword(password)) {
+            redirectAttributes.addFlashAttribute("error", "Password must be between 6-128 characters");
+            return "redirect:/login?authError=invalidPassword";
+        }
+
         System.out.println("\n==================== LOGIN REQUEST ====================");
-        System.out.println("📧 Email: " + email);
+        System.out.println("📧 Email: " + normalizedEmail);
         System.out.println("🔐 Initial Session ID: " + session.getId());
         System.out.println("🔐 Is New Session: " + session.isNew());
         System.out.println("🔐 Request Session: " + request.getSession(false) != null);
         
         // Try to login as any user (admin, doctor, patient, etc.)
-        User user = userService.loginUser(email, password);
+        User user = userService.loginUser(normalizedEmail, password);
         
         if (user != null && user.getStatus().equals("active")) {
             // Store user in Spring's built-in HTTP session
@@ -78,10 +90,10 @@ public class AuthController {
             String encodedToken = URLEncoder.encode(tabToken, StandardCharsets.UTF_8);
             return "redirect:" + dashboardPath + "#tabToken=" + encodedToken;
         } else {
-            System.out.println("❌ Login failed for email: " + email);
+            System.out.println("❌ Login failed for email: " + normalizedEmail);
             System.out.println("==========================================================\n");
             redirectAttributes.addFlashAttribute("error", "Invalid email or password");
-            return "redirect:/login";
+            return "redirect:/login?authError=invalidCredentials";
         }
     }
     

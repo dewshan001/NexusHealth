@@ -959,8 +959,9 @@
                                             style="font-size:14px; vertical-align:middle;">sync</span> Auto-saving
                                         draft...</p>
                                     <div>
-                                        <button class="btn btn-outline" id="btn-issue-prescription" style="margin-right:0.5rem;"
-                                            onclick="jumpToPharmacy()">Issue Prescription</button>
+                                        <button class="btn btn-outline" id="btn-issue-prescription"
+                                            style="margin-right:0.5rem;" onclick="jumpToPharmacy()">Issue
+                                            Prescription</button>
                                         <button class="btn btn-primary" id="btn-complete-consult"
                                             onclick="completeConsultation()">Save
                                             Notes & Complete</button>
@@ -1071,15 +1072,19 @@
                 <div class="glass-panel" style="padding: 2rem;">
                     <!-- Loading Spinner -->
                     <div id="consultation-history-loading" style="text-align: center; padding: 2rem; display: none;">
-                        <span class="material-symbols-outlined" style="animation: spin 1s linear infinite; font-size: 2rem; color: var(--primary-medical-blue);">sync</span>
+                        <span class="material-symbols-outlined"
+                            style="animation: spin 1s linear infinite; font-size: 2rem; color: var(--primary-medical-blue);">sync</span>
                         <p style="margin-top: 1rem; color: var(--text-muted);">Loading consultation history...</p>
                     </div>
 
                     <!-- Empty State -->
-                    <div id="consultation-history-empty" style="text-align: center; padding: 3rem; color: var(--text-muted); display: none;">
-                        <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--empty-icon-color); display: block; margin-bottom: 1rem;">description</span>
+                    <div id="consultation-history-empty"
+                        style="text-align: center; padding: 3rem; color: var(--text-muted); display: none;">
+                        <span class="material-symbols-outlined"
+                            style="font-size: 3rem; color: var(--empty-icon-color); display: block; margin-bottom: 1rem;">description</span>
                         <p style="font-size: 1rem;">No consultations found</p>
-                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Your consultation history will appear here once you complete consultations with patients.</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Your consultation history will appear here
+                            once you complete consultations with patients.</p>
                     </div>
 
                     <!-- History List -->
@@ -1316,18 +1321,64 @@
         }
 
         // 1. Schedule Management - Availability Toggle
-        function toggleAvailability() {
-            const isLeave = document.getElementById('leaveToggle').checked;
-            const textSpan = document.getElementById('availability-text');
+        let availabilityUpdateInProgress = false;
 
-            if (isLeave) {
-                textSpan.innerText = "Currently On Leave / Unavailable";
-                textSpan.style.color = "#EF4444";
-                showToast("Your schedule is now blocked for new appointments.", true);
-            } else {
+        function renderDoctorAvailabilityState(isAvailable) {
+            const textSpan = document.getElementById('availability-text');
+            const leaveToggle = document.getElementById('leaveToggle');
+            if (!textSpan || !leaveToggle) return;
+
+            leaveToggle.checked = !isAvailable;
+            if (isAvailable) {
                 textSpan.innerText = "Available for Appointments";
                 textSpan.style.color = "var(--success-soft-green)";
-                showToast("You are now receiving appointments.");
+            } else {
+                textSpan.innerText = "Currently On Leave / Unavailable";
+                textSpan.style.color = "#EF4444";
+            }
+        }
+
+        async function toggleAvailability() {
+            const leaveToggle = document.getElementById('leaveToggle');
+            if (!leaveToggle || availabilityUpdateInProgress) {
+                return;
+            }
+
+            const previousChecked = !leaveToggle.checked;
+            const isLeave = leaveToggle.checked;
+            const nextAvailable = !isLeave;
+            availabilityUpdateInProgress = true;
+            leaveToggle.disabled = true;
+
+            try {
+                const response = await fetch('/api/doctor/availability', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ available: nextAvailable })
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to update availability');
+                }
+
+                renderDoctorAvailabilityState(nextAvailable);
+                if (!nextAvailable) {
+                    showToast("Your schedule is now blocked for new appointments.", true);
+                } else {
+                    showToast("You are now receiving appointments.");
+                }
+            } catch (error) {
+                // Revert UI state if persistence fails
+                leaveToggle.checked = previousChecked;
+                renderDoctorAvailabilityState(previousChecked ? false : true);
+                showToast(error.message || 'Failed to update availability', true);
+            } finally {
+                leaveToggle.disabled = false;
+                availabilityUpdateInProgress = false;
             }
         }
 
@@ -1857,7 +1908,7 @@
         }
 
         // Session Management (cookie-based HttpSession)
-        
+
         /**
          * Helper function to create fetch options.
          * Automatically includes credentials for cookie-based sessions and per-tab sessionId.
@@ -1875,7 +1926,7 @@
             }
             return options;
         }
-        
+
         /**
          * Handle logout: invalidate session and clear storage.
          */
@@ -2000,7 +2051,7 @@
                 document.getElementById('optionsProfilePic').src = base64;
                 document.getElementById('doctorNavProfilePic').src = base64;
                 currentOptionsPicBase64 = base64;
-                showToast("Preview updated! Click Save Personal Info to commit.", false);
+                saveDoctorProfile();
             };
             reader.readAsDataURL(file);
         }
@@ -2025,6 +2076,9 @@
                     if (settingsName) settingsName.value = doc.fullName || '';
                     const settingsPhone = document.getElementById('settingsPhone');
                     if (settingsPhone) settingsPhone.value = doc.phone || '';
+
+                    const isAvailable = String(doc.availabilityStatus || 'available').toLowerCase() === 'available';
+                    renderDoctorAvailabilityState(isAvailable);
                 }
             } catch (e) { console.error('Error loading doctor data', e); }
         }
@@ -2049,8 +2103,10 @@
                     showToast('Personal info saved successfully!');
                     loadDoctorData();
                     currentOptionsPicBase64 = null;
-                } else alert('Failed: ' + data.message);
-            }).catch(e => { console.error(e); alert('Error saving profile'); });
+                } else {
+                    showToast('Failed: ' + data.message, true);
+                }
+            }).catch(e => { console.error(e); showToast('Error saving profile', true); });
         }
 
         function saveDoctorPassword() {
@@ -2058,8 +2114,8 @@
             const newPass = document.getElementById('settingsNewPass').value;
             const confirmPass = document.getElementById('settingsConfirmPass').value;
 
-            if (newPass !== confirmPass) { alert("New passwords do not match."); return; }
-            if (!currentPass || !newPass) { alert("Please fill in all password fields."); return; }
+            if (newPass !== confirmPass) { showToast("New passwords do not match.", true); return; }
+            if (!currentPass || !newPass) { showToast("Please fill in all password fields.", true); return; }
 
             const payload = { currentPassword: currentPass, newPassword: newPass };
 
@@ -2076,8 +2132,10 @@
                     document.getElementById('settingsCurrentPass').value = '';
                     document.getElementById('settingsNewPass').value = '';
                     document.getElementById('settingsConfirmPass').value = '';
-                } else alert("Failed: " + data.message);
-            }).catch(e => { console.error(e); alert("Error saving password"); });
+                } else {
+                    showToast("Failed: " + data.message, true);
+                }
+            }).catch(e => { console.error(e); showToast("Error saving password", true); });
         }
 
         window.addEventListener('load', loadDoctorData);

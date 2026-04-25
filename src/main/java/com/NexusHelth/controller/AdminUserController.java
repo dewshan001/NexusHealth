@@ -1,6 +1,7 @@
 package com.NexusHelth.controller;
 
 import com.NexusHelth.model.User;
+import com.NexusHelth.service.AppointmentService;
 import com.NexusHelth.service.UserService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,12 +10,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
 public class AdminUserController {
 
     private UserService userService = new UserService();
+    private AppointmentService appointmentService = new AppointmentService();
 
     @PostMapping("/users/create")
     public CreateUserResponse createUser(
@@ -237,6 +240,78 @@ public class AdminUserController {
 
         public boolean isSuccess() { return success; }
         public String getMessage() { return message; }
+    }
+
+    @GetMapping("/appointments")
+    public AdminAppointmentsResponse getAdminAppointments(
+            @RequestParam(required = false) Integer doctorId,
+            HttpSession session) {
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
+        if (user == null || !"admin".equals(user.getRole())) {
+            return new AdminAppointmentsResponse(false, null, "Unauthorized access");
+        }
+
+        List<Map<String, Object>> data = appointmentService.getAppointmentsForAdmin(doctorId);
+        return new AdminAppointmentsResponse(true, data, null);
+    }
+
+    @GetMapping("/appointments/doctors")
+    public AdminDoctorsResponse getAppointmentDoctors(HttpSession session) {
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
+        if (user == null || !"admin".equals(user.getRole())) {
+            return new AdminDoctorsResponse(false, null, "Unauthorized access");
+        }
+
+        List<Map<String, Object>> data = appointmentService.getDoctorDirectoryForAdmin();
+        return new AdminDoctorsResponse(true, data, null);
+    }
+
+    @PostMapping("/appointments/cancel")
+    public StatusUpdateResponse cancelAppointmentAsAdmin(
+            @RequestParam int appointmentId,
+            HttpSession session) {
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
+        if (user == null || !"admin".equals(user.getRole())) {
+            return new StatusUpdateResponse(false, "Unauthorized access");
+        }
+
+        if (!appointmentService.canCancel(appointmentId)) {
+            String status = appointmentService.getAppointmentStatus(appointmentId);
+            if (status == null) {
+                return new StatusUpdateResponse(false, "Appointment not found");
+            }
+            return new StatusUpdateResponse(false, "Cannot cancel appointment in status: " + status);
+        }
+
+        boolean success = appointmentService.cancelAppointment(appointmentId);
+        if (!success) {
+            return new StatusUpdateResponse(false, "Failed to cancel appointment");
+        }
+        return new StatusUpdateResponse(true, "Appointment cancelled successfully");
+    }
+
+    public static class AdminAppointmentsResponse {
+        public boolean success;
+        public List<Map<String, Object>> data;
+        public String error;
+
+        public AdminAppointmentsResponse(boolean success, List<Map<String, Object>> data, String error) {
+            this.success = success;
+            this.data = data;
+            this.error = error;
+        }
+    }
+
+    public static class AdminDoctorsResponse {
+        public boolean success;
+        public List<Map<String, Object>> data;
+        public String error;
+
+        public AdminDoctorsResponse(boolean success, List<Map<String, Object>> data, String error) {
+            this.success = success;
+            this.data = data;
+            this.error = error;
+        }
     }
 }
 

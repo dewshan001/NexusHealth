@@ -101,6 +101,39 @@
           if (window.location.pathname.indexOf('dashboard') !== -1) {
             window.location.href = '/login';
           }
+          return res;
+        }
+
+        // Some endpoints currently return HTTP 200 with a JSON body like:
+        //   { success:false, message:"Unauthorized ..." }
+        // If we attached a token and the body indicates auth failure, treat it like 401.
+        try {
+          if (needsToken && res && res.ok) {
+            var contentType = res.headers && res.headers.get && res.headers.get('content-type');
+            if (contentType && contentType.indexOf('application/json') !== -1) {
+              res.clone().json().then(function (body) {
+                if (!body || body.success !== false) return;
+
+                var msg = (body.message || body.error || '').toString();
+                var status = body.status;
+                var isUnauthorized =
+                  status === 401 ||
+                  status === 403 ||
+                  /unauthorized|authentication required|forbidden/i.test(msg);
+
+                if (isUnauthorized) {
+                  clearToken();
+                  if (window.location.pathname.indexOf('dashboard') !== -1) {
+                    window.location.href = '/login';
+                  }
+                }
+              }).catch(function () {
+                // ignore JSON parse errors
+              });
+            }
+          }
+        } catch (e3) {
+          // ignore
         }
         return res;
       });

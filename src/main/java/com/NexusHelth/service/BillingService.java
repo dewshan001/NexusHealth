@@ -216,7 +216,7 @@ public class BillingService {
             result.put("message", "Invalid prescriptionId");
             return result;
         }
-        if (discountAmount < 0) {
+        if (!Double.isFinite(discountAmount) || discountAmount < 0) {
             discountAmount = 0;
         }
 
@@ -317,7 +317,11 @@ public class BillingService {
                 discountAmount = subtotal;
             }
 
+            // Keep currency values stable to 2 decimal places before persisting.
+            discountAmount = Math.round(discountAmount * 100.0) / 100.0;
+
             double total = subtotal - discountAmount;
+            total = Math.round(total * 100.0) / 100.0;
             String invoiceNumber = generateInvoiceNumber();
 
             int invoiceId = 0;

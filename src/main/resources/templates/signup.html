@@ -85,17 +85,20 @@
                     <p class="login-helper-text">Already registered? <a class="login-link" href="/login">Sign in</a></p>
                 </div>
 
-                <form class="login-form" action="/signup" method="post">
-                    <div id="errorMessage" style="color: #d32f2f; margin-bottom: 15px; padding: 10px; border-radius: 4px; background-color: #ffebee; display: none;"></div>
-                    <div id="successMessage" style="color: #388e3c; margin-bottom: 15px; padding: 10px; border-radius: 4px; background-color: #e8f5e9; display: none;"></div>
+                <form class="login-form" id="signupForm" action="/signup" method="post" novalidate>
+                    <div id="authFlashError" class="auth-flash-data" th:if="${error}" th:data-message="${error}" data-type="error" hidden></div>
+                    <div id="authFlashSuccess" class="auth-flash-data" th:if="${success}" th:data-message="${success}" data-type="success" hidden></div>
+                    <div id="errorMessage" class="auth-inline-message auth-inline-message--error" role="alert" aria-live="assertive" hidden></div>
+                    <div id="successMessage" class="auth-inline-message auth-inline-message--success" role="status" aria-live="polite" hidden></div>
                     
                     <div class="form-group">
                         <label class="form-label" for="fullName">Full Name</label>
                         <div class="login-input-wrap">
                             <span class="material-symbols-outlined" aria-hidden="true">person</span>
                             <input class="form-input login-input" type="text" id="fullName" name="fullName"
-                                placeholder="Your full name" required>
+                                placeholder="Your full name" minlength="3" maxlength="100" required>
                         </div>
+                        <p class="field-error" id="fullNameError" data-for="fullName" aria-live="polite" style="color: #b91c1c;"></p>
                     </div>
 
                     <div class="form-group">
@@ -105,6 +108,7 @@
                             <input class="form-input login-input" type="email" id="email" name="email"
                                 placeholder="you@clinic.com" required>
                         </div>
+                        <p class="field-error" id="emailError" data-for="email" aria-live="polite" style="color: #b91c1c;"></p>
                     </div>
 
                     <div class="form-group">
@@ -112,8 +116,9 @@
                         <div class="login-input-wrap">
                             <span class="material-symbols-outlined" aria-hidden="true">lock</span>
                             <input class="form-input login-input" type="password" id="password"
-                                name="password" placeholder="Create a password" minlength="6" required>
+                                name="password" placeholder="Create a password" minlength="6" maxlength="128" required>
                         </div>
+                        <p class="field-error" id="passwordError" data-for="password" aria-live="polite" style="color: #b91c1c;"></p>
                     </div>
 
                     <div class="form-group">
@@ -123,6 +128,7 @@
                             <input class="form-input login-input" type="tel" id="phone" name="phone"
                                 placeholder="Your phone number" required>
                         </div>
+                        <p class="field-error" id="phoneError" data-for="phone" aria-live="polite" style="color: #b91c1c;"></p>
                     </div>
 
                     <div class="form-group">
@@ -131,6 +137,7 @@
                             <span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>
                             <input class="form-input login-input" type="date" id="dateOfBirth" name="dateOfBirth" required>
                         </div>
+                        <p class="field-error" id="dateOfBirthError" data-for="dateOfBirth" aria-live="polite" style="color: #b91c1c;"></p>
                     </div>
 
                     <div class="form-group">
@@ -144,6 +151,7 @@
                                 <option value="other">Other</option>
                             </select>
                         </div>
+                        <p class="field-error" id="genderError" data-for="gender" aria-live="polite" style="color: #b91c1c;"></p>
                     </div>
 
                     <div class="form-group">
@@ -162,6 +170,7 @@
                                 <option value="AB-">AB-</option>
                             </select>
                         </div>
+                        <p class="field-error" id="bloodTypeError" data-for="bloodType" aria-live="polite" style="color: #b91c1c;"></p>
                     </div>
 
                     <div class="form-group">
@@ -169,8 +178,9 @@
                         <div class="login-input-wrap">
                             <span class="material-symbols-outlined" aria-hidden="true">location_on</span>
                             <input class="form-input login-input" type="text" id="address" name="address"
-                                placeholder="Your address" required>
+                                placeholder="Your address" minlength="5" required>
                         </div>
+                        <p class="field-error" id="addressError" data-for="address" aria-live="polite" style="color: #b91c1c;"></p>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-large login-submit">Create Account</button>
@@ -180,6 +190,18 @@
             </article>
         </section>
     </main>
+
+    <div class="auth-modal" id="authModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" aria-describedby="authModalMessage">
+        <div class="auth-modal__backdrop" data-auth-modal-close></div>
+        <div class="auth-modal__dialog" role="document">
+            <button class="auth-modal__close" type="button" aria-label="Close popup" data-auth-modal-close>&times;</button>
+            <h3 class="auth-modal__title" id="authModalTitle">Form status</h3>
+            <p class="auth-modal__message" id="authModalMessage"></p>
+            <button type="button" class="btn btn-primary auth-modal__action" data-auth-modal-close>OK</button>
+        </div>
+    </div>
+
+    <script th:src="@{/auth-validation.js}" defer></script>
 </body>
 
 </html>

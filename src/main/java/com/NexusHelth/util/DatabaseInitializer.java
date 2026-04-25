@@ -57,6 +57,8 @@ public class DatabaseInitializer implements CommandLineRunner {
             // Ensure new settings columns exist for existing databases
             ensureClinicSettingsFeeColumn(conn);
             ensureDefaultAppointmentFee(conn);
+            ensureAppointmentsBookingColumns(conn);
+            ensureDoctorsAvailabilityColumn(conn);
 
             // Ensure prescription-linked billing support exists
             ensureInvoicesPrescriptionIdColumn(conn);
@@ -128,6 +130,34 @@ public class DatabaseInitializer implements CommandLineRunner {
             stmt.executeUpdate("UPDATE clinic_settings SET appointment_fee = 500.0 WHERE id = 1 AND (appointment_fee IS NULL OR appointment_fee <= 0)");
         } catch (Exception e) {
             System.err.println("⚠️  Could not ensure default appointment fee: " + e.getMessage());
+        }
+    }
+
+    private void ensureAppointmentsBookingColumns(Connection conn) {
+        ensureColumn(conn, "ALTER TABLE appointments ADD COLUMN preferred_language TEXT");
+        ensureColumn(conn, "ALTER TABLE appointments ADD COLUMN emergency_contact_name TEXT");
+        ensureColumn(conn, "ALTER TABLE appointments ADD COLUMN emergency_contact_phone TEXT");
+        ensureColumn(conn, "ALTER TABLE appointments ADD COLUMN consent_accepted INTEGER NOT NULL DEFAULT 0");
+    }
+
+    private void ensureDoctorsAvailabilityColumn(Connection conn) {
+        ensureColumn(conn, "ALTER TABLE doctors ADD COLUMN availability_status TEXT NOT NULL DEFAULT 'available'");
+        try (Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate("UPDATE doctors SET availability_status = 'available' WHERE availability_status IS NULL OR TRIM(availability_status) = ''");
+        } catch (Exception e) {
+            System.err.println("WARN doctor availability migration issue: " + e.getMessage());
+        }
+    }
+
+    private void ensureColumn(Connection conn, String alterSql) {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(alterSql);
+        } catch (Exception e) {
+            String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
+            if (msg.contains("duplicate column") || msg.contains("already exists")) {
+                return;
+            }
+            System.err.println("WARN migration issue: " + e.getMessage());
         }
     }
 

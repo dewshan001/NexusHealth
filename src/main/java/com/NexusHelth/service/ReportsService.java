@@ -61,15 +61,7 @@ public class ReportsService {
         Double dailyRevenue = getDailyRevenue(date);
         Double pharmacySales = getPharmacySales(date);
         Integer patientsVisited = getTotalPatientsVisited(date);
-        List<TransactionDTO> recentTransactions = getRecentTransactions(5);
-        
-        // If no data for today, try getting all-time data
-        if (dailyRevenue == 0.0 && pharmacySales == 0.0 && patientsVisited == 0 && recentTransactions.isEmpty()) {
-            System.out.println("  ℹ️ No data for date " + date + ", fetching all-time data...");
-            dailyRevenue = getAllTimeRevenue();
-            pharmacySales = getAllTimePharmacySales();
-            patientsVisited = getAllTimePatientsVisited();
-        }
+        List<TransactionDTO> recentTransactions = getTransactionsForDate(date);
 
         ReportsAnalyticsDTO reports = new ReportsAnalyticsDTO(
             dailyRevenue,
@@ -181,28 +173,27 @@ public class ReportsService {
     }
 
     /**
-     * Get recent transactions with limit
+     * Get all transactions for a specific date.
      */
-    private List<TransactionDTO> getRecentTransactions(int limit) {
+    private List<TransactionDTO> getTransactionsForDate(LocalDate date) {
         List<TransactionDTO> transactions = new ArrayList<>();
         String query = "SELECT id, transaction_code, type, department, amount, status, transacted_at " +
                       "FROM transactions " +
-                      "ORDER BY transacted_at DESC " +
-                      "LIMIT ?";
+                      "WHERE strftime('%Y-%m-%d', transacted_at) = ? " +
+                      "ORDER BY transacted_at DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-            pstmt.setInt(1, limit);
-            System.out.println("  💰 Getting recent transactions (limit: " + limit + ")");
+            pstmt.setString(1, date.toString());
+            System.out.println("  💰 Getting transactions for date: " + date);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 int count = 0;
                 while (rs.next()) {
                     count++;
                     String transactionCode = rs.getString("transaction_code");
-                    
-                    // If no transactionCode, generate one from ID
+
                     if (transactionCode == null || transactionCode.trim().isEmpty()) {
                         int txnId = rs.getInt("id");
                         transactionCode = "TXN-" + String.format("%05d", txnId);
@@ -210,12 +201,12 @@ public class ReportsService {
 
                     String type = rs.getString("type");
                     if (type == null) type = "Unknown";
-                    
+
                     String department = rs.getString("department");
                     if (department == null) department = "N/A";
-                    
+
                     Double amount = rs.getDouble("amount");
-                    
+
                     String status = rs.getString("status");
                     if (status == null) status = "pending";
 
@@ -231,10 +222,10 @@ public class ReportsService {
                     transactions.add(transaction);
                     System.out.println("    → Transaction: " + transactionCode + " | " + type + " | Rs." + String.format("%.2f", amount));
                 }
-                System.out.println("  💰 Total transactions found: " + count);
+                System.out.println("  💰 Total date-matched transactions found: " + count);
             }
         } catch (SQLException e) {
-            System.out.println("❌ Error getting recent transactions: " + e.getMessage());
+            System.out.println("❌ Error getting transactions for date: " + e.getMessage());
             e.printStackTrace();
         }
 

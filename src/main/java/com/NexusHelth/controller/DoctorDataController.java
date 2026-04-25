@@ -44,12 +44,16 @@ public class DoctorDataController {
         }
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-            String sql = "SELECT d.phone, u.profile_picture FROM users u LEFT JOIN doctors d ON u.id = d.user_id WHERE u.id = ?";
+            String sql = "SELECT d.phone, d.availability_status, u.profile_picture FROM users u LEFT JOIN doctors d ON u.id = d.user_id WHERE u.id = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setInt(1, user.getId());
                 try (ResultSet rs = pstmt.executeQuery()) {
                     if (rs.next()) {
                         doctor.phone = rs.getString("phone");
+                        String availabilityStatus = rs.getString("availability_status");
+                        doctor.availabilityStatus = (availabilityStatus == null || availabilityStatus.trim().isEmpty())
+                                ? "available"
+                                : availabilityStatus.trim().toLowerCase();
                         doctor.profilePicture = rs.getString("profile_picture");
                     }
                 }
@@ -65,6 +69,7 @@ public class DoctorDataController {
         public String fullName;
         public String profilePicture;
         public String phone;
+        public String availabilityStatus;
     }
 
     public static class DoctorProfileResponse {
@@ -144,6 +149,32 @@ public class DoctorDataController {
         public String patientCode;
         public Integer appointmentId;
         public List<Map<String, String>> medications;
+    }
+
+    @PostMapping("/api/doctor/availability")
+    public ResponseEntity<?> updateAvailability(@RequestBody AvailabilityRequest request, HttpSession session) {
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
+        if (user == null || !"doctor".equals(user.getRole())) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
+        }
+
+        if (request == null || request.available == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Availability value is required"));
+        }
+
+        boolean updated = appointmentService.updateDoctorAvailabilityByUserId(user.getId(), request.available);
+        if (!updated) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Unable to update availability"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "availabilityStatus", request.available ? "available" : "unavailable"
+        ));
+    }
+
+    public static class AvailabilityRequest {
+        public Boolean available;
     }
 }
 

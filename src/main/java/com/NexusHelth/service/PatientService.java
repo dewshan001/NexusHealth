@@ -4,6 +4,7 @@ import com.NexusHelth.model.User;
 import com.NexusHelth.model.Patient;
 import com.NexusHelth.util.DatabaseConnection;
 import com.NexusHelth.util.IdGeneratorUtil;
+import com.NexusHelth.util.ValidationUtil;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -68,11 +69,12 @@ public class PatientService {
 
                         // Insert patient record
                         try (PreparedStatement pstmt2 = conn.prepareStatement(patientQuery)) {
+                            String normalizedGender = ValidationUtil.normalizeGender(gender);
                             pstmt2.setInt(1, userId);
                             pstmt2.setString(2, patientCode);
                             pstmt2.setString(3, phone);
                             pstmt2.setString(4, dateOfBirth);
-                            pstmt2.setString(5, gender);
+                            pstmt2.setString(5, normalizedGender);
                             pstmt2.setString(6, bloodType);
                             pstmt2.setString(7, address);
                             pstmt2.executeUpdate();
@@ -178,9 +180,10 @@ public class PatientService {
         String query = "UPDATE patients SET phone = ?, date_of_birth = ?, gender = ?, blood_type = ?, address = ? WHERE user_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
+            String normalizedGender = ValidationUtil.normalizeGender(gender);
             pstmt.setString(1, phone);
             pstmt.setString(2, dateOfBirth);
-            pstmt.setString(3, gender);
+            pstmt.setString(3, normalizedGender);
             pstmt.setString(4, bloodType);
             pstmt.setString(5, address);
             pstmt.setInt(6, userId);
@@ -190,6 +193,77 @@ public class PatientService {
             e.printStackTrace();
         }
         return false;
+    }
+
+    /**
+     * Check whether an email is used by a different user.
+     */
+    public boolean emailExistsForOtherUser(String email, int currentUserId) {
+        String query = "SELECT 1 FROM users WHERE email = ? AND id <> ? LIMIT 1";
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            pstmt.setInt(2, currentUserId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Receptionist-safe update of patient details.
+     * Updates both users (full name + email) and patients (profile fields) atomically.
+     */
+    public boolean updatePatientDetailsByReceptionist(
+            int userId,
+            String fullName,
+            String email,
+            String phone,
+            String dateOfBirth,
+            String gender,
+            String bloodType,
+            String address) {
+
+        String updateUserQuery = "UPDATE users SET full_name = ?, email = ? WHERE id = ? AND role = 'patient'";
+        String updatePatientQuery = "UPDATE patients SET phone = ?, date_of_birth = ?, gender = ?, blood_type = ?, address = ? WHERE user_id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
+
+            int userRows;
+            try (PreparedStatement userStmt = conn.prepareStatement(updateUserQuery)) {
+                userStmt.setString(1, fullName);
+                userStmt.setString(2, email);
+                userStmt.setInt(3, userId);
+                userRows = userStmt.executeUpdate();
+            }
+
+            int patientRows;
+            try (PreparedStatement patientStmt = conn.prepareStatement(updatePatientQuery)) {
+                String normalizedGender = ValidationUtil.normalizeGender(gender);
+                patientStmt.setString(1, phone);
+                patientStmt.setString(2, dateOfBirth);
+                patientStmt.setString(3, normalizedGender);
+                patientStmt.setString(4, bloodType);
+                patientStmt.setString(5, address);
+                patientStmt.setInt(6, userId);
+                patientRows = patientStmt.executeUpdate();
+            }
+
+            if (userRows <= 0 || patientRows <= 0) {
+                conn.rollback();
+                return false;
+            }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     // Get all patients for admin dashboard
@@ -437,11 +511,12 @@ public class PatientService {
 
                         // Insert patient record
                         try (PreparedStatement pstmt2 = conn.prepareStatement(patientQuery)) {
+                            String normalizedGender = ValidationUtil.normalizeGender(gender);
                             pstmt2.setInt(1, userId);
                             pstmt2.setString(2, patientCode);
                             pstmt2.setString(3, phone);
                             pstmt2.setString(4, dateOfBirth);
-                            pstmt2.setString(5, gender);
+                            pstmt2.setString(5, normalizedGender);
                             pstmt2.executeUpdate();
                             System.out.println("✅ Patient record inserted successfully");
 

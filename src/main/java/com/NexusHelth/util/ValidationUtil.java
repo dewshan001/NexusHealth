@@ -86,14 +86,37 @@ public class ValidationUtil {
      * @return true if gender is valid, false otherwise
      */
     public static boolean isValidGender(String gender) {
-        if (gender == null || gender.trim().isEmpty()) {
-            return false;
+        String normalized = normalizeGender(gender);
+        return "male".equals(normalized) || "female".equals(normalized) || "other".equals(normalized);
+    }
+
+    /**
+     * Normalizes gender inputs to values accepted by the DB constraint.
+     * The SQLite schema uses: CHECK(gender IN ('male','female','other'))
+     *
+     * @param gender raw gender input (any casing / may include whitespace)
+     * @return normalized gender (male/female/other), or null if blank, or the
+     *         lowercased value if not recognized.
+     */
+    public static String normalizeGender(String gender) {
+        if (gender == null) {
+            return null;
         }
-        
-        String genderLower = gender.toLowerCase().trim();
-        return genderLower.equals("male") || 
-               genderLower.equals("female") || 
-               genderLower.equals("other");
+
+        String g = gender.trim().toLowerCase();
+        if (g.isEmpty()) {
+            return null;
+        }
+
+        // Common short forms
+        if (g.equals("m")) {
+            return "male";
+        }
+        if (g.equals("f")) {
+            return "female";
+        }
+
+        return g;
     }
     
     /**

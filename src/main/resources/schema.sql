@@ -57,7 +57,9 @@ CREATE TABLE IF NOT EXISTS doctors (
     working_hours_start       TEXT    DEFAULT '09:00',
     working_hours_end         TEXT    DEFAULT '17:00',
     years_experience          INTEGER DEFAULT 0,
-    rating                    REAL    DEFAULT 0.0
+    rating                    REAL    DEFAULT 0.0,
+    availability_status       TEXT    NOT NULL DEFAULT 'available'
+                              CHECK(availability_status IN ('available','unavailable'))
 );
 
 -- ─────────────────────────────────────────────
@@ -73,6 +75,10 @@ CREATE TABLE IF NOT EXISTS appointments (
     status            TEXT    NOT NULL DEFAULT 'scheduled'
                       CHECK(status IN ('scheduled','confirmed','completed','cancelled','no_show')),
     notes             TEXT,
+    preferred_language TEXT,
+    emergency_contact_name TEXT,
+    emergency_contact_phone TEXT,
+    consent_accepted  INTEGER NOT NULL DEFAULT 0,
     created_at        DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

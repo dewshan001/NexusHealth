@@ -50,7 +50,7 @@ public class PatientDashboardService {
             }
 
             // 4. Upcoming Clinic Visits List
-            String visitListQuery = "SELECT a.appointment_date, a.appointment_time, u.full_name as doctor_name, d.specialization "
+            String visitListQuery = "SELECT a.id as appointment_id, a.doctor_id, a.appointment_date, a.appointment_time, u.full_name as doctor_name, d.specialization "
                     +
                     "FROM appointments a " +
                     "JOIN doctors d ON a.doctor_id = d.id " +
@@ -65,6 +65,8 @@ public class PatientDashboardService {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
                         VisitDTO visit = new VisitDTO();
+                        visit.setId(rs.getInt("appointment_id"));
+                        visit.setDoctorId(rs.getInt("doctor_id"));
                         visit.setDate(rs.getString("appointment_date"));
                         visit.setTime(rs.getString("appointment_time"));
                         visit.setDoctorName(rs.getString("doctor_name"));
@@ -125,10 +127,28 @@ public class PatientDashboardService {
     }
 
     public static class VisitDTO {
+        private int id;
+        private int doctorId;
         private String date;
         private String time;
         private String doctorName;
         private String specialty;
+
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public int getDoctorId() {
+            return doctorId;
+        }
+
+        public void setDoctorId(int doctorId) {
+            this.doctorId = doctorId;
+        }
 
         public String getDate() {
             return date;
