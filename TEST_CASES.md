@@ -1,6 +1,6 @@
-# NexusHealth Website Test Cases (Function-Level)
+# NexusHealth Website Test Cases
 
-This document lists functional test cases for the JavaScript functions and event handlers embedded in the frontend HTML pages. Test cases are grouped by page and then by function.
+This document lists functional test cases for the frontend HTML pages, including JavaScript handlers and HTML form validation. Test cases are grouped by page and then by function or feature.
 
 ## Landing Page (frontend/index.html)
 
@@ -26,6 +26,34 @@ This document lists functional test cases for the JavaScript functions and event
 ### Contact form submit handler
 - **TC-CONTACT-FORM-01**: Fill required fields and submit. **Expected:** Default submit is prevented, alert is shown, form resets.
 - **TC-CONTACT-FORM-02**: Submit with missing required fields. **Expected:** Browser validation blocks submit; handler does not run.
+
+## Login Page (frontend/login.html)
+
+### Login form validation
+- **TC-LOGIN-FORM-01**: Submit with valid email and password. **Expected:** Browser submits the form without validation errors.
+- **TC-LOGIN-FORM-02**: Submit with empty email. **Expected:** Browser blocks submit with required field validation.
+- **TC-LOGIN-FORM-03**: Submit with invalid email format. **Expected:** Browser blocks submit with email format validation.
+- **TC-LOGIN-FORM-04**: Submit with empty password. **Expected:** Browser blocks submit with required field validation.
+- **TC-LOGIN-FORM-05**: Toggle "Remember me". **Expected:** Checkbox state changes; no validation impact.
+
+### Login page navigation
+- **TC-LOGIN-LINK-01**: Click "Create your account." **Expected:** Navigates to `signup.html`.
+- **TC-LOGIN-LINK-02**: Click "Contact support." **Expected:** Navigates to `contact.html`.
+- **TC-LOGIN-LINK-03**: Click "Forgot password?" **Expected:** Link is focusable and navigates to `#` without errors.
+
+## Sign Up Page (frontend/signup.html)
+
+### Sign up form validation
+- **TC-SIGNUP-FORM-01**: Submit with all required fields and terms checked. **Expected:** Browser submits the form without validation errors.
+- **TC-SIGNUP-FORM-02**: Submit with empty full name. **Expected:** Browser blocks submit with required field validation.
+- **TC-SIGNUP-FORM-03**: Submit with invalid email format. **Expected:** Browser blocks submit with email format validation.
+- **TC-SIGNUP-FORM-04**: Submit without selecting a role. **Expected:** Browser blocks submit with required field validation.
+- **TC-SIGNUP-FORM-05**: Submit with password shorter than 8 characters. **Expected:** Browser blocks submit with minlength validation.
+- **TC-SIGNUP-FORM-06**: Submit with terms unchecked. **Expected:** Browser blocks submit with required field validation.
+
+### Sign up page navigation
+- **TC-SIGNUP-LINK-01**: Click "Sign in." **Expected:** Navigates to `login.html`.
+- **TC-SIGNUP-LINK-02**: Click "Contact support." **Expected:** Navigates to `contact.html`.
 
 ## Admin Dashboard (frontend/admin-dashboard.html)
 
