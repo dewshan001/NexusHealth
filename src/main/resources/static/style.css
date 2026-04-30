@@ -10,8 +10,12 @@
     /* Pharmacy/Success Green */
     --success-green-hover: #0E9F6E;
 
+    --danger: #EF4444;
+    --danger-hover: #DC2626;
+
     --bg-white: #FFFFFF;
     --bg-light-gray: #F9FAFB;
+    --bg-secondary: #F3F4F6;
     --bg-card: #FFFFFF;
     --bg-gradient: linear-gradient(135deg, #F0F7FF 0%, #E8F4FD 100%);
 
@@ -40,8 +44,12 @@
     --success-soft-green: #34D399;
     --success-green-hover: #10B981;
 
+    --danger: #F87171;
+    --danger-hover: #EF4444;
+
     --bg-white: rgba(15, 23, 42, 0.88);
     --bg-light-gray: rgba(30, 41, 59, 0.82);
+    --bg-secondary: rgba(45, 56, 80, 0.7);
     --bg-card: rgba(17, 24, 39, 0.82);
     --bg-gradient: linear-gradient(135deg, #0A1628 0%, #111827 50%, #172554 100%);
 
@@ -193,6 +201,137 @@ h3 {
 .btn-outline-primary:hover {
     background-color: var(--primary-medical-blue);
     color: var(--bg-white);
+}
+
+.btn-secondary {
+    background-color: var(--bg-light-gray);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.btn-secondary:hover {
+    background-color: var(--text-secondary);
+    color: var(--bg-white);
+    border-color: var(--text-secondary);
+}
+
+.btn-danger {
+    background-color: #EF4444;
+    color: var(--bg-white);
+    border-color: #EF4444;
+}
+
+.btn-danger:hover {
+    background-color: #DC2626;
+    border-color: #DC2626;
+    box-shadow: var(--shadow-md);
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+    background-color: var(--bg-white);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    max-width: 450px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease-out;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-speed) ease;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    justify-content: flex-end;
+}
+
+.modal-footer .btn {
+    flex: 1;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Navigation Bar */

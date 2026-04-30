@@ -203,6 +203,43 @@ public class AppointmentController {
         }
     }
 
+    @PostMapping("/{appointmentId}/cancel")
+    public StandardResponse cancelPatientAppointment(
+            @PathVariable int appointmentId,
+            HttpSession session) {
+
+        User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);
+        if (user == null || !"patient".equals(user.getRole())) {
+            return new StandardResponse(false, "Authentication required or invalid role");
+        }
+
+        Patient patient = patientService.getPatientByUserId(user.getId());
+        if (patient == null) {
+            return new StandardResponse(false, "Patient profile not found");
+        }
+
+        Map<String, Object> appointmentData = appointmentService.getAppointmentById(appointmentId);
+        if (appointmentData == null) {
+            return new StandardResponse(false, "Appointment not found");
+        }
+
+        int apptPatientId = (Integer) appointmentData.get("patientId");
+        if (apptPatientId != patient.getId()) {
+            return new StandardResponse(false, "Unauthorized to cancel this appointment");
+        }
+
+        if (!appointmentService.canCancel(appointmentId)) {
+            return new StandardResponse(false, "This appointment cannot be cancelled. It may have already been completed or cancelled.");
+        }
+
+        boolean success = appointmentService.cancelAppointment(appointmentId);
+        if (success) {
+            return new StandardResponse(true, "Appointment cancelled successfully");
+        } else {
+            return new StandardResponse(false, "Failed to cancel appointment");
+        }
+    }
+
     @GetMapping("/{appointmentId}")
     public AppointmentDetailsResponse getAppointment(@PathVariable int appointmentId, HttpSession session) {
         User user = com.NexusHelth.util.AuthSessionUtil.getUser(session);

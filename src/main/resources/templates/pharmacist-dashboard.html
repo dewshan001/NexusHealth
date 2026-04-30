@@ -1631,15 +1631,8 @@
                 }
 
                 closeModal('viewRxModal');
-                
-                // If invoice was generated, display the invoice modal
-                if (result.invoiceData && result.invoiceData.success) {
-                    displayInvoiceModal(result.invoiceData);
-                    showToast('Prescription dispensed and invoice generated successfully!');
-                } else {
-                    showToast('Prescription processed and marked as Dispensed!');
-                }
-                
+                showToast('Prescription dispensed. Billing will be created by reception.');
+
                 loadPendingPrescriptions();
                 loadInventory(); // Refresh inventory as stock is deducted
                 loadSystemAlerts(); // Refresh alerts just in case stock dropped below threshold

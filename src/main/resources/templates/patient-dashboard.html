@@ -3358,7 +3358,8 @@
                                         </div>
                                     </div>
                                     <div class="visit-actions">
-                                        <button class="btn btn-outline" style="font-size:0.82rem; padding:0.4rem 0.9rem;" onclick="initiateReschedule(${visit.id || 0}, ${visit.doctorId || 0})">Reschedule</button>
+                                        <button type="button" class="btn btn-outline" style="font-size:0.82rem; padding:0.4rem 0.9rem;" onclick="initiateReschedule(${visit.id || 0}, ${visit.doctorId || 0})">Reschedule</button>
+                                        <button type="button" class="btn btn-outline" style="font-size:0.82rem; padding:0.4rem 0.9rem; color:var(--danger); border-color:var(--danger); cursor:pointer;" data-appointment-id="${visit.id || 0}" data-appointment-date="${visit.date || ''}" data-appointment-time="${visit.time || ''}" data-appointment-doctor="${visit.doctorName || ''}" onclick="showCancelConfirmation(this)">Cancel</button>
                                     </div>
                                 </div>
                                 `;
@@ -3486,6 +3487,177 @@
                     selectDoctor(dummyEl, doctorId);
                 }
             }, 300);
+        }
+
+        // ─── Cancel Appointment Logic ───────────────────────
+        window.appointmentToCancel = null;
+        function showCancelConfirmation(buttonEl) {
+            console.log('showCancelConfirmation called with button:', buttonEl);
+
+            const appointmentId = buttonEl.getAttribute('data-appointment-id');
+            const date = buttonEl.getAttribute('data-appointment-date');
+            const time = buttonEl.getAttribute('data-appointment-time');
+            const doctorName = buttonEl.getAttribute('data-appointment-doctor');
+
+            console.log('Extracted values - ID:', appointmentId, 'Date:', date, 'Time:', time, 'Doctor:', doctorName);
+
+            if (!appointmentId || appointmentId === '0' || appointmentId === 0) {
+                console.error('Invalid appointment ID:', appointmentId);
+                showSavedToast('Cannot cancel this appointment due to missing ID.');
+                return;
+            }
+
+            window.appointmentToCancel = appointmentId;
+            console.log('Set appointmentToCancel to:', window.appointmentToCancel);
+
+            // Create modal HTML
+            const modalHtml = `
+            <div id="cancelConfirmationModal" class="modal-overlay active" onclick="closeCancelModal(event)">
+                <div class="modal-content" onclick="event.stopPropagation()">
+                    <div class="modal-header">
+                        <h2>Cancel Appointment</h2>
+                        <button class="modal-close" onclick="closeCancelModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">Are you sure you want to cancel this appointment?</p>
+                        <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div>
+                                    <div style="font-size: 0.85rem; color: var(--text-secondary);">Doctor</div>
+                                    <div style="font-weight: 500; margin-top: 0.3rem;">${doctorName || 'N/A'}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.85rem; color: var(--text-secondary);">Date & Time</div>
+                                    <div style="font-weight: 500; margin-top: 0.3rem;">${date || 'N/A'} at ${time || 'N/A'}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary);">This action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeCancelModal()">Keep Appointment</button>
+                        <button class="btn btn-danger" onclick="cancelAppointmentRequest()">Yes, Cancel It</button>
+                    </div>
+                </div>
+            </div>
+            `;
+
+            // Remove existing modal if any
+            const existingModal = document.getElementById('cancelConfirmationModal');
+            if (existingModal) existingModal.remove();
+
+            // Insert modal
+            console.log('Inserting modal to body');
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeCancelModal(event) {
+            // Called either directly (no event) or by clicking the backdrop
+            if (event && event.target && event.target.id !== 'cancelConfirmationModal') {
+                return; // clicked inside modal body – ignore
+            }
+            const modal = document.getElementById('cancelConfirmationModal');
+            if (modal) modal.remove();
+            window.appointmentToCancel = null;
+        }
+
+        async function cancelAppointmentRequest() {
+            const appointmentId = window.appointmentToCancel;
+            if (!appointmentId || appointmentId === '0') {
+                showSavedToast('No appointment selected');
+                return;
+            }
+
+            // Disable the confirm button to prevent double-clicks
+            const confirmBtn = document.querySelector('#cancelConfirmationModal .btn-danger');
+            if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Cancelling...'; }
+
+            try {
+                const response = await fetch(`/api/appointments/${appointmentId}/cancel`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    showSavedToast('Server error: ' + response.status);
+                    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Yes, Cancel It'; }
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Close the modal
+                    closeCancelModal();
+
+                    // Show a prominent refund success banner in the upcoming visits section
+                    showRefundBanner();
+
+                    // Reload patient data to remove the cancelled appointment from the list
+                    setTimeout(() => loadPatientData(), 800);
+                } else {
+                    showSavedToast('Failed to cancel: ' + (data.message || 'Unknown error'));
+                    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Yes, Cancel It'; }
+                }
+            } catch (error) {
+                console.error('Error cancelling appointment:', error);
+                showSavedToast('An error occurred while cancelling the appointment');
+                if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Yes, Cancel It'; }
+            }
+        }
+
+        function showRefundBanner() {
+            // Remove any existing banner
+            const existing = document.getElementById('refundSuccessBanner');
+            if (existing) existing.remove();
+
+            const banner = document.createElement('div');
+            banner.id = 'refundSuccessBanner';
+            banner.style.cssText = [
+                'position: fixed',
+                'top: 50%',
+                'left: 50%',
+                'transform: translate(-50%, -50%)',
+                'background: linear-gradient(135deg, #10b981, #059669)',
+                'color: #ffffff',
+                'padding: 2rem 2.5rem',
+                'border-radius: 1rem',
+                'box-shadow: 0 20px 60px rgba(16, 185, 129, 0.4)',
+                'z-index: 99999',
+                'text-align: center',
+                'min-width: 320px',
+                'animation: refundBannerIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+            ].join('; ');
+
+            banner.innerHTML = `
+                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">💰</div>
+                <div style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.4rem;">Appointment Cancelled</div>
+                <div style="font-size: 1rem; opacity: 0.9; margin-bottom: 0.3rem;">Your payment has been refunded.</div>
+                <div style="font-size: 0.85rem; opacity: 0.75;">The refund will reflect in your account shortly.</div>
+            `;
+
+            // Inject keyframe animation once
+            if (!document.getElementById('refundBannerStyle')) {
+                const style = document.createElement('style');
+                style.id = 'refundBannerStyle';
+                style.textContent = `
+                    @keyframes refundBannerIn {
+                        from { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+                        to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            document.body.appendChild(banner);
+
+            // Auto-dismiss after 3.5 s
+            setTimeout(() => {
+                banner.style.transition = 'opacity 0.5s ease';
+                banner.style.opacity = '0';
+                setTimeout(() => banner.remove(), 500);
+            }, 3500);
         }
 
         // Call loadPatientData explicitly from our own load setup

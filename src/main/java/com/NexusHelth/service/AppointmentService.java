@@ -37,7 +37,8 @@ public class AppointmentService {
         return getAvailableDoctors(null, null, null, null);
     }
 
-    public List<Doctor> getAvailableDoctors(String search, String specialization, Double minRating, String availabilityStatus) {
+    public List<Doctor> getAvailableDoctors(String search, String specialization, Double minRating,
+            String availabilityStatus) {
         List<Doctor> doctors = new ArrayList<>();
         String query = "SELECT d.id, d.user_id, u.full_name, d.specialization, u.profile_picture, " +
                 "d.consultation_duration_min, d.working_hours_start, d.working_hours_end, " +
@@ -51,7 +52,8 @@ public class AppointmentService {
                 "ORDER BY d.rating DESC, u.full_name ASC";
 
         String likeSearch = (search == null || search.trim().isEmpty()) ? null : ("%" + search.trim() + "%");
-        String likeSpecialization = (specialization == null || specialization.trim().isEmpty()) ? null : ("%" + specialization.trim() + "%");
+        String likeSpecialization = (specialization == null || specialization.trim().isEmpty()) ? null
+                : ("%" + specialization.trim() + "%");
         String availability = (availabilityStatus == null) ? null : availabilityStatus.trim().toLowerCase();
         double fee = getPersistedAppointmentFee();
 
@@ -78,8 +80,10 @@ public class AppointmentService {
                     String end = rs.getString("working_hours_end");
                     int duration = rs.getInt("consultation_duration_min");
                     String dbAvailability = rs.getString("availability_status");
-                    boolean unavailableByLeave = dbAvailability != null && "unavailable".equalsIgnoreCase(dbAvailability.trim());
-                    String computedStatus = unavailableByLeave ? "Unavailable" : computeAvailabilityStatus(start, end, duration);
+                    boolean unavailableByLeave = dbAvailability != null
+                            && "unavailable".equalsIgnoreCase(dbAvailability.trim());
+                    String computedStatus = unavailableByLeave ? "Unavailable"
+                            : computeAvailabilityStatus(start, end, duration);
 
                     // Patients should never see doctors currently on leave/unavailable.
                     if (unavailableByLeave) {
@@ -155,15 +159,15 @@ public class AppointmentService {
     }
 
     public int bookAppointmentDetailed(int patientId,
-                                       int doctorId,
-                                       String date,
-                                       String time,
-                                       Integer bookedBy,
-                                       String notes,
-                                       String preferredLanguage,
-                                       String emergencyContactName,
-                                       String emergencyContactPhone,
-                                       boolean consentAccepted) {
+            int doctorId,
+            String date,
+            String time,
+            Integer bookedBy,
+            String notes,
+            String preferredLanguage,
+            String emergencyContactName,
+            String emergencyContactPhone,
+            boolean consentAccepted) {
         if (!isDoctorCurrentlyAvailable(doctorId)) {
             return -1;
         }
@@ -194,7 +198,8 @@ public class AppointmentService {
             return -1;
         }
 
-        String insertQuery = "INSERT INTO appointments (patient_id, doctor_id, booked_by, appointment_date, appointment_time, status, notes, " +
+        String insertQuery = "INSERT INTO appointments (patient_id, doctor_id, booked_by, appointment_date, appointment_time, status, notes, "
+                +
                 "preferred_language, emergency_contact_name, emergency_contact_phone, consent_accepted) " +
                 "VALUES (?, ?, ?, ?, ?, 'scheduled', ?, ?, ?, ?, ?)";
 
@@ -221,7 +226,7 @@ public class AppointmentService {
                 // SQLite doesn't support getGeneratedKeys(), so query the last inserted rowid
                 String idQuery = "SELECT last_insert_rowid() as id";
                 try (PreparedStatement idPstmt = conn.prepareStatement(idQuery);
-                     ResultSet rs = idPstmt.executeQuery()) {
+                        ResultSet rs = idPstmt.executeQuery()) {
                     if (rs.next()) {
                         int appointmentId = rs.getInt("id");
                         System.out.println("✅ Appointment booked successfully with ID: " + appointmentId);
@@ -239,11 +244,12 @@ public class AppointmentService {
 
     public Doctor getDoctorById(int doctorId) {
         String query = "SELECT d.id, d.user_id, u.full_name, d.specialization, u.profile_picture, " +
-                "d.consultation_duration_min, d.working_hours_start, d.working_hours_end, d.years_experience, d.rating, d.availability_status " +
+                "d.consultation_duration_min, d.working_hours_start, d.working_hours_end, d.years_experience, d.rating, d.availability_status "
+                +
                 "FROM doctors d JOIN users u ON d.user_id = u.id WHERE d.id = ?";
         double fee = getPersistedAppointmentFee();
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, doctorId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -251,7 +257,8 @@ public class AppointmentService {
                     String end = rs.getString("working_hours_end");
                     int duration = rs.getInt("consultation_duration_min");
                     String dbAvailability = rs.getString("availability_status");
-                    boolean unavailableByLeave = dbAvailability != null && "unavailable".equalsIgnoreCase(dbAvailability.trim());
+                    boolean unavailableByLeave = dbAvailability != null
+                            && "unavailable".equalsIgnoreCase(dbAvailability.trim());
                     return new Doctor(
                             rs.getInt("id"),
                             rs.getInt("user_id"),
@@ -264,8 +271,7 @@ public class AppointmentService {
                             rs.getInt("years_experience"),
                             rs.getDouble("rating"),
                             unavailableByLeave ? "Unavailable" : computeAvailabilityStatus(start, end, duration),
-                            fee
-                    );
+                            fee);
                 }
             }
         } catch (SQLException e) {
@@ -294,7 +300,8 @@ public class AppointmentService {
         }
 
         int duration = doctor.getConsultationDurationMin() > 0 ? doctor.getConsultationDurationMin() : 30;
-        List<String> dailyTemplate = generateSlots(doctor.getWorkingHoursStart(), doctor.getWorkingHoursEnd(), duration);
+        List<String> dailyTemplate = generateSlots(doctor.getWorkingHoursStart(), doctor.getWorkingHoursEnd(),
+                duration);
         if (dailyTemplate.isEmpty()) {
             return Collections.emptyList();
         }
@@ -330,8 +337,8 @@ public class AppointmentService {
 
         String query = "SELECT clinic_name, address, appointment_fee FROM clinic_settings WHERE id = 1";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query);
-             ResultSet rs = pstmt.executeQuery()) {
+                PreparedStatement pstmt = conn.prepareStatement(query);
+                ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
                 data.put("clinicName", rs.getString("clinic_name"));
                 data.put("address", rs.getString("address"));
@@ -373,7 +380,7 @@ public class AppointmentService {
     public String getDoctorAvailabilityStatusByUserId(int userId) {
         String query = "SELECT d.availability_status FROM doctors d WHERE d.user_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, userId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -392,7 +399,7 @@ public class AppointmentService {
     public boolean updateDoctorAvailabilityByUserId(int userId, boolean available) {
         String query = "UPDATE doctors SET availability_status = ? WHERE user_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, available ? "available" : "unavailable");
             pstmt.setInt(2, userId);
             return pstmt.executeUpdate() > 0;
@@ -450,7 +457,7 @@ public class AppointmentService {
                 "ORDER BY a.appointment_time";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, date);
 
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -485,7 +492,7 @@ public class AppointmentService {
         int doctorId = -1;
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement getPstmt = conn.prepareStatement(getAppointmentQuery)) {
+                PreparedStatement getPstmt = conn.prepareStatement(getAppointmentQuery)) {
             getPstmt.setInt(1, appointmentId);
 
             try (ResultSet rs = getPstmt.executeQuery()) {
@@ -526,21 +533,18 @@ public class AppointmentService {
     }
 
     /**
-     * Cancel an appointment
+     * Cancel an appointment: deletes the appointment record from the database.
      */
     public boolean cancelAppointment(int appointmentId) {
         System.out.println("\n❌ APPOINTMENT SERVICE: Cancelling appointment ID: " + appointmentId);
 
-        String query = "UPDATE appointments SET status = 'cancelled' WHERE id = ?";
-
+        String deleteSql = "DELETE FROM appointments WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-
-            pstmt.setInt(1, appointmentId);
-
-            int affectedRows = pstmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("✅ Appointment cancelled successfully");
+                PreparedStatement ps = conn.prepareStatement(deleteSql)) {
+            ps.setInt(1, appointmentId);
+            int affected = ps.executeUpdate();
+            if (affected > 0) {
+                System.out.println("✅ Appointment #" + appointmentId + " deleted successfully");
                 return true;
             }
         } catch (SQLException e) {
@@ -559,7 +563,7 @@ public class AppointmentService {
         String query = "UPDATE appointments SET status = 'confirmed' WHERE id = ? AND status IN ('scheduled', 'pending')";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
 
             pstmt.setInt(1, appointmentId);
 
@@ -583,7 +587,7 @@ public class AppointmentService {
     public String getAppointmentStatus(int appointmentId) {
         String query = "SELECT status FROM appointments WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, appointmentId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -615,7 +619,8 @@ public class AppointmentService {
         if (status == null) {
             return false;
         }
-        return !status.equals("completed") && !status.equals("cancelled");
+        // Allow cancelling any appointment except those already cancelled
+        return !status.equals("cancelled");
     }
 
     /**
@@ -624,7 +629,7 @@ public class AppointmentService {
     public boolean isDoctorValid(int doctorId) {
         String query = "SELECT COUNT(*) FROM doctors d JOIN users u ON d.user_id = u.id WHERE d.id = ? AND u.status = 'active'";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, doctorId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -643,7 +648,7 @@ public class AppointmentService {
     public boolean isPatientValid(int patientId) {
         String query = "SELECT COUNT(*) FROM patients p JOIN users u ON p.user_id = u.id WHERE p.id = ? AND u.status = 'active'";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, patientId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -671,7 +676,7 @@ public class AppointmentService {
                 "WHERE a.id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, appointmentId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -709,7 +714,7 @@ public class AppointmentService {
                 "ORDER BY a.appointment_date DESC, a.appointment_time DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
 
             if (doctorId == null) {
                 pstmt.setNull(1, java.sql.Types.INTEGER);
@@ -751,8 +756,8 @@ public class AppointmentService {
                 "ORDER BY u.full_name ASC";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query);
-             ResultSet rs = pstmt.executeQuery()) {
+                PreparedStatement pstmt = conn.prepareStatement(query);
+                ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
                 Map<String, Object> row = new HashMap<>();
                 row.put("id", rs.getInt("id"));
@@ -777,7 +782,8 @@ public class AppointmentService {
         // Generate unique invoice number
         String invoiceNumber = "INV-APT-" + System.currentTimeMillis();
 
-        String invoiceInsertSql = "INSERT INTO invoices (invoice_number, patient_id, doctor_id, patient_name, consultation_type, " +
+        String invoiceInsertSql = "INSERT INTO invoices (invoice_number, patient_id, doctor_id, patient_name, consultation_type, "
+                +
                 "consultation_amount, subtotal, total_amount, status, payment_method, paid_at) " +
                 "VALUES (?, ?, ?, ?, 'Appointment', ?, ?, ?, 'paid', 'card', CURRENT_TIMESTAMP)";
 
@@ -786,16 +792,20 @@ public class AppointmentService {
             conn = DatabaseConnection.getConnection();
             conn.setAutoCommit(false);
 
-            // Always read the latest persisted fee from DB so new invoices reflect receptionist updates.
+            // Always read the latest persisted fee from DB so new invoices reflect
+            // receptionist updates.
             double effectiveFee = appointmentFee;
             try (Statement stmt = conn.createStatement()) {
                 stmt.executeUpdate("INSERT OR IGNORE INTO clinic_settings (id, appointment_fee) VALUES (1, 500.0)");
-                stmt.executeUpdate("UPDATE clinic_settings SET appointment_fee = 500.0 WHERE id = 1 AND (appointment_fee IS NULL OR appointment_fee <= 0)");
+                stmt.executeUpdate(
+                        "UPDATE clinic_settings SET appointment_fee = 500.0 WHERE id = 1 AND (appointment_fee IS NULL OR appointment_fee <= 0)");
             } catch (Exception ignored) {
-                // Best-effort safety net; DatabaseInitializer/ClinicSettingsService also ensure defaults.
+                // Best-effort safety net; DatabaseInitializer/ClinicSettingsService also ensure
+                // defaults.
             }
 
-            try (PreparedStatement pstmt = conn.prepareStatement("SELECT appointment_fee FROM clinic_settings WHERE id = 1")) {
+            try (PreparedStatement pstmt = conn
+                    .prepareStatement("SELECT appointment_fee FROM clinic_settings WHERE id = 1")) {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     if (rs.next()) {
                         double persistedFee = rs.getDouble(1);
@@ -816,9 +826,9 @@ public class AppointmentService {
                 pstmt.setInt(2, patientId);
                 pstmt.setInt(3, doctorId);
                 pstmt.setString(4, patientName);
-                pstmt.setDouble(5, effectiveFee);  // consultation_amount
-                pstmt.setDouble(6, effectiveFee);  // subtotal
-                pstmt.setDouble(7, effectiveFee);  // total_amount
+                pstmt.setDouble(5, effectiveFee); // consultation_amount
+                pstmt.setDouble(6, effectiveFee); // subtotal
+                pstmt.setDouble(7, effectiveFee); // total_amount
 
                 int affectedRows = pstmt.executeUpdate();
                 if (affectedRows <= 0) {
@@ -826,10 +836,11 @@ public class AppointmentService {
                     return false;
                 }
 
-                // SQLite JDBC driver may not support getGeneratedKeys(); use last_insert_rowid() instead.
+                // SQLite JDBC driver may not support getGeneratedKeys(); use
+                // last_insert_rowid() instead.
                 String idQuery = "SELECT last_insert_rowid() as id";
                 try (PreparedStatement idPstmt = conn.prepareStatement(idQuery);
-                     ResultSet rs = idPstmt.executeQuery()) {
+                        ResultSet rs = idPstmt.executeQuery()) {
                     if (!rs.next()) {
                         conn.rollback();
                         return false;
@@ -848,10 +859,12 @@ public class AppointmentService {
                 }
             }
 
-            String department = (specialization == null || specialization.trim().isEmpty()) ? "Appointments" : specialization;
+            String department = (specialization == null || specialization.trim().isEmpty()) ? "Appointments"
+                    : specialization;
             String transactionCode = "TXN-" + invoiceNumber;
 
-            String txnInsertSql = "INSERT INTO transactions (invoice_id, transaction_code, type, department, amount, status, transacted_at) " +
+            String txnInsertSql = "INSERT INTO transactions (invoice_id, transaction_code, type, department, amount, status, transacted_at) "
+                    +
                     "VALUES (?, ?, 'Appointment', ?, ?, 'settled', CURRENT_TIMESTAMP)";
             try (PreparedStatement pstmt = conn.prepareStatement(txnInsertSql)) {
                 pstmt.setInt(1, invoiceId);
@@ -872,7 +885,8 @@ public class AppointmentService {
                 try {
                     conn.rollback();
                 } catch (SQLException rollbackEx) {
-                    System.err.println("Error rolling back appointment invoice transaction: " + rollbackEx.getMessage());
+                    System.err
+                            .println("Error rolling back appointment invoice transaction: " + rollbackEx.getMessage());
                 }
             }
         } finally {
@@ -959,8 +973,7 @@ public class AppointmentService {
         List<String> slots = generateSlots(
                 doctor.getWorkingHoursStart(),
                 doctor.getWorkingHoursEnd(),
-                doctor.getConsultationDurationMin() > 0 ? doctor.getConsultationDurationMin() : 30
-        );
+                doctor.getConsultationDurationMin() > 0 ? doctor.getConsultationDurationMin() : 30);
         return slots.contains(normalizedTime);
     }
 
@@ -968,7 +981,7 @@ public class AppointmentService {
         String query = "SELECT 1 FROM doctors d JOIN users u ON d.user_id = u.id " +
                 "WHERE d.id = ? AND u.status = 'active' AND COALESCE(d.availability_status, 'available') = 'available'";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, doctorId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next();
@@ -982,8 +995,8 @@ public class AppointmentService {
     private double getPersistedAppointmentFee() {
         String query = "SELECT appointment_fee FROM clinic_settings WHERE id = 1";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query);
-             ResultSet rs = pstmt.executeQuery()) {
+                PreparedStatement pstmt = conn.prepareStatement(query);
+                ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
                 double fee = rs.getDouble(1);
                 if (fee > 0) {

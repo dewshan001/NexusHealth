@@ -238,10 +238,6 @@ public class PharmacistPrescriptionService {
                 }
 
                 conn.commit(); // Commit transaction
-                
-                // 4. Generate invoice after successful dispensing
-                PharmacistInvoiceService invoiceService = new PharmacistInvoiceService();
-                invoiceService.generateInvoiceForPrescription(prescriptionId);
 
                 return new DispenseResult(true, "Prescription dispensed successfully");
 

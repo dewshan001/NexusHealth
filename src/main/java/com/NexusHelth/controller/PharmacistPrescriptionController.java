@@ -2,7 +2,6 @@ package com.NexusHelth.controller;
 
 import com.NexusHelth.model.User;
 import com.NexusHelth.service.PharmacistPrescriptionService;
-import com.NexusHelth.service.PharmacistInvoiceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
@@ -16,11 +15,9 @@ import java.util.Map;
 public class PharmacistPrescriptionController {
 
     private final PharmacistPrescriptionService service;
-    private final PharmacistInvoiceService invoiceService;
 
     public PharmacistPrescriptionController() {
         this.service = new PharmacistPrescriptionService();
-        this.invoiceService = new PharmacistInvoiceService();
     }
 
     @GetMapping("/pending")
@@ -63,13 +60,6 @@ public class PharmacistPrescriptionController {
             return ResponseEntity.badRequest().body(response);
         }
 
-        // Fetch the invoice created during dispensing without creating a duplicate.
-        Map<String, Object> invoiceData = invoiceService.getInvoiceByPrescriptionId(id);
-        if ((Boolean) invoiceData.getOrDefault("found", false)) {
-            response.put("invoiceId", invoiceData.get("id"));
-            response.put("invoiceData", invoiceData);
-        }
-
         return ResponseEntity.ok(response);
     }
 
@@ -78,4 +68,3 @@ public class PharmacistPrescriptionController {
         return user != null && "pharmacist".equals(user.getRole());
     }
 }
-
